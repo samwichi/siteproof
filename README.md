@@ -10,7 +10,7 @@ Course project for *Software Engineering in Construction Information Systems* (C
 
 | Member | Student ID | Role |
 |---|---|---|
-| Po-Hao Cheng (鄭博浩) | M11505503 | Software Engineer / System Architect |
+| 鄭博浩 | M11505503 | Software Engineer / System Architect |
 | A. Samuel Arzamendia | M11405807 | Business Analyst & Quality Control |
 
 ## Website organization chart
