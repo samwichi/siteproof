@@ -6,6 +6,14 @@ SiteProof focuses on one workflow, the **Material Delivery Closed-Loop**: a cont
 
 Course project for *Software Engineering in Construction Information Systems* (CT5805701, NTUST).
 
+## Documents
+
+Assignment #1 documents, **revised version (v3, 2026-10-06)**, corrected for consistency between the business plan and the presentation. These supersede the versions originally submitted.
+
+- [Business Plan (PDF)](docs/assignment-1/Business_Plan_v3.pdf)
+- [Business Plan (Word)](docs/assignment-1/Business_Plan_v3.docx)
+- [Presentation (PowerPoint)](docs/assignment-1/SiteProof_Business_Plan_Presentation_v3.pptx)
+
 ## Team
 
 | Member | Student ID | Role |
