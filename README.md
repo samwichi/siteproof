@@ -109,10 +109,9 @@ Implementation progress will be updated as the project develops.
 
 | Document | Format | Link |
 |---|---|---|
-| Business Plan | PDF | [View PDF](docs/assignment-1/Business_Plan_v3.pdf) |
-| Business Plan | Word | [View DOCX](docs/assignment-1/Business_Plan_v3.docx) |
-| Business Plan Presentation | PowerPoint | [View PPTX](docs/assignment-1/SiteProof_Business_Plan_Presentation_v3.pptx) |
-
+| Business Plan | PDF | [View PDF](Assignment%20%231/Business_Plan_v3.pdf) |
+| Business Plan | Word | [View DOCX](Assignment%20%231/Business_Plan_v3.docx) |
+| Business Plan Presentation | PowerPoint | [View PPTX](Assignment%20%231/SiteProof_Business_Plan_Presentation_v3.pptx) |
 ---
 
 ## 5. Team Members and Responsibilities
