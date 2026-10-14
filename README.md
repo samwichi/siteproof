@@ -24,7 +24,7 @@ The platform focuses on improving:
 - **Delivery Transparency:** Track material delivery status and progress.
 - **Document Management:** Centralize quality-related documents.
 - **Inspection Management:** Record inspection results and acceptance decisions.
-- **Financial Accountability:** Calculate retention amounts based on defined rules.
+- **Financial Accountability:** Calculate retention on the accepted value at the contract rate (3%–10%).
 - **Supplier Evaluation:** Maintain supplier performance ratings and delivery histories.
 
 ### Core Workflow — Material Delivery Closed-Loop
@@ -37,8 +37,8 @@ The workflow consists of the following steps:
 2. **Status Updates:** The supplier updates the delivery status.
 3. **Document Submission:** The supplier uploads relevant quality documents.
 4. **Inspection and Acceptance:** A site inspector reviews the delivery and records full acceptance, partial acceptance, or rejection.
-5. **Retention Calculation:** The system calculates the applicable retention amount.
-6. **Supplier Evaluation:** The contractor completes the delivery process and records a supplier rating on a 1–5 scale.
+5. **Retention Calculation:** The system calculates the retention on the accepted value at the contract rate (3%–10%) when the inspector records the acceptance decision.
+6. **Supplier Evaluation:** The contractor completes the delivery and gives a mandatory 1–5 supplier rating, whatever the inspection outcome.
 
 All information is maintained within **a single delivery record**, providing a traceable history of the entire delivery process.
 
@@ -94,9 +94,9 @@ Implementation progress will be updated as the project develops.
 
 | Component | Status |
 |---|---|
-| Business Plan | Completed |
-| System Requirements | To be updated |
-| Website Architecture | Planned |
+| Business Plan | Revised (v3) |
+| System Requirements | Defined |
+| Website Architecture | Defined |
 | Frontend Development | Not started |
 | Backend Development | Not started |
 | Database Design | Not started |
@@ -112,8 +112,8 @@ Implementation progress will be updated as the project develops.
 | Business Plan | PDF | [View PDF](Assignment%20%231/Business_Plan_v3.pdf) |
 | Business Plan | Word | [View DOCX](Assignment%20%231/Business_Plan_v3.docx) |
 | Business Plan Presentation | PowerPoint | [View PPTX](Assignment%20%231/SiteProof_Business_Plan_Presentation_v3.pptx) |
----
 
+---
 ## 5. Team Members and Responsibilities
 
 | Member | Student ID | Primary Role |
@@ -193,8 +193,8 @@ The technology stack will be determined during the system design and implementat
 
 | Component | Technology |
 |---|---|
-| Frontend | TBD |
-| Backend | TBD |
+| Frontend | HTML, CSS, JavaScript |
+| Backend | Node.js + Express.js |
 | Database | TBD |
 | Deployment | TBD |
 | Testing Framework | TBD |
