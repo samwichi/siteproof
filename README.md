@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/SiteProof.png" alt="SiteProof logo" width="320">
+  <img src="Assignment%20%231/SiteProof.png" alt="SiteProof logo" width="320">
 </p>
 
 SiteProof is a web-based platform designed to improve material delivery coordination, supplier management, and inspection processes for general contractors and material suppliers in Taiwan.
