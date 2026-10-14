@@ -106,6 +106,7 @@ Implementation progress will be updated as the project develops.
 ## 4. Project Documents
 
 **Current Version:** v3 (2026-10-06)
+Revised for consistency; supersedes the versions originally submitted.
 
 | Document | Format | Link |
 |---|---|---|
@@ -189,7 +190,7 @@ graph TD
 
 ## 7. Technology Stack
 
-The technology stack will be determined during the system design and implementation stages.
+Frontend and backend follow the course requirements (3-tier web application). Database, deployment and testing tools will be determined during system design.
 
 | Component | Technology |
 |---|---|
