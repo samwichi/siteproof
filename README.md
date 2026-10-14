@@ -107,8 +107,6 @@ Implementation progress will be updated as the project develops.
 
 **Current Version:** v3 (2026-10-06)
 
-This revised version improves consistency between the business plan and presentation and supersedes the originally submitted documents.
-
 | Document | Format | Link |
 |---|---|---|
 | Business Plan | PDF | [View PDF](docs/assignment-1/Business_Plan_v3.pdf) |
