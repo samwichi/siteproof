@@ -44,45 +44,57 @@ All information is maintained within **a single delivery record**, providing a t
 
 ---
 
-## 2. Project Scope and Development Phases
+## 2. Project Scope: MVP vs. Full Product
 
-SiteProof is planned to be developed in three phases.
+SiteProof is planned in three phases. **Only Phase 1 is the Minimum Viable Product**: the core, non-negotiable feature set that the team will actually build and deliver as a working product. Phases 2 and 3 are the full product vision: valuable, but not required for the product to launch and function.
 
-### Phase 1 — Minimum Viable Product (MVP)
+Scope tags used in this repository (same colors as the website chart and the data model):
 
-The initial development phase focuses on implementing the Material Delivery Closed-Loop.
+| Tag | Scope | Meaning |
+|---|---|---|
+| 🟩 **MVP** | Phase 1 | Built first. Required for the Material Delivery Closed-Loop to work. |
+| 🟨 **Phase 2** | Expansion | Planned next. Nice to have, not required at launch. |
+| ⬜ **Phase 3** | Intelligence | Future vision. |
 
-The MVP covers five core functional areas:
+### 2.1 Use cases
 
-1. User Authentication and Role Management
-2. Delivery Record Management
-3. Supplier Status Updates and Quality Document Uploads
-4. Inspection and Acceptance Management
-5. Retention Calculation and Supplier Rating
+| ID | Use case | Role | Scope | Page(s) |
+|---|---|---|---|---|
+| UC1 | Sign in with a role-based account | All | 🟩 MVP | Home / Sign in |
+| UC2 | Create a delivery record | Contractor | 🟩 MVP | Create Delivery Record |
+| UC3 | View delivery status, history, retention and supplier ratings | Contractor | 🟩 MVP | My Deliveries, Delivery Detail, Supplier Ratings |
+| UC4 | Complete a delivery and rate the supplier (1–5) | Contractor | 🟩 MVP | Complete and Rate Supplier |
+| UC5 | View assigned deliveries and update their status | Supplier | 🟩 MVP | Assigned Deliveries and Status Update |
+| UC6 | Upload delivery and quality documents | Supplier | 🟩 MVP | Upload Quality Documents |
+| UC7 | View own rating and delivery history | Supplier | 🟩 MVP | My Rating and History |
+| UC8 | Record received quantity and review documents | Inspector | 🟩 MVP | Inspection Queue, Inspect and Decide |
+| UC9 | Accept, partially accept or reject a delivery | Inspector | 🟩 MVP | Inspect and Decide |
+| UC10 | Calculate retention on the accepted value (system, included by UC9) | System | 🟩 MVP | Inspect and Decide |
 
-### Phase 2 — Platform Expansion
+### 2.2 Full product scope (not part of the MVP)
 
-Planned enhancements include:
+| Feature | Scope | Main data entities (see [ERModel.md](ERModel.md)) |
+|---|---|---|
+| RFQ and quotation comparison | 🟨 Phase 2 | RFQ, QUOTATION |
+| LINE notifications and 28-day test reminders | 🟨 Phase 2 | NOTIFICATION |
+| Digital payment requests | 🟨 Phase 2 | PAYMENT_REQUEST |
+| Advanced supplier analytics | 🟨 Phase 2 | Computed from existing MVP data |
+| Pro-tier features (multi-project / multi-office, unlimited supplier connections) | 🟨 Phase 2 | SUBSCRIPTION, SUPPLIER_CONNECTION |
+| ESG carbon-footprint tracking | 🟨 Phase 2 | ESG_RECORD |
+| Featured supplier listings | 🟨 Phase 2 | FEATURED_LISTING, MATERIAL_CATEGORY |
+| Mobile optimization | 🟨 Phase 2 | No data model change |
+| OCR for quality-inspection PDFs | ⬜ Phase 3 | DOCUMENT_EXTRACTION |
+| Budget-overrun alerts | ⬜ Phase 3 | PROJECT_BUDGET |
+| GPS / logistics integration | ⬜ Phase 3 | DELIVERY_TRACKING_POINT |
+| ERP integration | ⬜ Phase 3 | ERP_SYNC_LOG |
+| Predictive delivery-risk analytics | ⬜ Phase 3 | DELIVERY_RISK_SCORE |
 
-- Request for Quotation (RFQ) and quotation management
-- LINE notifications
-- Payment requests
-- Analytics and reporting
-- Pro-tier features
-- Featured supplier services
-- Mobile experience improvements
+The MVP has no push notifications: users see delivery status on the platform. Everything in 2.2 is part of the proposed roadmap and is not included in the initial MVP.
 
-### Phase 3 — Advanced Features
+### 2.3 Related documents
 
-Potential future enhancements include:
-
-- Optical Character Recognition (OCR)
-- Budget alerts
-- ERP integration
-- GPS integration
-- Delivery-risk analytics
-
-**Note:** Phase 2 and Phase 3 features are part of the proposed development roadmap and are not included in the initial MVP.
+* Website structure and page ownership: [Section 6 below](#6-website-structure-and-development-roadmap).
+* Normalized data model with MVP vs. full-product entities: [ERModel.md](ERModel.md).
 
 ---
 
