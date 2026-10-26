@@ -48,6 +48,8 @@ All information is maintained within **a single delivery record**, providing a t
 
 SiteProof is planned in three phases. **Only Phase 1 is the Minimum Viable Product**: the core, non-negotiable feature set that the team will actually build and deliver as a working product. Phases 2 and 3 are the full product vision: valuable, but not required for the product to launch and function.
 
+> 📝 **UPDATED — MVP definition:** The “five must-have functions” are the five end-to-end workflow stages (create delivery, update status, submit documents, inspect/decide, and complete/rate). UC1 (sign-in) is a shared prerequisite. UC1–UC10 below are all MVP use cases that implement or support those five stages; they are not ten separate must-have functions.
+
 Scope tags used in this repository (same colors as the website chart and the data model):
 
 | Tag | Scope | Meaning |
@@ -90,6 +92,8 @@ Scope tags used in this repository (same colors as the website chart and the dat
 | Predictive delivery-risk analytics | ⬜ Phase 3 | DELIVERY_RISK_SCORE |
 
 The MVP has no push notifications: users see delivery status on the platform. Everything in 2.2 is part of the proposed roadmap and is not included in the initial MVP.
+
+> 📝 **UPDATED — scope clarification:** The five workflow stages are a summary of the MVP, not a replacement for the use-case list. All ten use cases in section 2.1 remain in Phase 1, including role-based sign-in.
 
 ### 2.3 Related documents
 
