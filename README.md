@@ -58,6 +58,8 @@ Scope tags used in this repository (same colors as the website chart and the dat
 
 ### 2.1 Use cases
 
+The ten use cases implement the five must-have functions of the Business Plan (Account & Role Management, Delivery Management, Delivery Status Tracking, Receiving & Quality Documentation, Retention & Completion; see the traceability table in its section 5.5).
+
 | ID | Use case | Role | Scope | Page(s) |
 |---|---|---|---|---|
 | UC1 | Sign in with a role-based account | All | 🟩 MVP | Home / Sign in |
