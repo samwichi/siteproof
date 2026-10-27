@@ -7,7 +7,7 @@ Modeling steps follow the course lecture on relational data modeling (identify e
 
 | Tag | Color in Figure 2 | Meaning |
 |---|---|---|
-| **MVP** | 🟩 green, thick border | Entities and attributes the team will actually build in Phase 1. The “five must-have functions” mean the five workflow stages; UC1–UC10 are their MVP use cases and shared sign-in prerequisite. |
+| **MVP** | 🟩 green, thick border | Entities and attributes the team will actually build in Phase 1 (the five must-have functions). |
 | **PHASE 2** | 🟨 yellow | Planned expansion: RFQ, LINE notifications, payment requests, Pro tier, featured suppliers, ESG tracking. |
 | **PHASE 3** | ⬜ grey, dashed border | Future intelligence: OCR, budget alerts, GPS, ERP integration, delivery-risk analytics. |
 
@@ -18,8 +18,6 @@ Modeling steps follow the course lecture on relational data modeling (identify e
 ## 2. Figure 1 — MVP data model (what we implement first)
 
 10 entities, covering all nine user stories and all ten use cases.
-
-> 📝 **UPDATED — scope clarification:** The five must-have functions are the five workflow stages listed in README section 1. UC1–UC10 are all in MVP as detailed use cases; UC1 is a shared prerequisite.
 
 ```mermaid
 erDiagram
@@ -44,7 +42,7 @@ erDiagram
         int contractor_org_id FK
         varchar project_name
         varchar site_address
-        decimal retention_rate "contract rate 0.03-0.10"
+        decimal retention_rate "contract rate 3%-10%"
     }
     MATERIAL {
         int material_id PK
@@ -92,7 +90,7 @@ erDiagram
         int inspector_id FK
         decimal received_quantity
         decimal accepted_quantity
-        decimal retention_rate_applied "snapshot 0.03-0.10"
+        decimal retention_rate_applied "snapshot"
         datetime inspected_at
         varchar remarks
     }
@@ -150,7 +148,7 @@ erDiagram
         int contractor_org_id FK
         varchar project_name
         varchar site_address
-        decimal retention_rate "contract rate 0.03-0.10"
+        decimal retention_rate "contract rate 3%-10%"
     }
     MATERIAL["MATERIAL - MVP"] {
         int material_id PK
@@ -201,7 +199,7 @@ erDiagram
         int inspector_id FK
         decimal received_quantity
         decimal accepted_quantity
-        decimal retention_rate_applied "snapshot 0.03-0.10"
+        decimal retention_rate_applied "snapshot"
         datetime inspected_at
         varchar remarks
     }
@@ -380,7 +378,7 @@ erDiagram
 | USER_ACCOUNT | A person with one role: `CONTRACTOR_PM`, `SUPPLIER` or `INSPECTOR`; belongs to one organization | `user_id` | US1 / UC1 |
 | PROJECT | A construction project of a contractor; holds the contract retention rate | `project_id` | US2, US3, UC10 |
 | MATERIAL | Material name, specification and unit | `material_id` | US2 / UC2 |
-| DOCUMENT_TYPE | Lookup: delivery certificate, 7-day / 28-day test report, other; ESG / green-label types are Phase 2 | `doc_type_id` | US6 / UC6 |
+| DOCUMENT_TYPE | Lookup: delivery certificate, 7-day / 28-day test report, ESG / green label, other | `doc_type_id` | US6 / UC6 |
 | DELIVERY | The central **single delivery record**: project, supplier, material, ordered quantity, value, time slot, current status | `delivery_id` | US2, US3, US5, US9 |
 | DELIVERY_STATUS_HISTORY | One row per status change (who, when) | `history_id` | US3, US5, US7 |
 | DELIVERY_DOCUMENT | An uploaded PDF/JPG attached to a delivery | `document_id` | US6, US8 / UC6 |
@@ -416,11 +414,22 @@ erDiagram
 * One project receives zero or many deliveries; each delivery belongs to exactly one project.
 * One supplier organization supplies zero or many deliveries; each delivery has exactly one supplier.
 * One material describes zero or many deliveries; each delivery is for exactly one material.
-* One user (contractor project manager) creates zero or many deliveries; each delivery is created by exactly one user from the contractor organization that owns its project. 🆕 **ADDED:** The creator must have role `CONTRACTOR_PM`.
+* One user (contractor project manager) creates zero or many deliveries; each delivery is created by exactly one user with role `CONTRACTOR_PM` from the contractor organization that owns its project.
 * One delivery has one or many status-history rows (at least `SCHEDULED`, written when it is created).
 * One delivery has zero or many documents; each document has exactly one type and one uploader.
 * One delivery has zero or one inspection (re-inspection is outside the MVP); each inspection is performed by exactly one user with role `INSPECTOR`.
-* One delivery has zero or one rating; the rating is mandatory before the delivery can be `COMPLETED`. The rater is a contractor project manager from the organization that owns the project.
+* One delivery has zero or one rating; the rating is mandatory before the delivery can be `COMPLETED`.
+
+Operational rules decided for the MVP:
+
+* **One material per delivery.** A delivery record is one material with one specification. A truck with mixed loads (for example, rebar of several diameters) is registered as one record per specification. Multi-item deliveries are out of the MVP scope.
+* **Over-delivery.** The inspector records the quantity actually received, even if it is more than ordered, but the accepted quantity can never exceed the ordered quantity. The excess is returned and has no value.
+* **Inspector.** The site inspector is a user of the contractor organization. Third-party inspection is out of the MVP scope.
+* **No re-inspection.** A delivery is inspected once. If material is rejected or only partially accepted, a replacement is registered as a new delivery record.
+* **Documents do not block acceptance.** No document type is mandatory before the decision, because some reports (for example 28-day concrete test reports) only exist weeks after the delivery. The inspector decides with the documents available and can note missing ones in `remarks`.
+* **Who rates.** Any user with role `CONTRACTOR_PM` in the organization that owns the project can complete and rate a delivery; `rated_by` records who did it.
+* **Supplier selection.** Any registered supplier organization can be selected when creating a delivery. Qualified-supplier lists (`SUPPLIER_CONNECTION`) arrive in Phase 2.
+* **Value without tax.** `delivery_value` is recorded without tax; invoicing and taxes are handled outside SiteProof, in the contractor's existing process.
 
 ### 5.2 Keys
 
@@ -454,7 +463,7 @@ Same pattern as the lecture's *Employee / Department / DepartmentLocation* examp
 
 ## 7. Derived values (not stored)
 
-📝 **UPDATED — calculation basis:** The following values are computed, never stored. Retention rate is stored as a fraction (for example `0.05` = 5%) and is constrained to 0.03–0.10. For partial acceptance, *accepted value = delivery value × accepted quantity ÷ received quantity; retention = accepted value × retention rate; rejected (accepted quantity = 0) yields zero accepted value and zero retention.* `received_quantity` is the actual delivered quantity measured at inspection and is the denominator; `ordered_quantity` is the planned quantity and is not used as the denominator. If received quantity is zero, accepted quantity must also be zero and the result is zero.
+The following are computed, never stored, so they cannot become inconsistent. Retention rate is stored as a fraction (for example `0.05` = 5%). Business Plan v3, section 5.4: *accepted value = delivery value × accepted quantity ÷ ordered quantity on the delivery record; retention = accepted value × retention rate; rejected = 0.* The quantity used is the ordered quantity on the delivery record (`DELIVERY.ordered_quantity`), because `delivery_value` is the value of that full quantity: if 100 units are ordered, 80 arrive and 80 are accepted, the accepted value is 80% of the delivery value.
 
 ```sql
 CREATE VIEW v_inspection_result AS
@@ -465,9 +474,9 @@ SELECT i.delivery_id,
             WHEN i.accepted_quantity = i.received_quantity     THEN 'ACCEPTED'
             ELSE 'PARTIALLY_ACCEPTED' END                      AS decision,
        COALESCE(ROUND(d.delivery_value * i.accepted_quantity
-                      / NULLIF(i.received_quantity, 0), 2), 0) AS accepted_value,
+                      / NULLIF(d.ordered_quantity, 0), 2), 0) AS accepted_value,
        COALESCE(ROUND(d.delivery_value * i.accepted_quantity
-                      / NULLIF(i.received_quantity, 0)
+                      / NULLIF(d.ordered_quantity, 0)
                       * i.retention_rate_applied, 2), 0)       AS retention_amount
 FROM INSPECTION i
 JOIN DELIVERY d ON d.delivery_id = i.delivery_id;
@@ -487,11 +496,11 @@ The SQL is standard-style; adapt functions to the DBMS chosen for the project.
 
 * `SUPPLIER_RATING.score` between 1 and 5.
 * `INSPECTION`: `received_quantity >= 0` and `0 <= accepted_quantity <= received_quantity`.
-* 📝 **UPDATED:** `PROJECT.retention_rate` and `INSPECTION.retention_rate_applied` must be between 0.03 and 0.10 inclusive (3%–10%). The applied rate is copied from the project when the inspection decision is recorded.
+* `PROJECT.retention_rate` between 0 and 1 (the plan's example range is 3%–10%; the exact limit is a contract setting).
 * `DELIVERY.slot_end > DELIVERY.slot_start`; `DELIVERY.ordered_quantity > 0`; `DELIVERY.delivery_value >= 0`.
 * `DELIVERY.status` and `DELIVERY_STATUS_HISTORY.status` limited to `SCHEDULED, PREPARING, IN_TRANSIT, DELIVERED, INSPECTED, COMPLETED`.
 * `USER_ACCOUNT.role` in (`CONTRACTOR_PM`, `SUPPLIER`, `INSPECTOR`); `ORGANIZATION.org_type` in (`CONTRACTOR`, `SUPPLIER`).
-* 🆕 **ADDED — cross-entity role and ownership rules (application-level):** `created_by` must reference an active `CONTRACTOR_PM` in the contractor organization that owns the delivery's project; `supplier_org_id` must reference an organization of type `SUPPLIER`; `inspector_id` must reference an active `INSPECTOR`; and `rated_by` must reference an active `CONTRACTOR_PM` in the project's contractor organization. A delivery can become `COMPLETED` only after an inspection and a 1–5 supplier rating exist. Enforce these rules in the application or database triggers because they span tables.
+* Application-level rules (need more than one table): `INSPECTION.accepted_quantity <= DELIVERY.ordered_quantity`; a delivery's `supplier_org_id` must be an organization of type `SUPPLIER`; its creator and the user who rates it must be active `CONTRACTOR_PM` users, and its inspector an active `INSPECTOR` user, all from the project's contractor organization; a delivery can only become `COMPLETED` if it has an inspection and a rating.
 
 ## 9. Traceability: user stories and use cases → entities
 
