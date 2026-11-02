@@ -113,7 +113,7 @@ Implementation progress will be updated as the project develops.
 | Website Architecture | Defined |
 | Frontend Development | Not started |
 | Backend Development | Not started |
-| Database Design | Logical data model defined ([ERModel.md](ERModel.md)) |
+| Database Design | MVP tables implemented in MySQL and loaded with the given data ([ERModel.md](ERModel.md)) |
 | System Testing | Not started |
 
 ---
@@ -204,13 +204,13 @@ graph TD
 
 ## 7. Technology Stack
 
-Frontend and backend follow the course requirements (3-tier web application). Database, deployment and testing tools will be determined during system design.
+Frontend and backend follow the course requirements (3-tier web application). The database is MySQL 8.4 (run in Docker). Deployment and testing tools will be decided later.
 
 | Component | Technology |
 |---|---|
 | Frontend | HTML, CSS, JavaScript |
 | Backend | Node.js + Express.js |
-| Database | TBD |
+| Database | MySQL 8.4 (Docker) |
 | Deployment | TBD |
 | Testing Framework | TBD |
 
