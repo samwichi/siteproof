@@ -1,0 +1,6 @@
+{{!-- A message for div#toast. HTMX 4 takes the <hx-partial> out of the response and puts its content in #toast. --}}
+<hx-partial hx-target="#toast" hx-swap="innerHTML">
+  <div class="alert alert-{{kind}} py-2 my-2" hx-on::after:process="setTimeout(() => this.remove(), 4000)">
+    {{message}}
+  </div>
+</hx-partial>

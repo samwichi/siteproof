@@ -1,0 +1,35 @@
+{{!-- The edit form replaces the whole table row. A <form> cannot be placed between <tr> and <td>, so the form is inside one wide cell. --}}
+<tr class="table-warning">
+  <td colspan="8">
+    <form class="row g-2 align-items-end" hx-put="/deliveries/{{ID}}" hx-target="closest tr" hx-swap="outerHTML">
+      <div class="col-12">
+        <strong>Delivery #{{ID}}</strong> - {{material}} ({{supplier}}, {{project}})
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Quantity ({{unit}})</label>
+        <input class="form-control" type="number" name="ordered_quantity" value="{{quantity}}" min="0.01" step="0.01" required>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Value (NT$)</label>
+        <input class="form-control" type="number" name="delivery_value" value="{{valueRaw}}" min="0" step="0.01" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Slot start</label>
+        <input class="form-control" type="datetime-local" name="slot_start" value="{{slotStartInput}}" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Slot end</label>
+        <input class="form-control" type="datetime-local" name="slot_end" value="{{slotEndInput}}" required>
+      </div>
+      <div class="col-md-2 text-nowrap">
+        {{!-- Both buttons have the name "action": the route reads req.body.action to know which one was clicked. --}}
+        <button type="submit" class="btn btn-success" title="Update" name="action" value="update">
+          <i class="bi bi-check-lg"></i>
+        </button>
+        <button type="submit" class="btn btn-warning" title="Cancel" name="action" value="cancel" formnovalidate>
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </form>
+  </td>
+</tr>

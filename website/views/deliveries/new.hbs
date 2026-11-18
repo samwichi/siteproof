@@ -1,0 +1,57 @@
+<h2>New delivery</h2>
+{{#unless projects.length}}
+  <div class="alert alert-warning">Your company has no project yet, so a delivery cannot be created.</div>
+{{/unless}}
+<form class="row g-3" hx-post="/deliveries" hx-target="#main" hx-push-url="/deliveries">
+  <div class="col-md-6">
+    <label class="form-label" for="project_id">Project</label>
+    <select class="form-select" id="project_id" name="project_id" required>
+      <option value="" selected disabled>Choose a project</option>
+      {{#each projects}}
+        <option value="{{project_id}}">{{project_name}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label" for="org_id">Supplier</label>
+    <select class="form-select" id="org_id" name="org_id" required>
+      <option value="" selected disabled>Choose a supplier</option>
+      {{#each suppliers}}
+        <option value="{{org_id}}">{{org_name}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="col-12">
+    <label class="form-label" for="material_id">Material (grouped by category)</label>
+    <select class="form-select" id="material_id" name="material_id" required>
+      <option value="" selected disabled>Choose a material</option>
+      {{#each groups}}
+        <optgroup label="{{category}}">
+          {{#each items}}
+            <option value="{{material_id}}">{{material_name}} ({{unit}})</option>
+          {{/each}}
+        </optgroup>
+      {{/each}}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label" for="ordered_quantity">Ordered quantity</label>
+    <input class="form-control" type="number" id="ordered_quantity" name="ordered_quantity" min="0.01" step="0.01" required>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label" for="unit_price">Agreed unit price (NT$)</label>
+    <input class="form-control" type="number" id="unit_price" name="unit_price" min="0" step="0.01" required>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label" for="slot_start">Time slot start</label>
+    <input class="form-control" type="datetime-local" id="slot_start" name="slot_start" required>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label" for="slot_end">Time slot end</label>
+    <input class="form-control" type="datetime-local" id="slot_end" name="slot_end" required>
+  </div>
+  <div class="col-12">
+    <button class="btn btn-success"><i class="bi bi-check-circle-fill"></i> Create delivery</button>
+    <a class="btn btn-secondary" href="/deliveries" hx-boost="true" hx-target="#main">Cancel</a>
+  </div>
+</form>

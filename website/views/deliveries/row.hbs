@@ -1,0 +1,23 @@
+<tr class="align-middle">
+  <td class="text-nowrap">
+    {{#if canEdit}}
+      <span class="btn btn-sm btn-danger"
+            hx-delete="/deliveries/{{ID}}" hx-target="closest tr" hx-swap="outerHTML"
+            hx-confirm="Delete delivery #{{ID}}?">
+        <i class="bi bi-trash3-fill"></i>
+      </span>
+      <span class="btn btn-sm btn-primary"
+            hx-get="/deliveries/{{ID}}/edit" hx-target="closest tr" hx-swap="outerHTML">
+        <i class="bi bi-pencil"></i>
+      </span>
+    {{/if}}
+    {{ID}}
+  </td>
+  <td>{{project}}</td>
+  <td>{{supplier}}</td>
+  <td class="text-truncate" style="max-width: 260px;" title="{{material}}">{{material}}</td>
+  <td class="text-end">{{quantity}} {{unit}}</td>
+  <td class="text-end">{{value}}</td>
+  <td class="text-nowrap">{{slotStart}} - {{slotEnd}}</td>
+  <td><span class="badge text-bg-{{badge}}">{{status}}</span></td>
+</tr>

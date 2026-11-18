@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}}</title>
+  <script src="/htmx.min.js"></script>
+
+  <link rel="stylesheet" href="/bootstrap.min.css">
+  <link rel="stylesheet" href="/bootstrap-icons.min.css">
+  <script src="/bootstrap.bundle.min.js"></script>
+</head>
+<body class="container">
+  <header class="text-center my-3">
+    <h1><i class="bi bi-truck"></i> SiteProof</h1>
+    <p class="text-muted">Smart Delivery &amp; Supplier Management Platform</p>
+  </header>
+  {{> navbar}}
+  <div id="toast"></div>
+  <main id="main" {{#where}} hx-trigger="load" hx-get="{{.}}" {{/where}} hx-history-elt>
+    {{> home}}
+  </main>
+  <footer class="text-center text-muted my-4">
+    <p>&copy; 2026 SiteProof - NTUST CT5805701</p>
+  </footer>
+</body>
+</html>
