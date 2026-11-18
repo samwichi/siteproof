@@ -39,21 +39,31 @@ INSERT INTO organization (org_id, org_name, org_type, address, phone, email)
 SELECT company_id, name, 'SUPPLIER', address, phone, email
 FROM raw_companies;
 
--- 4.9 Load the materials and give each one a category: "Product..." items are materials; items paid by hour/day/trip are equipment if they mention a machine, otherwise labor; the rest is other.
+-- 4.9 Load the materials and give each one a category (1 = Labor, 2 = Equipment, 3 = Material, 4 = Other). The rules are checked in this order:
+--     a) Material: names that start with "Product", and the items that are only a material even if the name does not start with "Product"
+--        (structural concrete, backfill materials, cement mortar, rebar by kg).
+--     b) Equipment: machines that are rented by hour, day or trip (wheeled and crawler machines, crushers, trailers).
+--        The rows "Machine operator ...", "Machine tool operator ..." and "Equipment operator ..." are NOT equipment: they are the wages of the
+--        person who operates the machine (about 330-400 per hour, like the other workers), so they are labor.
+--     c) Labor: all the other items paid by hour or day (workers, technicians, machine operators, engineer).
+--     d) Other: services and work items (tests, demolition, excavation, formwork, measurement, paving, pile driving, ...).
 INSERT INTO material (material_id, material_name, unit, category_id)
 SELECT material_id,
        item,
        unit,
        CASE
          WHEN item LIKE 'Product%' THEN 3
+         WHEN item LIKE 'Structural concrete%'
+              OR item LIKE 'Underground distribution pipe%'
+              OR item LIKE 'Selective backfill material%'
+              OR item LIKE 'Cement mortar%'
+              OR item = 'rebar.' THEN 3
          WHEN unit IN ('Hour', 'Day', 'Trip')
-              AND (item LIKE '%machine%' OR item LIKE '%equipment%' OR item LIKE '%crawler%'
-                   OR item LIKE '%wheeled%' OR item LIKE '%trailer%' OR item LIKE '%crusher%') THEN 2
+              AND (item LIKE '%wheeled%' OR item LIKE '%crawler%' OR item LIKE '%trailer%' OR item LIKE '%crusher%') THEN 2
          WHEN unit IN ('Hour', 'Day') THEN 1
          ELSE 4
        END
 FROM raw_materials;
-
 -- 4.10 Load the clean transactions as purchases. Fix error 4: total_price is not copied; the view purchase_total calculates it again.
 INSERT INTO purchase (purchase_id, org_id, material_id, quantity, unit_price, discount_rate, purchase_date)
 SELECT transaction_id, company_id, material_id, quantity, price_per_unit, discount_rate, transaction_date
