@@ -81,6 +81,10 @@ const documents = require('./routes/documents');
 documents.connection = connection;
 app.use('/documents', requireRole('SUPPLIER'), documents);
 
+const status = require('./routes/status');
+status.connection = connection;
+app.use('/status', requireRole('SUPPLIER'), status);
+
 // ---- Errors that nobody handled (for example a failed query inside an async route) ----
 app.use((err, req, res, next) => {
     console.log('Unhandled error: ', err);

@@ -48,6 +48,7 @@ website/
 │   ├── deliveries.js      UC2, UC3  contractor: create, list, edit, delete delivery records   <-- first CRUD
 │   ├── inspections.js     UC8-UC10  inspector: record received / accepted quantity (accepted value and retention are calculated)
 │   ├── ratings.js         UC4  contractor: complete an inspected delivery and rate the supplier (1-5)
+│   ├── status.js          UC5  supplier: list the assigned deliveries and move the status one step (SCHEDULED -> PREPARING -> IN_TRANSIT -> DELIVERED, or one step back)
 │   └── documents.js       UC6  supplier: add, list, edit, delete quality documents (type and file name) until the delivery is inspected
 ├── lib/
 │   ├── auth.js            loadUser (who is logged in) and requireRole('...')
@@ -55,7 +56,7 @@ website/
 ├── views/
 │   ├── index.hbs          the only full page: header, navbar, div#toast, main#main, footer
 │   ├── navbar.hbs, home.hbs, login.hbs, toast.hbs
-│   └── deliveries/, inspections/, ratings/, documents/     one folder for each route (index, row, rowToast, new/form, edit)
+│   └── deliveries/, inspections/, ratings/, status/, documents/     one folder for each route (index, row, rowToast, new/form, edit)
 └── public/                our own CSS / JS / images
 ```
 
