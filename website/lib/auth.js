@@ -7,6 +7,7 @@ function loadUser(req, res, next) {
         req.user = u;
         res.locals.user = u;
         res.locals.isContractor = (u.role === 'CONTRACTOR_PM');   // the templates cannot compare strings, so we prepare the answer here
+        res.locals.isInspector = (u.role === 'INSPECTOR');
     }
     next();
 }

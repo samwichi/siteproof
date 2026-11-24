@@ -22,8 +22,10 @@ app.post('/login', async (req, res) => {
     const options = { signed: true, maxAge: 3600000, httpOnly: true };    // 1 hour
     res.cookie('user', { id: u.user_id, orgId: u.org_id, name: u.full_name, role: u.role }, options);
 
-    // Only the contractor pages exist so far; the other roles go to the homepage.
-    res.redirect(u.role === 'CONTRACTOR_PM' ? '/deliveries' : '/');
+    // Each role starts on its own page (the supplier pages do not exist yet, so suppliers go to the homepage).
+    if (u.role === 'CONTRACTOR_PM') res.redirect('/deliveries');
+    else if (u.role === 'INSPECTOR') res.redirect('/inspections');
+    else res.redirect('/');
 });
 
 app.post('/logout', (req, res) => {
