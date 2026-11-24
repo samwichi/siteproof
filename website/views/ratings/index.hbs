@@ -1,16 +1,17 @@
-<h2>Complete and rate</h2>
+<h1 class="h2">Complete and rate</h1>
 <p class="text-muted">Inspected deliveries of your projects. Rate the supplier from 1 to 5 to complete the delivery (the rating is mandatory, also for rejected deliveries).</p>
 {{> list/controls placeholder="Search by ID, project, supplier or material"}}
-<div id="list">
+<div id="list" data-count="{{list.total}}">
   <div class="table-responsive">
     <table class="table table-striped table-hover table-sm">
+      <caption class="visually-hidden">Inspected deliveries to rate</caption>
       <thead>
         <tr>
           {{> list/th key="ID" label="ID"}}
           {{> list/th key="project" label="Project"}}
           {{> list/th key="supplier" label="Supplier"}}
           {{> list/th key="material" label="Material"}}
-          <th>Inspection</th>
+          <th scope="col">Inspection</th>
           {{> list/th key="rating" label="Rating"}}
           {{> list/th key="status" label="Status"}}
         </tr>

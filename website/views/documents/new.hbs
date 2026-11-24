@@ -1,4 +1,4 @@
-<h2>New document</h2>
+<h1 class="h2">New document</h1>
 {{#unless deliveries.length}}
   <div class="alert alert-warning">You have no delivery that can receive documents (the inspected deliveries are closed).</div>
 {{/unless}}
@@ -27,7 +27,7 @@
            placeholder="delivery_note_d9.pdf" required>
   </div>
   <div class="col-12">
-    <button class="btn btn-success"><i class="bi bi-check-circle-fill"></i> Add document</button>
+    <button class="btn btn-success"><i aria-hidden="true" class="bi bi-check-circle-fill"></i> Add document</button>
     <a class="btn btn-secondary" href="/documents" hx-boost="true" hx-target="#main">Cancel</a>
   </div>
 </form>

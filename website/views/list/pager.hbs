@@ -16,7 +16,7 @@
             <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
           {{/if}}
           {{#each list.numbers}}
-            <li class="page-item {{#if current}}active{{/if}}"><a class="page-link" href="{{href}}" hx-boost="true" hx-target="#list" hx-select="#list" hx-swap="outerHTML">{{n}}</a></li>
+            <li class="page-item {{#if current}}active{{/if}}"><a class="page-link" {{#if current}}aria-current="page"{{/if}} href="{{href}}" hx-boost="true" hx-target="#list" hx-select="#list" hx-swap="outerHTML">{{n}}</a></li>
           {{/each}}
           {{#if list.nextHref}}
             <li class="page-item"><a class="page-link" href="{{list.nextHref}}" aria-label="Next page" hx-boost="true" hx-target="#list" hx-select="#list" hx-swap="outerHTML">&raquo;</a></li>

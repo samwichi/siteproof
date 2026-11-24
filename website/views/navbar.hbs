@@ -1,45 +1,45 @@
-<nav class="navbar navbar-expand-lg bg-body-tertiary" hx-boost:inherited="true" hx-target:inherited="#main">
+<nav aria-label="Main menu" class="navbar navbar-expand-lg bg-body-tertiary" hx-boost:inherited="true" hx-target:inherited="#main">
   <div class="container-fluid">
-    <a class="navbar-brand" href="/"><i class="bi bi-house-door-fill"></i> Home</a>
-    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+    <a class="navbar-brand" href="/"><i aria-hidden="true" class="bi bi-house-door-fill"></i> Home</a>
+    <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle the menu">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         {{#if isContractor}}
         <li class="nav-item">
-          <a class="nav-link" href="/deliveries"><i class="bi bi-box-seam"></i> My deliveries</a>
+          <a class="nav-link" href="/deliveries"><i aria-hidden="true" class="bi bi-box-seam"></i> My deliveries</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/ratings"><i class="bi bi-star"></i> Complete and rate</a>
+          <a class="nav-link" href="/ratings"><i aria-hidden="true" class="bi bi-star"></i> Complete and rate</a>
         </li>
         {{/if}}
         {{#if isInspector}}
         <li class="nav-item">
-          <a class="nav-link" href="/inspections"><i class="bi bi-clipboard-check"></i> Inspections</a>
+          <a class="nav-link" href="/inspections"><i aria-hidden="true" class="bi bi-clipboard-check"></i> Inspections</a>
         </li>
         {{/if}}
         {{#if isSupplier}}
         <li class="nav-item">
-          <a class="nav-link" href="/assigned"><i class="bi bi-truck"></i> Assigned deliveries</a>
+          <a class="nav-link" href="/assigned"><i aria-hidden="true" class="bi bi-truck"></i> Assigned deliveries</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/documents"><i class="bi bi-file-earmark-text"></i> Quality documents</a>
+          <a class="nav-link" href="/documents"><i aria-hidden="true" class="bi bi-file-earmark-text"></i> Quality documents</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/history"><i class="bi bi-star-half"></i> My rating and history</a>
+          <a class="nav-link" href="/history"><i aria-hidden="true" class="bi bi-star-half"></i> My rating and history</a>
         </li>
         {{/if}}
       </ul>
       <div class="d-flex align-items-center">
         {{#if user}}
-          <span class="navbar-text me-3"><i class="bi bi-person-circle"></i> {{user.name}} ({{user.role}})</span>
+          <span class="navbar-text me-3"><i aria-hidden="true" class="bi bi-person-circle"></i> {{user.name}} ({{user.role}})</span>
           {{!-- The logout form must reload the whole page, so it is not boosted. --}}
           <form action="/logout" method="post" hx-boost="false">
-            <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-box-arrow-right"></i> Sign out</button>
+            <button class="btn btn-outline-dark btn-sm"><i aria-hidden="true" class="bi bi-box-arrow-right"></i> Sign out</button>
           </form>
         {{else}}
-          <a class="btn btn-primary btn-sm" href="/login"><i class="bi bi-box-arrow-in-right"></i> Sign in</a>
+          <a class="btn btn-primary btn-sm" href="/login"><i aria-hidden="true" class="bi bi-box-arrow-in-right"></i> Sign in</a>
         {{/if}}
       </div>
     </div>

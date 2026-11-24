@@ -1,4 +1,4 @@
-<h2>New delivery</h2>
+<h1 class="h2">New delivery</h1>
 {{#unless projects.length}}
   <div class="alert alert-warning">Your company has no project yet, so a delivery cannot be created.</div>
 {{/unless}}
@@ -17,7 +17,7 @@
     {{!-- Typing here asks the server for the matching suppliers and replaces the options of the <select> below. --}}
     <input class="form-control mb-1" type="search" id="supplier_search" name="q" placeholder="Type a part of the supplier name to search" autocomplete="off"
            hx-get="/deliveries/suppliers" hx-trigger="input delay:300ms" hx-target="#org_id" hx-swap="innerHTML" hx-sync="this:replace">
-    <select class="form-select" id="org_id" name="org_id" required>
+    <select class="form-select" id="org_id" name="org_id" required aria-label="Supplier (search results)">
       {{> deliveries/supplierOptions}}
     </select>
   </div>
@@ -29,7 +29,7 @@
     </div>
     <input class="form-control mb-1" type="search" id="material_search" name="material_q" placeholder="Type a part of the material name to search" autocomplete="off"
            hx-get="/deliveries/materials" hx-trigger="input delay:300ms" hx-include="#material_cat" hx-target="#material_id" hx-swap="innerHTML" hx-sync="this:replace">
-    <select class="form-select" id="material_id" name="material_id" required>
+    <select class="form-select" id="material_id" name="material_id" required aria-label="Material (search results)">
       {{> deliveries/materialOptions}}
     </select>
   </div>
@@ -50,7 +50,7 @@
     <input class="form-control" type="datetime-local" id="slot_end" name="slot_end" required>
   </div>
   <div class="col-12">
-    <button class="btn btn-success"><i class="bi bi-check-circle-fill"></i> Create delivery</button>
+    <button class="btn btn-success"><i aria-hidden="true" class="bi bi-check-circle-fill"></i> Create delivery</button>
     <a class="btn btn-secondary" href="/deliveries" hx-boost="true" hx-target="#main">Cancel</a>
   </div>
 </form>

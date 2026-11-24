@@ -1,23 +1,23 @@
 {{!-- UC3: everything about one delivery in one page (read only). --}}
 <p>
   <a class="btn btn-outline-secondary btn-sm" href="/deliveries" hx-boost="true" hx-target="#main">
-    <i class="bi bi-arrow-left"></i> Back to my deliveries
+    <i aria-hidden="true" class="bi bi-arrow-left"></i> Back to my deliveries
   </a>
 </p>
 
-<h2>Delivery #{{ID}} <span class="badge text-bg-{{badge}} fs-6 align-middle">{{status}}</span></h2>
+<h1 class="h2">Delivery #{{ID}} <span class="badge text-bg-{{badge}} fs-6 align-middle">{{status}}</span></h1>
 
 <div class="d-flex flex-wrap gap-1 align-items-center my-3 small">
   {{#each steps}}
     <span class="badge {{#if current}}text-bg-primary{{else}}{{#if done}}text-bg-success{{else}}text-bg-light border text-muted{{/if}}{{/if}}">{{name}}</span>
-    <i class="bi bi-chevron-right text-muted"></i>
+    <i aria-hidden="true" class="bi bi-chevron-right text-muted"></i>
   {{/each}}
 </div>
 
 <div class="row g-3">
   <div class="col-lg-6">
     <div class="card h-100">
-      <div class="card-header"><i class="bi bi-box-seam"></i> Order</div>
+      <div class="card-header"><i aria-hidden="true" class="bi bi-box-seam"></i> Order</div>
       <ul class="list-group list-group-flush">
         <li class="list-group-item"><strong>Project:</strong> {{project}}</li>
         <li class="list-group-item"><strong>Supplier:</strong> {{supplier}}</li>
@@ -31,7 +31,7 @@
 
   <div class="col-lg-6">
     <div class="card h-100">
-      <div class="card-header"><i class="bi bi-clipboard-check"></i> Inspection and retention</div>
+      <div class="card-header"><i aria-hidden="true" class="bi bi-clipboard-check"></i> Inspection and retention</div>
       {{#if inspection}}
         <ul class="list-group list-group-flush">
           <li class="list-group-item"><strong>Decision:</strong> {{inspection.decision}} (by {{inspection.inspector}})</li>
@@ -47,11 +47,11 @@
 
   <div class="col-lg-6">
     <div class="card h-100">
-      <div class="card-header"><i class="bi bi-file-earmark-text"></i> Quality documents</div>
+      <div class="card-header"><i aria-hidden="true" class="bi bi-file-earmark-text"></i> Quality documents</div>
       {{#if documents.length}}
         <ul class="list-group list-group-flush">
           {{#each documents}}
-            <li class="list-group-item"><i class="bi bi-file-earmark-text"></i> {{doc_type}}: {{file_name}}</li>
+            <li class="list-group-item"><i aria-hidden="true" class="bi bi-file-earmark-text"></i> {{doc_type}}: {{file_name}}</li>
           {{/each}}
         </ul>
       {{else}}
@@ -62,16 +62,16 @@
 
   <div class="col-lg-6">
     <div class="card h-100">
-      <div class="card-header"><i class="bi bi-star"></i> Supplier rating</div>
+      <div class="card-header"><i aria-hidden="true" class="bi bi-star"></i> Supplier rating</div>
       <div class="card-body">
         {{#if rating}}
-          <span class="text-warning fs-4">{{rating.stars}}</span> ({{rating.score}} of 5)<br>
+          <span class="stars fs-4" role="img" aria-label="{{rating.score}} out of 5">{{rating.stars}}</span> ({{rating.score}} of 5)<br>
           <small class="text-muted">rated by {{rating.ratedBy}}</small>
         {{else}}
           <span class="text-muted">Not rated yet.</span>
           {{#if canRate}}
             <a class="btn btn-success btn-sm ms-2" href="/ratings" hx-boost="true" hx-target="#main">
-              <i class="bi bi-star-fill"></i> Complete and rate
+              <i aria-hidden="true" class="bi bi-star-fill"></i> Complete and rate
             </a>
           {{else}}
             <span class="text-muted">The rating is given after the inspection.</span>

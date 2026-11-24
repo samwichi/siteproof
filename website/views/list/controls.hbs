@@ -1,11 +1,13 @@
 {{!-- The search box and the status filter of a list. It is outside <div id="list">, so the cursor stays in the box while the list is replaced.
       Parameter: placeholder. --}}
+{{!-- A hidden message that screen readers read after each update of the list (see public/a11y.js). --}}
+<div id="listStatus" class="visually-hidden" role="status" aria-live="polite"></div>
 <form id="listForm" class="row g-2 mb-3" action="{{list.path}}" method="get"
       hx-get="{{list.path}}" hx-target="#list" hx-select="#list" hx-swap="outerHTML" hx-push-url="true"
       hx-trigger="input delay:300ms, submit" hx-sync="this:replace">
   <div class="col-md-6">
     <div class="input-group">
-      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <span class="input-group-text"><i aria-hidden="true" class="bi bi-search"></i></span>
       <input class="form-control" type="search" name="q" value="{{list.q}}" placeholder="{{placeholder}}" aria-label="Search">
     </div>
   </div>
@@ -18,7 +20,7 @@
   </div>
   <div class="col-md-2">
     <a class="btn btn-outline-secondary w-100" href="{{list.path}}" hx-boost="true" hx-target="#main">
-      <i class="bi bi-x-circle"></i> Clear
+      <i aria-hidden="true" class="bi bi-x-circle"></i> Clear
     </a>
   </div>
 </form>

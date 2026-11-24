@@ -1,14 +1,15 @@
-<h2>My deliveries</h2>
+<h1 class="h2">My deliveries</h1>
 <p class="text-muted">Click the ID of a delivery to see its documents, inspection, retention and rating.</p>
 <p>
   <a class="btn btn-success" href="/deliveries/new" hx-boost="true" hx-target="#main">
-    <i class="bi bi-plus-circle-fill"></i> New delivery
+    <i aria-hidden="true" class="bi bi-plus-circle-fill"></i> New delivery
   </a>
 </p>
 {{> list/controls placeholder="Search by ID, project, supplier or material"}}
-<div id="list">
+<div id="list" data-count="{{list.total}}">
   <div class="table-responsive">
     <table class="table table-striped table-hover table-sm">
+      <caption class="visually-hidden">My deliveries</caption>
       <thead>
         <tr>
           {{> list/th key="ID" label="ID"}}

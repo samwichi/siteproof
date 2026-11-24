@@ -8,19 +8,19 @@
         <strong>Delivery #{{ID}}</strong> - {{material}} ({{supplier}}, {{project}}). Inspection: {{decision}}
       </div>
       <div class="col-md-3">
-        <label class="form-label">Supplier rating</label>
-        <select class="form-select" name="score" required>
+        <label class="form-label" for="score-{{ID}}">Supplier rating (1 to 5)</label>
+        <select class="form-select" id="score-{{ID}}" autofocus name="score" required>
           {{#each options}}
             <option value="{{value}}" {{#if selected}}selected{{/if}}>{{value}}</option>
           {{/each}}
         </select>
       </div>
       <div class="col-md-2 text-nowrap">
-        <button type="submit" class="btn btn-success" title="Save" name="action" value="save">
-          <i class="bi bi-check-lg"></i>
+        <button type="submit" class="btn btn-success" title="Save" aria-label="Save rating of delivery #{{ID}}" name="action" value="save">
+          <i aria-hidden="true" class="bi bi-check-lg"></i>
         </button>
-        <button type="submit" class="btn btn-warning" title="Cancel" name="action" value="cancel" formnovalidate>
-          <i class="bi bi-x-lg"></i>
+        <button type="submit" class="btn btn-warning" title="Cancel" aria-label="Cancel" name="action" value="cancel" formnovalidate>
+          <i aria-hidden="true" class="bi bi-x-lg"></i>
         </button>
       </div>
     </form>
