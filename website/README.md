@@ -46,7 +46,7 @@ website/
 ├── routes/
 │   ├── auth.js            UC1  sign in / sign out
 │   ├── deliveries.js      UC2, UC3  contractor: create, list, edit, delete delivery records   <-- first CRUD
-│   ├── inspections.js     UC8-UC10  inspector: record received / accepted quantity (accepted value and retention are calculated)
+│   ├── inspections.js     UC8-UC10  inspector: see the supplier's quality documents, record received / accepted quantity (accepted value and retention are calculated)
 │   ├── ratings.js         UC4  contractor: complete an inspected delivery and rate the supplier (1-5)
 │   ├── assigned.js        UC5  supplier: list the assigned deliveries and move each one forward (PREPARING, IN_TRANSIT, DELIVERED)
 │   ├── history.js         UC7  supplier: own average rating, score distribution and delivery history (read only)

@@ -1,4 +1,4 @@
-// UC8, UC9, UC10: the site inspector records the received and accepted quantity of a delivery.
+// UC8, UC9, UC10: the site inspector checks the quality documents of a delivery and records the received and accepted quantity.
 // The system calculates the accepted value and the retention (Business Plan v3, section 5.4).
 // An inspector only sees the deliveries of the projects of his own company (p.org_id = the company of the logged-in user).
 // Rules: a delivery can be inspected only when its status is DELIVERED; the inspection can be changed or deleted
@@ -20,6 +20,8 @@ const SELECT_ROWS = `
            m.unit                                AS unit,
            CAST(d.ordered_quantity AS DOUBLE)    AS ordered,
            d.status                              AS status,
+           (SELECT GROUP_CONCAT(CONCAT(dd.doc_type, ': ', dd.file_name) ORDER BY dd.document_id SEPARATOR '|')
+            FROM delivery_document dd WHERE dd.delivery_id = d.delivery_id) AS documentList,
            CAST(i.received_quantity AS DOUBLE)   AS received,
            CAST(i.accepted_quantity AS DOUBLE)   AS accepted,
            FORMAT(d.delivery_value * i.accepted_quantity / d.ordered_quantity, 0)                    AS acceptedValue,
@@ -34,6 +36,8 @@ const SELECT_ROWS = `
 // Add the values that the template needs (Handlebars cannot compare values, so we do it here).
 function prepare(row) {
     row.badge = BADGES[row.status];
+    // UC8: the quality documents that the supplier added to this delivery (file names cannot contain "|").
+    row.documents = row.documentList ? row.documentList.split('|') : [];
     row.canInspect = (row.status === 'DELIVERED');
     row.canChange = (row.status === 'INSPECTED');
     if (row.received !== null) {
