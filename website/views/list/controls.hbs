@@ -5,20 +5,29 @@
 <form id="listForm" class="row g-2 mb-3" action="{{list.path}}" method="get"
       hx-get="{{list.path}}" hx-target="#list" hx-select="#list" hx-swap="outerHTML" hx-push-url="true"
       hx-trigger="input delay:300ms, submit" hx-sync="this:replace">
-  <div class="col-md-6">
+  <div class="{{#if list.filters.length}}col-lg-4{{else}}col-md-6{{/if}}">
     <div class="input-group">
       <span class="input-group-text"><i aria-hidden="true" class="bi bi-search"></i></span>
       <input class="form-control" type="search" name="q" value="{{list.q}}" placeholder="{{placeholder}}" aria-label="Search">
     </div>
   </div>
-  <div class="col-md-4">
+  <div class="{{#if list.filters.length}}col-6 col-lg-2{{else}}col-md-4{{/if}}">
     <select class="form-select" name="status" aria-label="Filter by {{list.filterLabel}}">
       {{#each list.statusOptions}}
         <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
       {{/each}}
     </select>
   </div>
-  <div class="col-md-2">
+  {{#each list.filters}}
+  <div class="col-6 col-lg-2">
+    <select class="form-select" name="{{name}}" aria-label="Filter by {{label}}">
+      {{#each options}}
+        <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+      {{/each}}
+    </select>
+  </div>
+  {{/each}}
+  <div class="{{#if list.filters.length}}col-6 col-lg-2{{else}}col-md-2{{/if}}">
     <a class="btn btn-outline-secondary w-100" href="{{list.path}}" hx-boost="true" hx-target="#main">
       <i aria-hidden="true" class="bi bi-x-circle"></i> Clear
     </a>

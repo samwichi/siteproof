@@ -15,14 +15,32 @@ const BADGES = { PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger' };
 // ---------- the list of all companies (waiting companies first) ----------
 const SELECT_COMPANIES = `
     SELECT o.org_id AS ID, o.org_name AS name, o.org_type AS type, o.status AS status,
+           o.phone AS phone, o.email AS email, o.address AS address,
+           (SELECT COUNT(*) FROM organization x WHERE x.org_name = o.org_name AND x.org_id <> o.org_id) AS sameName,
            DATE_FORMAT(o.created_at, '%Y-%m-%d') AS registered,
            (SELECT COUNT(*) FROM user_account u WHERE u.org_id = o.org_id AND u.role <> 'COMPANY') AS users,
            (SELECT COUNT(*) FROM org_document d WHERE d.org_id = o.org_id) AS documents
     FROM organization o
     WHERE 1 = 1`;
 
+// A company "has an account" when somebody registered for it. The 500 companies of the given data have none until somebody does.
+const HAS_ACCOUNT = 'EXISTS (SELECT 1 FROM user_account u WHERE u.org_id = o.org_id)';
+const HAS_SAME_NAME = 'EXISTS (SELECT 1 FROM organization x WHERE x.org_name = o.org_name AND x.org_id <> o.org_id)';
+
 const LIST = {
-    search: ['o.org_id', 'o.org_name', 'o.email'],
+    search: ['o.org_id', 'o.org_name', 'o.email', 'o.phone', 'o.address'],
+    filters: [
+        { name: 'type', label: 'type', allLabel: 'All types', options: [
+            { value: 'CONTRACTOR', label: TYPE_NAMES.CONTRACTOR, sql: "o.org_type = 'CONTRACTOR'" },
+            { value: 'SUPPLIER', label: TYPE_NAMES.SUPPLIER, sql: "o.org_type = 'SUPPLIER'" },
+            { value: 'INSPECTION', label: TYPE_NAMES.INSPECTION, sql: "o.org_type = 'INSPECTION'" }] },
+        // The normal view: the companies that are in use (they have an account) and the ones that wait for the approval.
+        { name: 'scope', label: 'accounts', default: 'registered', options: [
+            { value: 'registered', label: 'With an account', sql: "o.status = 'PENDING' OR " + HAS_ACCOUNT },
+            { value: 'all', label: 'All companies' },
+            { value: 'none', label: 'Without an account', sql: 'NOT ' + HAS_ACCOUNT },
+            { value: 'samename', label: 'Same name as another', sql: HAS_SAME_NAME }] }
+    ],
     statuses: Object.keys(BADGES),
     statusColumn: 'o.status',
     sorts: { ID: 'o.org_id', name: 'o.org_name', type: 'o.org_type', status: "FIELD(o.status, 'PENDING', 'REJECTED', 'APPROVED')",
@@ -34,6 +52,7 @@ const LIST = {
 function prepare(row) {
     row.typeName = TYPE_NAMES[row.type];
     row.badge = BADGES[row.status];
+    row.encodedName = encodeURIComponent(row.name || '');      // for the link "more with this name"
     return row;
 }
 
@@ -42,6 +61,12 @@ app.get('/', async (req, res) => {
     const [[waiting]] = await db().execute("SELECT COUNT(*) AS n FROM organization WHERE status = 'PENDING'");
     result.pending = Number(waiting.n);
     result.pendingMany = result.pending > 1;
+    // In the normal view the companies without an account are not shown: tell how many they are, so that nobody thinks they are lost.
+    const scope = result.list.filters.find(f => f.name === 'scope');
+    if (scope.value === 'registered') {
+        const [[hidden]] = await db().execute("SELECT COUNT(*) AS n FROM organization o WHERE o.status <> 'PENDING' AND NOT " + HAS_ACCOUNT);
+        result.hidden = Number(hidden.n);
+    }
     res.render('admin/index', result);
 });
 
@@ -57,6 +82,13 @@ async function showCompany(req, res, message, kind) {
         isPending: orgs[0].status === 'PENDING', isApproved: orgs[0].status === 'APPROVED', isRejected: orgs[0].status === 'REJECTED'
     });
 
+    // Other companies with the same name (the administrator can check before the approval that it is not a second registration of one company).
+    const [sameName] = await db().execute(
+        `SELECT o.org_id AS ID, o.org_type AS type, o.status AS status, o.phone AS phone, o.email AS email, o.address AS address,
+                (SELECT COUNT(*) FROM user_account u WHERE u.org_id = o.org_id AND u.role <> 'COMPANY') AS users
+         FROM organization o WHERE o.org_name = ? AND o.org_id <> ? ORDER BY o.org_id LIMIT 20`, [orgs[0].org_name, req.params.id]);
+    sameName.forEach(prepare);
+
     const [accounts] = await db().execute(
         "SELECT full_name AS name, email, active FROM user_account WHERE org_id = ? AND role = 'COMPANY' ORDER BY user_id", [req.params.id]);
     const [documents] = await db().execute(
@@ -67,7 +99,7 @@ async function showCompany(req, res, message, kind) {
     users.forEach(u => { u.roleName = ROLE_NAMES[u.role]; u.isActive = (u.active === 1); });
     const [[counted]] = await db().execute("SELECT COUNT(*) AS n FROM user_account WHERE org_id = ? AND role <> 'COMPANY'", [req.params.id]);
 
-    res.render('admin/company', { org: org, accounts: accounts, documents: documents, users: users,
+    res.render('admin/company', { org: org, sameName: sameName, sameNameMany: sameName.length > 1, accounts: accounts, documents: documents, users: users,
                                   userTotal: Number(counted.n), moreUsers: Number(counted.n) > users.length, message: message, kind: kind });
 }
 
