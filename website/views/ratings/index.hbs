@@ -1,0 +1,15 @@
+<h2>Complete and rate</h2>
+<p class="text-muted">Inspected deliveries of your projects. Rate the supplier from 1 to 5 to complete the delivery (the rating is mandatory, also for rejected deliveries).</p>
+<table class="table table-striped table-hover table-sm">
+  <thead>
+    <tr><th>ID</th><th>Project</th><th>Supplier</th><th>Material</th><th>Inspection</th><th>Rating</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    {{#each rows}}
+      {{> ratings/row}}
+    {{/each}}
+  </tbody>
+</table>
+{{#unless rows.length}}
+  <p class="text-muted text-center">No inspected deliveries yet.</p>
+{{/unless}}

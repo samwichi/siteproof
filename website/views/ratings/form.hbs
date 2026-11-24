@@ -1,0 +1,28 @@
+{{!-- The same form is used to rate (hx-post) and to change the rating (hx-put). It replaces the whole table row. --}}
+<tr class="table-warning">
+  <td colspan="7">
+    <form class="row g-2 align-items-end"
+          {{#if isNew}}hx-post="/ratings/{{ID}}"{{else}}hx-put="/ratings/{{ID}}"{{/if}}
+          hx-target="closest tr" hx-swap="outerHTML">
+      <div class="col-12">
+        <strong>Delivery #{{ID}}</strong> - {{material}} ({{supplier}}, {{project}}). Inspection: {{decision}}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Supplier rating</label>
+        <select class="form-select" name="score" required>
+          {{#each options}}
+            <option value="{{value}}" {{#if selected}}selected{{/if}}>{{value}}</option>
+          {{/each}}
+        </select>
+      </div>
+      <div class="col-md-2 text-nowrap">
+        <button type="submit" class="btn btn-success" title="Save" name="action" value="save">
+          <i class="bi bi-check-lg"></i>
+        </button>
+        <button type="submit" class="btn btn-warning" title="Cancel" name="action" value="cancel" formnovalidate>
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </form>
+  </td>
+</tr>
