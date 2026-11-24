@@ -22,16 +22,15 @@
     </select>
   </div>
   <div class="col-12">
-    <label class="form-label" for="material_id">Material (grouped by category)</label>
+    <label class="form-label" for="material_search">Material</label>
+    {{!-- The category buttons and the search box ask the server for the matching materials and replace the options of the <select> below. --}}
+    <div id="material_buttons" class="d-flex flex-wrap gap-1 mb-2" role="group" aria-label="Material category">
+      {{> deliveries/materialButtons}}
+    </div>
+    <input class="form-control mb-1" type="search" id="material_search" name="material_q" placeholder="Type a part of the material name to search" autocomplete="off"
+           hx-get="/deliveries/materials" hx-trigger="input delay:300ms" hx-include="#material_cat" hx-target="#material_id" hx-swap="innerHTML" hx-sync="this:replace">
     <select class="form-select" id="material_id" name="material_id" required>
-      <option value="" selected disabled>Choose a material</option>
-      {{#each groups}}
-        <optgroup label="{{category}}">
-          {{#each items}}
-            <option value="{{material_id}}">{{material_name}} ({{unit}})</option>
-          {{/each}}
-        </optgroup>
-      {{/each}}
+      {{> deliveries/materialOptions}}
     </select>
   </div>
   <div class="col-md-3">

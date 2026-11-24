@@ -1,0 +1,6 @@
+{{!-- The answer of GET /deliveries/materials: the options go to the target of the request (the <select>),
+      and HTMX puts the content of the <hx-partial> in the div of the category buttons (so the active button changes). --}}
+{{> deliveries/materialOptions}}
+<hx-partial hx-target="#material_buttons" hx-swap="innerHTML">
+  {{> deliveries/materialButtons}}
+</hx-partial>

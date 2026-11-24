@@ -106,15 +106,29 @@ app.get('/suppliers', async (req, res) => {
     res.render('deliveries/supplierOptions', await findSuppliers(req.query.q));
 });
 
-// ---------- C: the form to create a delivery (must be before /:id routes) ----------
-app.get('/new', async (req, res) => {
-    const [projects] = await db().execute(
-        'SELECT project_id, project_name FROM project WHERE org_id = ? ORDER BY project_name', [req.user.orgId]);
-    const found = await findSuppliers('');
+// The materials that match the text and the category (457 materials are too many for a normal <select>, so only the first 100 are sent).
+// The category buttons show how many materials of each category match the text, so the user sees where to look.
+const MATERIAL_LIMIT = 100;
+async function findMaterials(text, categoryId) {
+    const q = String(text || '').trim().slice(0, 100);
+    const category = Number.isInteger(Number(categoryId)) ? Number(categoryId) : 0;      // 0 = all categories
+    const textSql = q ? ' AND m.material_name LIKE ?' : '';
+    const textArgs = q ? [like(q)] : [];
+
+    const [counts] = await db().execute(
+        `SELECT c.category_id AS id, c.category_name AS name, COUNT(m.material_id) AS n
+         FROM material_category c LEFT JOIN material m ON m.category_id = c.category_id${textSql}
+         GROUP BY c.category_id, c.category_name ORDER BY c.category_id`, textArgs);
+    const categories = counts.map(c => ({ id: c.id, name: c.name, n: Number(c.n), active: c.id === category }));
+    const all = categories.reduce((sum, c) => sum + c.n, 0);
+    const total = category ? (categories.find(c => c.id === category) || { n: 0 }).n : all;
+
+    const categorySql = category ? ' AND m.category_id = ?' : '';
     const [materials] = await db().execute(
         `SELECT m.material_id, m.material_name, m.unit, c.category_name
          FROM material m JOIN material_category c ON c.category_id = m.category_id
-         ORDER BY c.category_id, m.material_name`);
+         WHERE 1 = 1${textSql}${categorySql}
+         ORDER BY c.category_id, m.material_name LIMIT ${MATERIAL_LIMIT}`, textArgs.concat(category ? [category] : []));
 
     // Group the materials by category, so the <select> can show <optgroup>s.
     const groups = [];
@@ -126,7 +140,22 @@ app.get('/new', async (req, res) => {
         }
         g.items.push(m);
     }
-    res.render('deliveries/new', Object.assign(found, { projects: projects, groups: groups }));
+    return { groups: groups, categories: categories, category: category || '', allActive: !category, all: all,
+             materialTotal: total, materialShown: materials.length, materialMore: total > materials.length };
+}
+
+// ---------- C: the <option>s of the material <select> and the category buttons, while the user types or clicks a category (must be before /:id routes) ----------
+app.get('/materials', async (req, res) => {
+    res.render('deliveries/materialResponse', await findMaterials(req.query.material_q, req.query.category));
+});
+
+// ---------- C: the form to create a delivery (must be before /:id routes) ----------
+app.get('/new', async (req, res) => {
+    const [projects] = await db().execute(
+        'SELECT project_id, project_name FROM project WHERE org_id = ? ORDER BY project_name', [req.user.orgId]);
+    const suppliers = await findSuppliers('');
+    const materials = await findMaterials('', 0);
+    res.render('deliveries/new', Object.assign(suppliers, materials, { projects: projects }));
 });
 
 // ---------- C: create ----------
@@ -138,6 +167,8 @@ app.post('/', async (req, res) => {
 
     const message = checkFields(quantity, price, b.slot_start, b.slot_end);
     if (message) return fail(res, message);
+    if (!b.org_id) return fail(res, 'Please choose a supplier.');
+    if (!b.material_id) return fail(res, 'Please choose a material.');
 
     try {
         // The project must belong to the company of the logged-in user.
