@@ -1,0 +1,31 @@
+{{!-- The edit form replaces the whole table row. A <form> cannot be placed between <tr> and <td>, so the form is inside one wide cell. --}}
+<tr class="table-warning">
+  <td colspan="7">
+    <form class="row g-2 align-items-end" hx-put="/documents/{{ID}}" hx-target="closest tr" hx-swap="outerHTML">
+      <div class="col-12">
+        <strong>Document #{{ID}}</strong> - delivery #{{deliveryId}} ({{material}}, {{project}})
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Document type</label>
+        <select class="form-select" name="doc_type" required>
+          {{#each typeOptions}}
+            <option value="{{value}}" {{#if selected}}selected{{/if}}>{{value}}</option>
+          {{/each}}
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">File name (.pdf, .jpg)</label>
+        <input class="form-control" type="text" name="file_name" value="{{fileName}}" maxlength="200" required>
+      </div>
+      <div class="col-md-2 text-nowrap">
+        {{!-- Both buttons have the name "action": the route reads req.body.action to know which one was clicked. --}}
+        <button type="submit" class="btn btn-success" title="Update" name="action" value="update">
+          <i class="bi bi-check-lg"></i>
+        </button>
+        <button type="submit" class="btn btn-warning" title="Cancel" name="action" value="cancel" formnovalidate>
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </form>
+  </td>
+</tr>

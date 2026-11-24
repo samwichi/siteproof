@@ -1,0 +1,33 @@
+<h2>New document</h2>
+{{#unless deliveries.length}}
+  <div class="alert alert-warning">You have no delivery that can receive documents (the inspected deliveries are closed).</div>
+{{/unless}}
+<form class="row g-3" hx-post="/documents" hx-target="#main" hx-push-url="/documents">
+  <div class="col-12">
+    <label class="form-label" for="delivery_id">Delivery</label>
+    <select class="form-select" id="delivery_id" name="delivery_id" required>
+      <option value="" selected disabled>Choose a delivery</option>
+      {{#each deliveries}}
+        <option value="{{delivery_id}}">#{{delivery_id}} - {{project_name}} - {{material_name}} ({{status}})</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label" for="doc_type">Document type</label>
+    <select class="form-select" id="doc_type" name="doc_type" required>
+      <option value="" selected disabled>Choose a type</option>
+      {{#each typeOptions}}
+        <option value="{{value}}">{{value}}</option>
+      {{/each}}
+    </select>
+  </div>
+  <div class="col-md-8">
+    <label class="form-label" for="file_name">File name (.pdf, .jpg)</label>
+    <input class="form-control" type="text" id="file_name" name="file_name" maxlength="200"
+           placeholder="delivery_note_d9.pdf" required>
+  </div>
+  <div class="col-12">
+    <button class="btn btn-success"><i class="bi bi-check-circle-fill"></i> Add document</button>
+    <a class="btn btn-secondary" href="/documents" hx-boost="true" hx-target="#main">Cancel</a>
+  </div>
+</form>
