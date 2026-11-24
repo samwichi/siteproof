@@ -1,0 +1,75 @@
+<h1 class="h2">My products</h1>
+<p class="text-muted">The materials that {{user.orgName}} can provide. The contractors find the <strong>listed</strong> products on their page "Find products" and see your price range, minimum order and lead time. Unlist a product when you cannot provide it for a while.</p>
+
+<details class="card mb-4" {{#unless list.total}}open{{/unless}}>
+  <summary class="card-header fw-semibold"><i aria-hidden="true" class="bi bi-plus-circle-fill text-success"></i> Add a product</summary>
+  <form class="row g-3 card-body" hx-post="/products" hx-target="#main" hx-disable="findAll button">
+    <div class="col-12">
+      <label class="form-label" for="material_search">Material</label>
+      {{!-- The same material picker as the new delivery form; it lists only the materials that your company does not offer yet. --}}
+      <div id="material_buttons" class="d-flex flex-wrap gap-1 mb-2" role="group" aria-label="Material category">
+        {{> deliveries/materialButtons}}
+      </div>
+      <input class="form-control mb-1" type="search" id="material_search" name="material_q" placeholder="Type a part of the material name to search" autocomplete="off"
+             hx-get="/products/materials" hx-trigger="input delay:300ms" hx-include="#material_cat" hx-target="#material_id" hx-swap="innerHTML" hx-sync="this:replace">
+      <select class="form-select" id="material_id" name="material_id" required aria-label="Material (search results)">
+        {{> deliveries/materialOptions}}
+      </select>
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label" for="price_min">Lowest price (NT$ / unit)</label>
+      <input class="form-control" type="number" id="price_min" name="price_min" min="0" step="0.01" required>
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label" for="price_max">Highest price (NT$ / unit)</label>
+      <input class="form-control" type="number" id="price_max" name="price_max" min="0" step="0.01" required>
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label" for="min_order_qty">Minimum order</label>
+      <input class="form-control" type="number" id="min_order_qty" name="min_order_qty" min="0.01" step="0.01" aria-describedby="optional-help">
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label" for="lead_time_days">Lead time (days)</label>
+      <input class="form-control" type="number" id="lead_time_days" name="lead_time_days" min="0" max="365" step="1" aria-describedby="optional-help">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="note">Note</label>
+      <input class="form-control" id="note" name="note" maxlength="200" placeholder="For example: brand, strength class, delivery area" aria-describedby="optional-help">
+    </div>
+    <div id="optional-help" class="form-text col-12 mt-1">Minimum order, lead time and note can stay empty. The unit is the unit of the material.</div>
+    <div class="col-12">
+      <button class="btn btn-success"><i aria-hidden="true" class="bi bi-check-circle-fill"></i> Add product</button>
+    </div>
+  </form>
+</details>
+
+{{> list/controls placeholder="Search by material, material ID or note"}}
+<div id="list" data-count="{{list.total}}">
+  <div class="table-responsive">
+    <table class="table table-striped table-hover table-sm">
+      <caption class="visually-hidden">My products</caption>
+      <thead>
+        <tr>
+          <th scope="col"><span class="visually-hidden">Actions</span></th>
+          {{> list/th key="material" label="Material"}}
+          {{> list/th key="category" label="Category"}}
+          {{> list/th key="price" label="Price (NT$ / unit)" cls="text-end"}}
+          {{> list/th key="minOrder" label="Minimum order" cls="text-end"}}
+          {{> list/th key="lead" label="Lead time" cls="text-end"}}
+          {{> list/th key="deliveries" label="Deliveries" cls="text-end"}}
+          {{> list/th key="status" label="Status"}}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+          {{> products/row}}
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{#unless rows.length}}
+    <p class="text-muted text-center">{{#if list.filtered}}No product matches your search.{{else}}Your company has no product yet. Add the first one above, so that the contractors can find you.{{/if}}</p>
+  {{/unless}}
+  {{> list/pager}}
+</div>
+{{#if message}}{{> toast}}{{/if}}

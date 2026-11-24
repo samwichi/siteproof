@@ -88,6 +88,10 @@ const assigned = require('./routes/assigned');
 assigned.connection = connection;
 app.use('/assigned', requireRole('SUPPLIER'), assigned);
 
+const products = require('./routes/products');
+products.connection = connection;
+app.use('/products', requireRole('SUPPLIER'), products);
+
 const history = require('./routes/history');
 history.connection = connection;
 app.use('/history', requireRole('SUPPLIER'), history);

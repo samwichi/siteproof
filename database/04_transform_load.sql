@@ -68,3 +68,10 @@ FROM raw_materials;
 INSERT INTO purchase (purchase_id, org_id, material_id, quantity, unit_price, discount_rate, purchase_date)
 SELECT transaction_id, company_id, material_id, quantity, price_per_unit, discount_rate, transaction_date
 FROM raw_transactions;
+
+-- 4.11 Fill the product catalog of the suppliers from the purchases: each supplier offers the materials that it has sold, and the
+--      price range is the lowest and the highest unit price of those sales. The suppliers can change or unlist them on the website.
+INSERT INTO supplier_product (org_id, material_id, price_min, price_max)
+SELECT org_id, material_id, MIN(unit_price), MAX(unit_price)
+FROM purchase
+GROUP BY org_id, material_id;

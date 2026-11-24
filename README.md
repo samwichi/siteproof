@@ -131,6 +131,8 @@ SiteProof has moved from planning to implementation. The database and the first 
 | UC9 Accept, partially accept or reject | Done | Decision from the received and accepted quantity |
 | UC10 Retention | Done | Accepted value and retention are calculated by the system (the retention rate is copied from the project at the inspection) |
 
+Beyond the ten use cases, the supplier keeps a **product catalog** (My products): the materials that its company can provide, with the price range, minimum order and lead time ([website/README.md](website/README.md), section 2.2). It is the first step of the RFQ and quotation workflow of phase 2.
+
 The whole closed loop works from the first step to the last: the contractor creates a delivery, the supplier moves it to DELIVERED, the inspector inspects it, the contractor completes it with a rating, and the supplier sees the rating.
 
 **Next:** automated tests, real file upload, and the second phase of the product (see section 2).

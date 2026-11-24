@@ -163,6 +163,27 @@ CREATE TABLE supplier_rating (
     FOREIGN KEY (rated_by)    REFERENCES user_account (user_id)
 );
 
+-- 1.13b Product catalog of the suppliers: the materials that a supplier can provide, with its price range per unit (the unit is the
+--       unit of the material). The supplier manages it (website: My products); the contractors search it (website: Find products).
+--       active = 0 means that the supplier has taken the product off the catalog for now (unlisted); the row stays.
+--       A supplier offers each material only once. Step 4.11 fills it from the purchases of the given data.
+CREATE TABLE supplier_product (
+    product_id     INT AUTO_INCREMENT PRIMARY KEY,
+    org_id         CHAR(8)       NOT NULL,
+    material_id    CHAR(8)       NOT NULL,
+    price_min      DECIMAL(10,2) NOT NULL,
+    price_max      DECIMAL(10,2) NOT NULL,
+    min_order_qty  DECIMAL(10,2) NULL     CHECK (min_order_qty IS NULL OR min_order_qty > 0),
+    lead_time_days INT           NULL     CHECK (lead_time_days IS NULL OR lead_time_days BETWEEN 0 AND 365),
+    note           VARCHAR(200)  NULL,
+    active         TINYINT(1)    NOT NULL DEFAULT 1,
+    updated_at     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CHECK (price_min >= 0 AND price_max >= price_min),
+    UNIQUE (org_id, material_id),
+    FOREIGN KEY (org_id)      REFERENCES organization (org_id),
+    FOREIGN KEY (material_id) REFERENCES material (material_id)
+);
+
 -- 1.14 View that calculates the total price of each purchase: quantity x unit price x (1 - discount).
 CREATE VIEW purchase_total AS
 SELECT purchase_id,

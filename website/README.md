@@ -65,6 +65,15 @@ Rules:
 * The proof documents are saved in `website/uploads/` under a random name (the folder is in `.gitignore`). The server checks the first bytes of each file (a text file named `.pdf` is refused) and only the administrator can open a document.
 * The company ID is not typed by the user: the server draws a random 8-digit number and draws again if the number exists already (also the 500 suppliers of the given data), so two companies never get the same ID.
 
+## 2.2 Product catalog of the suppliers (menu of a supplier: My products)
+
+* A supplier lists the materials that its company can provide: the material (the same picker as the new delivery form; it shows only the materials that the company does not offer yet), the lowest and the highest price per unit, and optionally the minimum order, the lead time in days and a note.
+* The supplier edits the prices, the minimum order, the lead time and the note in the row. The material cannot be changed (a company offers each material only once: delete the product and add the other material).
+* **Unlist** takes a product off the catalog for a while (the contractors do not see it); **List again** brings it back. Delete removes it.
+* All suppliers and the users of the same company share the catalog of the company; nobody can see or change the products of another company in "My products".
+* The catalog is filled at the start from the purchases of the given data (step 4.11 of `database/04_transform_load.sql`): each supplier offers the materials it has sold, with the lowest and highest unit price as the range. The demo suppliers also offer the materials of their sample deliveries (step 6.7b).
+* An existing database gets the new table with `database/08_upgrade_supplier_products.sql`.
+
 ## 3. Folders
 
 ```
@@ -84,12 +93,14 @@ website/
 │   ├── ratings.js         UC4  contractor: complete an inspected delivery and rate the supplier (1-5)
 │   ├── assigned.js        UC5  supplier: list the assigned deliveries and move each one forward (PREPARING, IN_TRANSIT, DELIVERED)
 │   ├── history.js         UC7  supplier: own average rating, score distribution and delivery history (read only)
-│   └── documents.js       UC6  supplier: add, list, edit, delete quality documents (type and file name) until the delivery is inspected
+│   ├── documents.js       UC6  supplier: add, list, edit, delete quality documents (type and file name) until the delivery is inspected
+│   └── products.js        supplier: the product catalog of the company ("My products"): add, list, edit, unlist / list again, delete
 ├── lib/
 │   ├── auth.js            loadUser (who is logged in; asks the database at every request whether the account and its company are still allowed), requireRole('...'), role names, start page of each role
 │   ├── upload.js          proof documents: receive (multer), check the first bytes, save under a random name, read
 │   ├── respond.js         fail(res, message): error message in the toast, without changing the page
-│   └── listing.js         readList(): search, status filter, sorting and paging of a list (used by all the list pages)
+│   ├── listing.js         readList(): search, status filter, sorting and paging of a list (used by all the list pages)
+│   └── materials.js       findMaterials(): the material picker (category buttons + search box) of the new delivery form and of "My products"
 ├── views/
 │   ├── index.hbs          the only full page: header, navbar, div#toast, main#main, footer
 │   ├── navbar.hbs, home.hbs, login.hbs, toast.hbs

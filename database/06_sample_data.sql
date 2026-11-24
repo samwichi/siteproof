@@ -147,6 +147,16 @@ INSERT INTO supplier_rating (delivery_id, rated_by, score) VALUES
 (@d2, (SELECT user_id FROM user_account WHERE email = 'pm.lin@siteproof.example.com'),  3),
 (@d3, (SELECT user_id FROM user_account WHERE email = 'pm.chen@siteproof.example.com'), 2);
 
+-- 6.7b The demo suppliers offer the materials of their sample deliveries in the product catalog (if step 4.11 did not add them already):
+--      the price range is 10% around the unit price of the delivery; the lead time and the minimum order are examples.
+INSERT IGNORE INTO supplier_product (org_id, material_id, price_min, price_max, min_order_qty, lead_time_days)
+SELECT d.org_id, d.material_id,
+       ROUND(MIN(d.delivery_value / d.ordered_quantity) * 0.9, 2),
+       ROUND(MAX(d.delivery_value / d.ordered_quantity) * 1.1, 2),
+       10, 3
+FROM delivery d
+GROUP BY d.org_id, d.material_id;
+
 -- 6.8 Check: rows in each table (expected: organization 503, user_account 14, inspection_appointment 1, project 3, delivery 8, delivery_document 8, inspection 4, supplier_rating 3).
 SELECT (SELECT COUNT(*) FROM organization)      AS organizations,
        (SELECT COUNT(*) FROM user_account)      AS users,
