@@ -102,19 +102,36 @@ The MVP has no push notifications: users see delivery status on the platform. Ev
 
 ## 3. Project Status
 
-SiteProof is currently in the planning and system design stage.
-
-Implementation progress will be updated as the project develops.
+SiteProof has moved from planning to implementation. The database and the first version of the website run locally with Docker (see [website/README.md](website/README.md) for the instructions). Eight of the ten use cases work and two are partly done.
 
 | Component | Status |
 |---|---|
 | Business Plan | Revised (v3) |
 | System Requirements | Defined |
 | Website Architecture | Defined |
-| Frontend Development | Not started |
-| Backend Development | Not started |
-| Database Design | MVP tables implemented in MySQL and loaded with the given data ([ERModel.md](ERModel.md)) |
-| System Testing | Not started |
+| Frontend Development | In progress: pages for the three roles (contractor, supplier, inspector) with Handlebars, HTMX and Bootstrap |
+| Backend Development | In progress: Express routes with sign-in, role check and company-level data isolation |
+| Database Design | MVP tables implemented in MySQL, loaded with the given data and with sample data ([ERModel.md](ERModel.md)) |
+| System Testing | Started: each function is tested by hand with the sample data; no automated tests yet |
+
+### 3.1 Use case progress
+
+| Use case | Status | What works now |
+|---|---|---|
+| UC1 Sign in | Done | Sign in and sign out; each role starts on its own page; other roles cannot open the page |
+| UC2 Create a delivery record | Done | Contractor creates, edits and deletes delivery records (edit and delete only while SCHEDULED) |
+| UC3 View delivery status, history, retention and ratings | Partly | List with status for the contractor; the delivery detail page (documents, retention, rating in one place) is still to do |
+| UC4 Complete a delivery and rate the supplier | Done | Rating 1 to 5, can be changed or deleted |
+| UC5 Update the delivery status | Done | Supplier sees the assigned deliveries and moves each one step by step: PREPARING, IN_TRANSIT, DELIVERED |
+| UC6 Quality documents | Done (simple) | Supplier adds, edits and deletes the document type and file name until the inspection; the file itself is not uploaded yet |
+| UC7 Supplier rating and history | Done | Supplier sees the average rating, how the scores are distributed and the history of its deliveries with the inspection result |
+| UC8 Record received quantity and review documents | Partly | Received quantity works; the inspector cannot see the documents yet |
+| UC9 Accept, partially accept or reject | Done | Decision from the received and accepted quantity |
+| UC10 Retention | Done | Accepted value and retention are calculated by the system (the retention rate is copied from the project at the inspection) |
+
+The whole closed loop works from the first step to the last: the contractor creates a delivery, the supplier moves it to DELIVERED, the inspector inspects it, the contractor completes it with a rating, and the supplier sees the rating.
+
+**Next:** the inspector sees the documents (UC8), the delivery detail page (UC3), then automated tests and real file upload.
 
 ---
 ## 4. Project Documents
@@ -204,15 +221,15 @@ graph TD
 
 ## 7. Technology Stack
 
-Frontend and backend follow the course requirements (3-tier web application). The database is MySQL 8.4 (run in Docker). Deployment and testing tools will be decided later.
+Frontend and backend follow the course requirements (3-tier web application) and the technology of the laboratories. The database is MySQL 8.4 (run in Docker).
 
 | Component | Technology |
 |---|---|
-| Frontend | HTML, CSS, JavaScript |
-| Backend | Node.js + Express.js |
+| Frontend | HTML, Bootstrap 5, Handlebars templates, HTMX 4 |
+| Backend | Node.js 22 + Express 5 (mysql2, cookie-parser, bcryptjs) |
 | Database | MySQL 8.4 (Docker) |
-| Deployment | TBD |
-| Testing Framework | TBD |
+| Deployment | Docker on a local computer (cloud deployment to be decided) |
+| Testing Framework | Manual tests with sample data (automated tests to be decided) |
 
 ---
 
