@@ -1,7 +1,7 @@
 {{!-- A column header that sorts the list. Parameters: key (the key in the sorts of the route), label, cls (optional, e.g. text-end). --}}
-<th class="{{cls}}" aria-sort="{{lookup (lookup list.th key) 'ariaSort'}}">
+<th scope="col" class="{{cls}}" aria-sort="{{lookup (lookup list.th key) 'ariaSort'}}">
   <a class="text-reset text-decoration-none text-nowrap" href="{{lookup (lookup list.th key) 'href'}}"
      hx-boost="true" hx-target="#list" hx-select="#list" hx-swap="outerHTML">
-    {{label}} <i class="bi {{lookup (lookup list.th key) 'icon'}}"></i>
+    {{label}} <i aria-hidden="true" class="bi {{lookup (lookup list.th key) 'icon'}}"></i>
   </a>
 </th>

@@ -1,22 +1,22 @@
 <tr class="align-middle">
   <td class="text-nowrap">
     {{#if canEdit}}
-      <span class="btn btn-sm btn-danger" title="Delete document"
+      <button type="button" class="btn btn-sm btn-danger"
             hx-delete="/documents/{{ID}}" hx-target="closest tr" hx-swap="outerHTML"
-            hx-confirm="Delete the document {{fileName}}?">
-        <i class="bi bi-trash3-fill"></i>
-      </span>
-      <span class="btn btn-sm btn-primary" title="Edit document"
-            hx-get="/documents/{{ID}}/edit" hx-target="closest tr" hx-swap="outerHTML">
-        <i class="bi bi-pencil"></i>
-      </span>
+            hx-confirm="Delete the document {{fileName}}?" title="Delete document #{{ID}}" aria-label="Delete document #{{ID}}">
+        <i aria-hidden="true" class="bi bi-trash3-fill"></i>
+      </button>
+      <button type="button" class="btn btn-sm btn-primary"
+            hx-get="/documents/{{ID}}/edit" hx-target="closest tr" hx-swap="outerHTML" title="Edit document #{{ID}}" aria-label="Edit document #{{ID}}">
+        <i aria-hidden="true" class="bi bi-pencil"></i>
+      </button>
     {{/if}}
     {{ID}}
   </td>
   <td>#{{deliveryId}} - {{project}}</td>
   <td class="text-truncate" style="max-width: 260px;" title="{{material}}">{{material}}</td>
   <td>{{docType}}</td>
-  <td><i class="bi bi-file-earmark-text"></i> {{fileName}}</td>
+  <td><i aria-hidden="true" class="bi bi-file-earmark-text"></i> {{fileName}}</td>
   <td>{{uploadedBy}}</td>
   <td><span class="badge text-bg-{{badge}}">{{status}}</span></td>
 </tr>

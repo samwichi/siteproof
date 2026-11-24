@@ -1,21 +1,21 @@
 <tr class="align-middle">
   <td class="text-nowrap">
     {{#if canInspect}}
-      <span class="btn btn-sm btn-success" title="Inspect"
-            hx-get="/inspections/{{ID}}/new" hx-target="closest tr" hx-swap="outerHTML">
-        <i class="bi bi-clipboard-check"></i>
-      </span>
+      <button type="button" class="btn btn-sm btn-success"
+            hx-get="/inspections/{{ID}}/new" hx-target="closest tr" hx-swap="outerHTML" title="Inspect delivery #{{ID}}" aria-label="Inspect delivery #{{ID}}">
+        <i aria-hidden="true" class="bi bi-clipboard-check"></i>
+      </button>
     {{/if}}
     {{#if canChange}}
-      <span class="btn btn-sm btn-danger" title="Delete inspection"
+      <button type="button" class="btn btn-sm btn-danger"
             hx-delete="/inspections/{{ID}}" hx-target="closest tr" hx-swap="outerHTML"
-            hx-confirm="Delete the inspection of delivery #{{ID}}?">
-        <i class="bi bi-trash3-fill"></i>
-      </span>
-      <span class="btn btn-sm btn-primary" title="Edit inspection"
-            hx-get="/inspections/{{ID}}/edit" hx-target="closest tr" hx-swap="outerHTML">
-        <i class="bi bi-pencil"></i>
-      </span>
+            hx-confirm="Delete the inspection of delivery #{{ID}}?" title="Delete the inspection of delivery #{{ID}}" aria-label="Delete the inspection of delivery #{{ID}}">
+        <i aria-hidden="true" class="bi bi-trash3-fill"></i>
+      </button>
+      <button type="button" class="btn btn-sm btn-primary"
+            hx-get="/inspections/{{ID}}/edit" hx-target="closest tr" hx-swap="outerHTML" title="Edit the inspection of delivery #{{ID}}" aria-label="Edit the inspection of delivery #{{ID}}">
+        <i aria-hidden="true" class="bi bi-pencil"></i>
+      </button>
     {{/if}}
     {{ID}}
   </td>
@@ -24,9 +24,9 @@
   <td class="text-truncate" style="max-width: 220px;" title="{{material}}">{{material}}</td>
   <td class="small">
     {{#each documents}}
-      <div class="text-nowrap"><i class="bi bi-file-earmark-text"></i> {{this}}</div>
+      <div class="text-nowrap"><i aria-hidden="true" class="bi bi-file-earmark-text"></i> {{this}}</div>
     {{else}}
-      <span class="text-danger"><i class="bi bi-exclamation-triangle"></i> No documents</span>
+      <span class="text-danger"><i aria-hidden="true" class="bi bi-exclamation-triangle"></i> No documents</span>
     {{/each}}
   </td>
   <td class="text-end text-nowrap">{{ordered}} {{unit}}</td>

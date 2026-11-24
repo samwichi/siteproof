@@ -6,7 +6,7 @@
   <td class="text-nowrap">{{slotStart}} - {{slotEnd}}</td>
   <td>
     <a href="/documents" hx-boost="true" hx-target="#main" title="Open the quality documents">
-      <i class="bi bi-file-earmark-text"></i> {{documents}}
+      <i aria-hidden="true" class="bi bi-file-earmark-text"></i> {{documents}}
     </a>
   </td>
   <td><span class="badge text-bg-{{badge}}">{{status}}</span></td>
@@ -17,7 +17,7 @@
             hx-confirm="Change delivery #{{ID}} from {{status}} to {{nextStatus}}?">
         <input type="hidden" name="from" value="{{status}}">
         <button type="submit" class="btn btn-sm btn-primary">
-          <i class="bi bi-arrow-right-circle-fill"></i> {{nextLabel}}
+          <i aria-hidden="true" class="bi bi-arrow-right-circle-fill"></i> {{nextLabel}}
         </button>
       </form>
     {{else}}

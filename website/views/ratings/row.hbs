@@ -1,21 +1,21 @@
 <tr class="align-middle">
   <td class="text-nowrap">
     {{#if canRate}}
-      <span class="btn btn-sm btn-success" title="Complete and rate"
-            hx-get="/ratings/{{ID}}/new" hx-target="closest tr" hx-swap="outerHTML">
-        <i class="bi bi-star-fill"></i>
-      </span>
+      <button type="button" class="btn btn-sm btn-success"
+            hx-get="/ratings/{{ID}}/new" hx-target="closest tr" hx-swap="outerHTML" title="Complete and rate delivery #{{ID}}" aria-label="Complete and rate delivery #{{ID}}">
+        <i aria-hidden="true" class="bi bi-star-fill"></i>
+      </button>
     {{/if}}
     {{#if canChange}}
-      <span class="btn btn-sm btn-danger" title="Delete rating"
+      <button type="button" class="btn btn-sm btn-danger"
             hx-delete="/ratings/{{ID}}" hx-target="closest tr" hx-swap="outerHTML"
-            hx-confirm="Delete the rating of delivery #{{ID}}? The delivery will not be completed any more.">
-        <i class="bi bi-trash3-fill"></i>
-      </span>
-      <span class="btn btn-sm btn-primary" title="Change rating"
-            hx-get="/ratings/{{ID}}/edit" hx-target="closest tr" hx-swap="outerHTML">
-        <i class="bi bi-pencil"></i>
-      </span>
+            hx-confirm="Delete the rating of delivery #{{ID}}? The delivery will not be completed any more." title="Delete the rating of delivery #{{ID}}" aria-label="Delete the rating of delivery #{{ID}}">
+        <i aria-hidden="true" class="bi bi-trash3-fill"></i>
+      </button>
+      <button type="button" class="btn btn-sm btn-primary"
+            hx-get="/ratings/{{ID}}/edit" hx-target="closest tr" hx-swap="outerHTML" title="Change the rating of delivery #{{ID}}" aria-label="Change the rating of delivery #{{ID}}">
+        <i aria-hidden="true" class="bi bi-pencil"></i>
+      </button>
     {{/if}}
     {{ID}}
   </td>
@@ -25,7 +25,7 @@
   <td>{{decision}}<br><small class="text-muted">received {{received}}, accepted {{accepted}}</small></td>
   <td class="text-nowrap">
     {{#if stars}}
-      <span class="text-warning">{{stars}}</span><br><small class="text-muted">by {{ratedBy}}</small>
+      <span class="stars" role="img" aria-label="{{score}} out of 5">{{stars}}</span><br><small class="text-muted">by {{ratedBy}}</small>
     {{else}}
       <span class="text-muted">Not rated</span>
     {{/if}}

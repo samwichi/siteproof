@@ -83,3 +83,13 @@ To add the same to a new list: copy `LIST` and the `index.hbs` structure of `rou
 ## 5. Git
 
 Each member works in his own branch (for example `feature/delivery-crud`). After each finished function: `git add`, `git commit -m "Add ..."`, `git push`, and a pull request to `main`.
+
+## Accessibility and keyboard use
+
+- Every page has one `<h1>` (the page title); tables have a hidden `<caption>` and `scope="col"` headers; sortable headers use `aria-sort`; the pager marks the current page with `aria-current`.
+- Row actions (edit, delete, inspect, ...) are real `<button>` elements with a name such as "Delete delivery #8", so Tab, Enter and Space work. Icons are hidden from screen readers (`aria-hidden`).
+- Every form field has a `<label for>`; ids in inline forms contain the row number (`quantity-8`) so they stay unique. The first field of an inline form has `autofocus`.
+- The first Tab on every page shows a "Skip to the main content" link.
+- `public/a11y.js` moves the focus after HTMX changes the page (HTMX does not do it like a normal page load): to the page title after a menu click, back to the same row after a form is saved or cancelled, to the same column header after sorting, to the list after a page number click. A hidden `role="status"` message tells screen readers how many results a list has after a search.
+- `public/site.css`: darker star colour (contrast), clear focus frame.
+- Check: axe-core (WCAG 2.x A/AA rules) on all pages of the three roles, including the open inline forms: 0 violations.

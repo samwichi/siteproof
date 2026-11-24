@@ -1,17 +1,17 @@
 <tr class="align-middle">
   <td class="text-nowrap">
     {{#if canEdit}}
-      <span class="btn btn-sm btn-danger"
+      <button type="button" class="btn btn-sm btn-danger"
             hx-delete="/deliveries/{{ID}}" hx-target="closest tr" hx-swap="outerHTML"
-            hx-confirm="Delete delivery #{{ID}}?">
-        <i class="bi bi-trash3-fill"></i>
-      </span>
-      <span class="btn btn-sm btn-primary"
-            hx-get="/deliveries/{{ID}}/edit" hx-target="closest tr" hx-swap="outerHTML">
-        <i class="bi bi-pencil"></i>
-      </span>
+            hx-confirm="Delete delivery #{{ID}}?" title="Delete delivery #{{ID}}" aria-label="Delete delivery #{{ID}}">
+        <i aria-hidden="true" class="bi bi-trash3-fill"></i>
+      </button>
+      <button type="button" class="btn btn-sm btn-primary"
+            hx-get="/deliveries/{{ID}}/edit" hx-target="closest tr" hx-swap="outerHTML" title="Edit delivery #{{ID}}" aria-label="Edit delivery #{{ID}}">
+        <i aria-hidden="true" class="bi bi-pencil"></i>
+      </button>
     {{/if}}
-    <a href="/deliveries/{{ID}}" hx-boost="true" hx-target="#main" title="Open the details of delivery #{{ID}}">{{ID}}</a>
+    <a class="d-inline-block px-2 py-1" href="/deliveries/{{ID}}" hx-boost="true" hx-target="#main" title="Open the details of delivery #{{ID}}">{{ID}}</a>
   </td>
   <td>{{project}}</td>
   <td>{{supplier}}</td>
