@@ -107,6 +107,18 @@ erDiagram
         decimal accepted_quantity
         decimal retention_rate "copied from project"
     }
+    SUPPLIER_PRODUCT {
+        int product_id PK
+        char(8) org_id FK "supplier"
+        char(8) material_id FK
+        decimal price_min "per unit"
+        decimal price_max "per unit"
+        decimal min_order_qty "optional"
+        int lead_time_days "optional"
+        varchar note
+        tinyint active "0 = unlisted"
+        timestamp updated_at
+    }
     SUPPLIER_RATING {
         int delivery_id PK, FK
         int rated_by FK
@@ -119,6 +131,8 @@ erDiagram
     ORGANIZATION ||--o{ INSPECTION_APPOINTMENT : "inspection company is appointed"
     ORGANIZATION ||--o{ PROJECT : owns
     ORGANIZATION ||--o{ PURCHASE : "sells in"
+    ORGANIZATION ||--o{ SUPPLIER_PRODUCT : offers
+    MATERIAL ||--o{ SUPPLIER_PRODUCT : "offered as"
     MATERIAL ||--o{ PURCHASE : "bought in"
     MATERIAL_CATEGORY ||--o{ MATERIAL : groups
     ORGANIZATION ||--o{ DELIVERY : supplies
@@ -231,6 +245,18 @@ erDiagram
         decimal accepted_quantity
         decimal retention_rate "copied from project"
     }
+    SUPPLIER_PRODUCT["SUPPLIER_PRODUCT - MVP"] {
+        int product_id PK
+        char(8) org_id FK "supplier"
+        char(8) material_id FK
+        decimal price_min "per unit"
+        decimal price_max "per unit"
+        decimal min_order_qty "optional"
+        int lead_time_days "optional"
+        varchar note
+        tinyint active "0 = unlisted"
+        timestamp updated_at
+    }
     SUPPLIER_RATING["SUPPLIER_RATING - MVP"] {
         int delivery_id PK, FK
         int rated_by FK
@@ -330,6 +356,8 @@ erDiagram
     ORGANIZATION ||--o{ INSPECTION_APPOINTMENT : "inspection company is appointed"
     ORGANIZATION ||--o{ PROJECT : owns
     ORGANIZATION ||--o{ PURCHASE : "sells in"
+    ORGANIZATION ||--o{ SUPPLIER_PRODUCT : offers
+    MATERIAL ||--o{ SUPPLIER_PRODUCT : "offered as"
     MATERIAL ||--o{ PURCHASE : "bought in"
     MATERIAL_CATEGORY ||--o{ MATERIAL : groups
     ORGANIZATION ||--o{ DELIVERY : supplies
@@ -373,7 +401,7 @@ erDiagram
     classDef mvp fill:#bfe8cf,stroke:#1f7a4d,stroke-width:3px,color:#0f2a1c
     classDef p2 fill:#fbe3a0,stroke:#b8860b,stroke-width:2px,color:#2b2100
     classDef p3 fill:#e6e9ee,stroke:#6e7781,stroke-width:2px,stroke-dasharray:5 3,color:#24292f
-    class ORGANIZATION,USER_ACCOUNT,ORG_DOCUMENT,INSPECTION_APPOINTMENT,PROJECT,MATERIAL_CATEGORY,MATERIAL,PURCHASE,DELIVERY,DELIVERY_DOCUMENT,INSPECTION,SUPPLIER_RATING mvp
+    class ORGANIZATION,USER_ACCOUNT,ORG_DOCUMENT,INSPECTION_APPOINTMENT,PROJECT,MATERIAL_CATEGORY,MATERIAL,PURCHASE,SUPPLIER_PRODUCT,DELIVERY,DELIVERY_DOCUMENT,INSPECTION,SUPPLIER_RATING mvp
     class SUPPLIER_CONNECTION,RFQ,QUOTATION,NOTIFICATION,PAYMENT_REQUEST,SUBSCRIPTION,FEATURED_LISTING,ESG_RECORD p2
     class DOCUMENT_EXTRACTION,PROJECT_BUDGET,DELIVERY_TRACKING_POINT,ERP_SYNC_LOG,DELIVERY_RISK_SCORE p3
 ```
@@ -390,6 +418,7 @@ erDiagram
 | MATERIAL_CATEGORY | Categories to search the catalog: Labor, Equipment, Material, Other | `category_id` | US2 |
 | MATERIAL | Catalog of materials, labor and equipment | `material_id` (8-digit id) | US2 / UC2 |
 | PURCHASE | Past purchases from suppliers (loaded from the data given in class) | `purchase_id` | US3, US7 |
+| SUPPLIER_PRODUCT | Product catalog of a supplier: the materials it can provide, price range per unit, minimum order, lead time; filled from the purchases (step 4.11) and managed by the supplier; `active = 0` unlists a product | `product_id` (`org_id` + `material_id` unique) | US2, US3 |
 | DELIVERY | The single delivery record: project, supplier, material, quantity, value, time slot, status | `delivery_id` | US2, US3, US5 / UC2, UC3, UC5 |
 | DELIVERY_DOCUMENT | Quality documents (PDF/JPG) of a delivery | `document_id` | US6, US8 / UC6 |
 | INSPECTION | Received and accepted quantity; one per delivery | `inspection_id` | US8, US9 / UC8-UC10 |

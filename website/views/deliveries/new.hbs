@@ -1,4 +1,7 @@
 <h1 class="h2">New delivery</h1>
+{{#if productMissing}}
+  <div class="alert alert-warning">This product is not in the catalog any more (the supplier unlisted or deleted it). Please choose the supplier and the material below.</div>
+{{/if}}
 {{#unless projects.length}}
   <div class="alert alert-warning">Your company has no project yet, so a delivery cannot be created. Please ask the company account of {{user.orgName}} to create the project (menu Projects).</div>
 {{/unless}}
@@ -12,6 +15,22 @@
       {{/each}}
     </select>
   </div>
+  {{#if product}}
+  {{!-- Opened from "Find products": the supplier and the material come from the catalog (hidden fields), the price range is shown as a help. --}}
+  <div class="col-12">
+    <div class="card border-success">
+      <div class="card-body py-2">
+        <div class="small text-muted">From the product catalog</div>
+        <strong>{{product.material}}</strong> ({{product.unit}}) from <strong>{{product.supplier}}</strong>
+        <div class="small">Price range {{product.priceMinText}}{{#unless product.samePrice}} - {{product.priceMaxText}}{{/unless}} NT$ / {{product.unit}}{{#if product.minOrder}} · minimum order {{product.minOrder}} {{product.unit}}{{/if}}{{#if product.leadTime}} · lead time {{product.leadTime}} days{{/if}}</div>
+        {{#if product.note}}<div class="small text-muted">{{product.note}}</div>{{/if}}
+        <a class="small" href="/deliveries/new" hx-boost="true" hx-target="#main">Choose another supplier or material</a>
+      </div>
+    </div>
+    <input type="hidden" name="org_id" value="{{product.supplierId}}">
+    <input type="hidden" name="material_id" value="{{product.materialId}}">
+  </div>
+  {{else}}
   <div class="col-md-6">
     <label class="form-label" for="supplier_search">Supplier</label>
     {{!-- Typing here asks the server for the matching suppliers and replaces the options of the <select> below. --}}
@@ -33,13 +52,15 @@
       {{> deliveries/materialOptions}}
     </select>
   </div>
+  {{/if}}
   <div class="col-md-3">
     <label class="form-label" for="ordered_quantity">Ordered quantity</label>
-    <input class="form-control" type="number" id="ordered_quantity" name="ordered_quantity" min="0.01" step="0.01" required>
+    <input class="form-control" type="number" id="ordered_quantity" name="ordered_quantity" min="0.01" step="0.01" required{{#if product.minOrder}} value="{{product.minOrder}}"{{/if}}>
   </div>
   <div class="col-md-3">
     <label class="form-label" for="unit_price">Agreed unit price (NT$)</label>
-    <input class="form-control" type="number" id="unit_price" name="unit_price" min="0" step="0.01" required>
+    <input class="form-control" type="number" id="unit_price" name="unit_price" min="0" step="0.01" required{{#if product}} value="{{product.priceMid}}" aria-describedby="price-help"{{/if}}>
+    {{#if product}}<div id="price-help" class="form-text">The middle of the catalog price range. Change it to the price that you agreed with the supplier.</div>{{/if}}
   </div>
   <div class="col-md-3">
     <label class="form-label" for="slot_start">Time slot start</label>

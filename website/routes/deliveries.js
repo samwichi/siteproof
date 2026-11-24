@@ -4,6 +4,7 @@
 const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList, like } = require('../lib/listing');
+const { findMaterials } = require('../lib/materials');
 const app = express.Router();
 
 // The promise version of the connection pool injected by app.js (same mysql2 package as in the laboratory, but with async/await).
@@ -106,56 +107,42 @@ app.get('/suppliers', async (req, res) => {
     res.render('deliveries/supplierOptions', await findSuppliers(req.query.q));
 });
 
-// The materials that match the text and the category (457 materials are too many for a normal <select>, so only the first 100 are sent).
-// The category buttons show how many materials of each category match the text, so the user sees where to look.
-const MATERIAL_LIMIT = 100;
-async function findMaterials(text, categoryId) {
-    const q = String(text || '').trim().slice(0, 100);
-    const category = Number.isInteger(Number(categoryId)) ? Number(categoryId) : 0;      // 0 = all categories
-    const textSql = q ? ' AND m.material_name LIKE ?' : '';
-    const textArgs = q ? [like(q)] : [];
-
-    const [counts] = await db().execute(
-        `SELECT c.category_id AS id, c.category_name AS name, COUNT(m.material_id) AS n
-         FROM material_category c LEFT JOIN material m ON m.category_id = c.category_id${textSql}
-         GROUP BY c.category_id, c.category_name ORDER BY c.category_id`, textArgs);
-    const categories = counts.map(c => ({ id: c.id, name: c.name, n: Number(c.n), active: c.id === category }));
-    const all = categories.reduce((sum, c) => sum + c.n, 0);
-    const total = category ? (categories.find(c => c.id === category) || { n: 0 }).n : all;
-
-    const categorySql = category ? ' AND m.category_id = ?' : '';
-    const [materials] = await db().execute(
-        `SELECT m.material_id, m.material_name, m.unit, c.category_name
-         FROM material m JOIN material_category c ON c.category_id = m.category_id
-         WHERE 1 = 1${textSql}${categorySql}
-         ORDER BY c.category_id, m.material_name LIMIT ${MATERIAL_LIMIT}`, textArgs.concat(category ? [category] : []));
-
-    // Group the materials by category, so the <select> can show <optgroup>s.
-    const groups = [];
-    for (const m of materials) {
-        let g = groups[groups.length - 1];
-        if (!g || g.category !== m.category_name) {
-            g = { category: m.category_name, items: [] };
-            groups.push(g);
-        }
-        g.items.push(m);
-    }
-    return { groups: groups, categories: categories, category: category || '', allActive: !category, all: all,
-             materialTotal: total, materialShown: materials.length, materialMore: total > materials.length };
-}
+// The material picker (category buttons, search box, <select>) is shared with the product catalog of the suppliers: see lib/materials.js.
 
 // ---------- C: the <option>s of the material <select> and the category buttons, while the user types or clicks a category (must be before /:id routes) ----------
 app.get('/materials', async (req, res) => {
-    res.render('deliveries/materialResponse', await findMaterials(req.query.material_q, req.query.category));
+    res.render('deliveries/materialResponse', await findMaterials(db(), req.query.material_q, req.query.category));
 });
+
+// A listed product of an approved supplier (routes/catalog.js shows them), with the values that the new delivery form needs.
+async function findCatalogProduct(id) {
+    const [rows] = await db().execute(
+        `SELECT sp.org_id AS supplierId, s.org_name AS supplier, sp.material_id AS materialId, m.material_name AS material, m.unit AS unit,
+                CAST(sp.price_min AS DOUBLE) AS priceMin, CAST(sp.price_max AS DOUBLE) AS priceMax,
+                CAST(sp.min_order_qty AS DOUBLE) AS minOrder, sp.lead_time_days AS leadTime, sp.note AS note
+         FROM supplier_product sp
+         JOIN organization s ON s.org_id = sp.org_id
+         JOIN material m     ON m.material_id = sp.material_id
+         WHERE sp.product_id = ? AND sp.active = 1 AND s.org_type = 'SUPPLIER' AND s.status = 'APPROVED'`, [id]);
+    if (rows.length !== 1) return null;
+    const p = rows[0];
+    p.samePrice = (p.priceMin === p.priceMax);
+    p.priceMid = Math.round((p.priceMin + p.priceMax) / 2 * 100) / 100;
+    p.priceMinText = p.priceMin.toLocaleString('en-US');          // 2400 -> 2,400 (the form shows the range as a help)
+    p.priceMaxText = p.priceMax.toLocaleString('en-US');
+    return p;
+}
 
 // ---------- C: the form to create a delivery (must be before /:id routes) ----------
 app.get('/new', async (req, res) => {
     const [projects] = await db().execute(
         'SELECT project_id, project_name FROM project WHERE org_id = ? ORDER BY project_name', [req.user.orgId]);
     const suppliers = await findSuppliers('');
-    const materials = await findMaterials('', 0);
-    res.render('deliveries/new', Object.assign(suppliers, materials, { projects: projects }));
+    const materials = await findMaterials(db(), '', 0);
+    // Opened from "Find products" (?product=ID): the supplier and the material of that listed product are chosen already.
+    const product = req.query.product ? await findCatalogProduct(req.query.product) : null;
+    res.render('deliveries/new', Object.assign(suppliers, materials,
+        { projects: projects, product: product, productMissing: Boolean(req.query.product) && !product }));
 });
 
 // ---------- C: create ----------

@@ -1,0 +1,38 @@
+{{!-- The edit form replaces the whole table row; the form is inside one wide cell (a <form> cannot be placed between <tr> and <td>).
+      The material cannot be changed: delete the product and add the other material instead. --}}
+<tr class="table-warning">
+  <td colspan="8">
+    <form class="row g-2 align-items-end" hx-put="/products/{{ID}}" hx-target="closest tr" hx-swap="outerHTML" hx-disable="findAll button">
+      <div class="col-12"><strong>{{material}}</strong> ({{category}}, per {{unit}})</div>
+      <div class="col-6 col-md-2">
+        <label class="form-label" for="min-{{ID}}">Lowest price</label>
+        <input class="form-control" id="min-{{ID}}" autofocus type="number" name="price_min" value="{{priceMinRaw}}" min="0" step="0.01" required>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label" for="max-{{ID}}">Highest price</label>
+        <input class="form-control" id="max-{{ID}}" type="number" name="price_max" value="{{priceMaxRaw}}" min="0" step="0.01" required>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label" for="order-{{ID}}">Minimum order</label>
+        <input class="form-control" id="order-{{ID}}" type="number" name="min_order_qty" value="{{minOrder}}" min="0.01" step="0.01">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label" for="lead-{{ID}}">Lead time (days)</label>
+        <input class="form-control" id="lead-{{ID}}" type="number" name="lead_time_days" value="{{leadTime}}" min="0" max="365" step="1">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="note-{{ID}}">Note</label>
+        <input class="form-control" id="note-{{ID}}" name="note" value="{{note}}" maxlength="200">
+      </div>
+      <div class="col-md-1 text-nowrap">
+        {{!-- Both buttons have the name "action": the route reads req.body.action to know which one was clicked. --}}
+        <button type="submit" class="btn btn-success" title="Update" aria-label="Update the product {{material}}" name="action" value="update">
+          <i aria-hidden="true" class="bi bi-check-lg"></i>
+        </button>
+        <button type="submit" class="btn btn-warning" title="Cancel" aria-label="Cancel" name="action" value="cancel" formnovalidate>
+          <i aria-hidden="true" class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </form>
+  </td>
+</tr>

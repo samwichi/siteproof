@@ -1,13 +1,13 @@
-{{!-- The category buttons of the material picker. The hidden field remembers the chosen category for the search box (hx-include="#material_cat").
+{{!-- The category buttons of the material picker (materialUrl: the address that answers, by default /deliveries/materials). The hidden field remembers the chosen category for the search box (hx-include="#material_cat").
       A button asks the server for the materials of its category that match the text of the search box (hx-include="#material_search"). --}}
 <input type="hidden" id="material_cat" name="category" value="{{category}}">
 <button type="button" class="btn btn-sm {{#if allActive}}btn-primary{{else}}btn-outline-primary{{/if}}" aria-pressed="{{#if allActive}}true{{else}}false{{/if}}"
-        hx-get="/deliveries/materials" hx-vals='{"category": ""}' hx-include="#material_search" hx-target="#material_id" hx-swap="innerHTML">
+        hx-get="{{#if @root.materialUrl}}{{@root.materialUrl}}{{else}}/deliveries/materials{{/if}}" hx-vals='{"category": ""}' hx-include="#material_search" hx-target="#material_id" hx-swap="innerHTML">
   All <span class="badge text-bg-light">{{all}}</span>
 </button>
 {{#each categories}}
   <button type="button" class="btn btn-sm {{#if active}}btn-primary{{else}}btn-outline-primary{{/if}}" aria-pressed="{{#if active}}true{{else}}false{{/if}}"
-          hx-get="/deliveries/materials" hx-vals='{"category": "{{id}}"}' hx-include="#material_search" hx-target="#material_id" hx-swap="innerHTML">
+          hx-get="{{#if @root.materialUrl}}{{@root.materialUrl}}{{else}}/deliveries/materials{{/if}}" hx-vals='{"category": "{{id}}"}' hx-include="#material_search" hx-target="#material_id" hx-swap="innerHTML">
     {{name}} <span class="badge text-bg-light">{{n}}</span>
   </button>
 {{/each}}

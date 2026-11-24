@@ -1,0 +1,50 @@
+<h1 class="h2">Find products</h1>
+<p class="text-muted">The products that the approved suppliers offer. Search a material to compare its suppliers: the cheapest is first. Click <strong>Order</strong> to create a delivery with that supplier and material.</p>
+{{> list/controls placeholder="Search by material, supplier or note"}}
+<div id="list" data-count="{{list.total}}">
+  <div class="table-responsive">
+    <table class="table table-striped table-hover table-sm">
+      <caption class="visually-hidden">Products of the suppliers</caption>
+      <thead>
+        <tr>
+          <th scope="col"><span class="visually-hidden">Actions</span></th>
+          {{> list/th key="material" label="Material"}}
+          {{> list/th key="supplier" label="Supplier"}}
+          {{> list/th key="price" label="Price (NT$ / unit)" cls="text-end"}}
+          {{> list/th key="minOrder" label="Minimum order" cls="text-end"}}
+          {{> list/th key="lead" label="Lead time" cls="text-end"}}
+          {{> list/th key="rating" label="Supplier rating"}}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+        <tr class="align-middle">
+          <td>
+            <a class="btn btn-sm btn-success text-nowrap" href="/deliveries/new?product={{ID}}" hx-boost="true" hx-target="#main"
+               aria-label="Order {{material}} from {{supplier}}">
+              <i aria-hidden="true" class="bi bi-cart-plus"></i> Order
+            </a>
+          </td>
+          <td style="max-width: 340px;">
+            <div class="text-truncate" title="{{material}}">{{material}}</div>
+            <div class="small text-muted text-truncate">{{category}}{{#if note}} · {{note}}{{/if}}</div>
+          </td>
+          <td>{{supplier}}</td>
+          <td class="text-end text-nowrap">{{#if samePrice}}{{priceMin}}{{else}}{{priceMin}} - {{priceMax}}{{/if}} / {{unit}}</td>
+          <td class="text-end text-nowrap">{{#if minOrder}}{{minOrder}} {{unit}}{{else}}<span class="text-muted">-</span>{{/if}}</td>
+          <td class="text-end text-nowrap">{{#if leadTime}}{{leadTime}} days{{else}}<span class="text-muted">-</span>{{/if}}</td>
+          <td class="text-nowrap">
+            {{#if averageText}}
+              <span class="stars" role="img" aria-label="{{averageText}} out of 5">{{stars}}</span> {{averageText}} <small class="text-muted">({{rated}})</small>
+            {{else}}<span class="text-muted small">No rating yet</span>{{/if}}
+          </td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{#unless rows.length}}
+    <p class="text-muted text-center">{{#if list.filtered}}No product matches your search. Try a shorter word or another category.{{else}}No supplier has listed a product yet.{{/if}}</p>
+  {{/unless}}
+  {{> list/pager}}
+</div>
