@@ -69,6 +69,10 @@ const deliveries = require('./routes/deliveries');
 deliveries.connection = connection;
 app.use('/deliveries', requireRole('CONTRACTOR_PM'), deliveries);
 
+const inspections = require('./routes/inspections');
+inspections.connection = connection;
+app.use('/inspections', requireRole('INSPECTOR'), inspections);
+
 // ---- Errors that nobody handled (for example a failed query inside an async route) ----
 app.use((err, req, res, next) => {
     console.log('Unhandled error: ', err);

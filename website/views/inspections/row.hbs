@@ -1,0 +1,35 @@
+<tr class="align-middle">
+  <td class="text-nowrap">
+    {{#if canInspect}}
+      <span class="btn btn-sm btn-success" title="Inspect"
+            hx-get="/inspections/{{ID}}/new" hx-target="closest tr" hx-swap="outerHTML">
+        <i class="bi bi-clipboard-check"></i>
+      </span>
+    {{/if}}
+    {{#if canChange}}
+      <span class="btn btn-sm btn-danger" title="Delete inspection"
+            hx-delete="/inspections/{{ID}}" hx-target="closest tr" hx-swap="outerHTML"
+            hx-confirm="Delete the inspection of delivery #{{ID}}?">
+        <i class="bi bi-trash3-fill"></i>
+      </span>
+      <span class="btn btn-sm btn-primary" title="Edit inspection"
+            hx-get="/inspections/{{ID}}/edit" hx-target="closest tr" hx-swap="outerHTML">
+        <i class="bi bi-pencil"></i>
+      </span>
+    {{/if}}
+    {{ID}}
+  </td>
+  <td>{{project}}</td>
+  <td>{{supplier}}</td>
+  <td class="text-truncate" style="max-width: 220px;" title="{{material}}">{{material}}</td>
+  <td class="text-end text-nowrap">{{ordered}} {{unit}}</td>
+  <td>
+    {{#if decision}}
+      {{decision}}<br><small class="text-muted">received {{received}}, accepted {{accepted}}</small>
+    {{else}}
+      <span class="text-muted">Waiting</span>
+    {{/if}}
+  </td>
+  <td class="text-end">{{#if decision}}{{acceptedValue}} / {{retention}}{{/if}}</td>
+  <td><span class="badge text-bg-{{badge}}">{{status}}</span></td>
+</tr>

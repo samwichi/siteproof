@@ -11,6 +11,11 @@
           <a class="nav-link" href="/deliveries"><i class="bi bi-box-seam"></i> My deliveries</a>
         </li>
         {{/if}}
+        {{#if isInspector}}
+        <li class="nav-item">
+          <a class="nav-link" href="/inspections"><i class="bi bi-clipboard-check"></i> Inspections</a>
+        </li>
+        {{/if}}
       </ul>
       <div class="d-flex align-items-center">
         {{#if user}}
