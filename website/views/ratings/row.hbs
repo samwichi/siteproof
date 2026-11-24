@@ -1,0 +1,34 @@
+<tr class="align-middle">
+  <td class="text-nowrap">
+    {{#if canRate}}
+      <span class="btn btn-sm btn-success" title="Complete and rate"
+            hx-get="/ratings/{{ID}}/new" hx-target="closest tr" hx-swap="outerHTML">
+        <i class="bi bi-star-fill"></i>
+      </span>
+    {{/if}}
+    {{#if canChange}}
+      <span class="btn btn-sm btn-danger" title="Delete rating"
+            hx-delete="/ratings/{{ID}}" hx-target="closest tr" hx-swap="outerHTML"
+            hx-confirm="Delete the rating of delivery #{{ID}}? The delivery will not be completed any more.">
+        <i class="bi bi-trash3-fill"></i>
+      </span>
+      <span class="btn btn-sm btn-primary" title="Change rating"
+            hx-get="/ratings/{{ID}}/edit" hx-target="closest tr" hx-swap="outerHTML">
+        <i class="bi bi-pencil"></i>
+      </span>
+    {{/if}}
+    {{ID}}
+  </td>
+  <td>{{project}}</td>
+  <td>{{supplier}}</td>
+  <td class="text-truncate" style="max-width: 220px;" title="{{material}}">{{material}}</td>
+  <td>{{decision}}<br><small class="text-muted">received {{received}}, accepted {{accepted}}</small></td>
+  <td class="text-nowrap">
+    {{#if stars}}
+      <span class="text-warning">{{stars}}</span><br><small class="text-muted">by {{ratedBy}}</small>
+    {{else}}
+      <span class="text-muted">Not rated</span>
+    {{/if}}
+  </td>
+  <td><span class="badge text-bg-{{badge}}">{{status}}</span></td>
+</tr>
