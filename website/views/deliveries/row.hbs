@@ -2,7 +2,7 @@
   <td class="text-nowrap">
     {{#if canEdit}}
       <button type="button" class="btn btn-sm btn-danger"
-            hx-delete="/deliveries/{{ID}}" hx-target="closest tr" hx-swap="outerHTML"
+            hx-delete="/deliveries/{{ID}}" hx-target="closest tr" hx-swap="delete"
             hx-confirm="Delete delivery #{{ID}}?" title="Delete delivery #{{ID}}" aria-label="Delete delivery #{{ID}}">
         <i aria-hidden="true" class="bi bi-trash3-fill"></i>
       </button>

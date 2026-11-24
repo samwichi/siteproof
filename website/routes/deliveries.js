@@ -94,9 +94,9 @@ async function findSuppliers(text) {
     const q = String(text || '').trim().slice(0, 100);
     const where = q ? ' AND org_name LIKE ?' : '';
     const args = q ? [like(q)] : [];
-    const [[counted]] = await db().execute("SELECT COUNT(*) AS n FROM organization WHERE org_type = 'SUPPLIER'" + where, args);
+    const [[counted]] = await db().execute("SELECT COUNT(*) AS n FROM organization WHERE org_type = 'SUPPLIER' AND status = 'APPROVED'" + where, args);
     const [suppliers] = await db().execute(
-        "SELECT org_id, org_name FROM organization WHERE org_type = 'SUPPLIER'" + where + ' ORDER BY org_name LIMIT ' + SUPPLIER_LIMIT, args);
+        "SELECT org_id, org_name FROM organization WHERE org_type = 'SUPPLIER' AND status = 'APPROVED'" + where + ' ORDER BY org_name LIMIT ' + SUPPLIER_LIMIT, args);
     const total = Number(counted.n);
     return { suppliers: suppliers, total: total, shown: suppliers.length, more: total > suppliers.length };
 }
@@ -175,6 +175,10 @@ app.post('/', async (req, res) => {
         const [own] = await db().execute(
             'SELECT project_id FROM project WHERE project_id = ? AND org_id = ?', [b.project_id, req.user.orgId]);
         if (own.length === 0) return fail(res, 'Please choose one of your projects.', 404);
+
+        // The supplier must be an approved supplier (a company that is not approved yet cannot get deliveries).
+        const [sup] = await db().execute("SELECT org_id FROM organization WHERE org_id = ? AND org_type = 'SUPPLIER' AND status = 'APPROVED'", [b.org_id]);
+        if (sup.length === 0) return fail(res, 'Please choose a supplier from the list.', 404);
 
         const [result] = await db().execute(
             `INSERT INTO delivery (project_id, org_id, material_id, created_by, ordered_quantity, delivery_value, slot_start, slot_end)
@@ -288,7 +292,7 @@ app.delete('/:id', async (req, res) => {
         if (result.affectedRows === 0) {
             return fail(res, 'Only SCHEDULED deliveries of your projects can be deleted.', 409);
         }
-        // Nothing except the message: HTMX removes the row (outerHTML swap with an empty response) and shows the message in #toast.
+        // Nothing except the message: hx-swap="delete" of the button removes the row (HTMX 4 does not swap an empty response next to a partial) and the message goes to #toast.
         res.render('toast', { message: 'Delivery #' + req.params.id + ' deleted.', kind: 'success' });
     }
     catch (err) {

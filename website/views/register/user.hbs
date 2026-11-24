@@ -1,0 +1,44 @@
+<h1 class="h2 mb-3">Register as a user</h1>
+<p class="text-muted">Your company must be registered and approved first. If you cannot find it in the list, ask the person who manages your company on SiteProof.</p>
+<form class="row g-3" hx-post="/register/user" hx-target="#main" hx-disable="findAll button">
+  <div class="col-md-4">
+    <label class="form-label" for="role">Your role</label>
+    {{!-- Choosing the role replaces the options of the company list below (a contractor can only work for a contractor and so on). --}}
+    <select class="form-select" id="role" name="role" required autofocus
+            hx-get="/register/companies" hx-trigger="change" hx-include="#company_search" hx-target="#org_id" hx-swap="innerHTML">
+      <option value="" selected disabled>Choose a role</option>
+      <option value="CONTRACTOR_PM">Contractor (project manager)</option>
+      <option value="SUPPLIER">Supplier</option>
+      <option value="INSPECTOR">Inspector</option>
+    </select>
+  </div>
+  <div class="col-md-8">
+    <label class="form-label" for="company_search">Your company</label>
+    <input class="form-control mb-1" type="search" id="company_search" name="q" placeholder="Type a part of the company name or ID to search" autocomplete="off"
+           hx-get="/register/companies" hx-trigger="input delay:300ms" hx-include="#role" hx-target="#org_id" hx-swap="innerHTML" hx-sync="this:replace">
+    <select class="form-select" id="org_id" name="org_id" required aria-label="Company (search results)">
+      {{> register/companyOptions}}
+    </select>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label" for="full_name">Your name</label>
+    <input class="form-control" id="full_name" name="full_name" maxlength="100" autocomplete="name" required>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label" for="email">E-mail (to sign in)</label>
+    <input class="form-control" id="email" name="email" type="email" maxlength="100" autocomplete="email" required>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label" for="password">Password</label>
+    <input class="form-control" id="password" name="password" type="password" minlength="8" maxlength="72" autocomplete="new-password" aria-describedby="password-help" required>
+    <div id="password-help" class="form-text">At least 8 characters.</div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label" for="password2">Password again</label>
+    <input class="form-control" id="password2" name="password2" type="password" minlength="8" maxlength="72" autocomplete="new-password" required>
+  </div>
+  <div class="col-12">
+    <button class="btn btn-success"><i aria-hidden="true" class="bi bi-person-check-fill"></i> Create my account</button>
+    <a class="btn btn-secondary" href="/register" hx-boost="true" hx-target="#main">Cancel</a>
+  </div>
+</form>

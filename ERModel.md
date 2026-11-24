@@ -1,7 +1,7 @@
 # SiteProof - Data Model (ER Diagram, 3NF)
 
 Data model of SiteProof, based on the user stories (US1-US9) and use cases (UC1-UC10) of the [Business Plan v3](Assignment%20%231/Business_Plan_v3.pdf).
-The MVP part is implemented in MySQL 8.4 (scripts `01_schema.sql` to `05_verify.sql`); the tables in Figure 1 are exactly the tables of the database.
+The MVP part is implemented in MySQL 8.4 (scripts `01_schema.sql` to `06_sample_data.sql`); the tables in Figure 1 are exactly the tables of the database.
 
 ## 1. Legend
 
@@ -15,25 +15,44 @@ Attributes of a later phase inside an MVP table are marked in the comment (for e
 
 ## 2. Figure 1 - MVP data model (implemented in MySQL)
 
-10 tables.
+12 tables.
 
 ```mermaid
 erDiagram
     ORGANIZATION {
         char(8) org_id PK "8-digit company id"
         varchar org_name
-        varchar org_type "CONTRACTOR or SUPPLIER"
+        varchar org_type "CONTRACTOR, SUPPLIER or INSPECTION"
         varchar address
         varchar phone
         varchar email
+        varchar status "PENDING, APPROVED or REJECTED"
+        varchar review_note "reason of a rejection"
+        timestamp created_at
     }
     USER_ACCOUNT {
         int user_id PK
-        char(8) org_id FK
+        char(8) org_id FK "NULL only for ADMIN"
         varchar full_name
         varchar email UK
         varchar password
-        varchar role "CONTRACTOR_PM, SUPPLIER, INSPECTOR"
+        varchar role "CONTRACTOR_PM, SUPPLIER, INSPECTOR, COMPANY, ADMIN"
+        tinyint active "0 = switched off"
+        timestamp created_at
+    }
+    ORG_DOCUMENT {
+        int document_id PK
+        char(8) org_id FK
+        varchar file_name
+        varchar stored_name UK "random name on the disk"
+        varchar file_type "PDF, JPG or PNG"
+        int file_size
+        timestamp uploaded_at
+    }
+    INSPECTION_APPOINTMENT {
+        char(8) contractor_id PK,FK
+        char(8) inspection_id PK,FK
+        timestamp appointed_at
     }
     PROJECT {
         int project_id PK
@@ -94,6 +113,9 @@ erDiagram
     }
 
     ORGANIZATION ||--o{ USER_ACCOUNT : employs
+    ORGANIZATION ||--o{ ORG_DOCUMENT : "proves itself with"
+    ORGANIZATION ||--o{ INSPECTION_APPOINTMENT : "contractor appoints"
+    ORGANIZATION ||--o{ INSPECTION_APPOINTMENT : "inspection company is appointed"
     ORGANIZATION ||--o{ PROJECT : owns
     ORGANIZATION ||--o{ PURCHASE : "sells in"
     MATERIAL ||--o{ PURCHASE : "bought in"
@@ -119,20 +141,39 @@ erDiagram
     ORGANIZATION["ORGANIZATION - MVP"] {
         char(8) org_id PK "8-digit company id"
         varchar org_name
-        varchar org_type "CONTRACTOR or SUPPLIER"
+        varchar org_type "CONTRACTOR, SUPPLIER or INSPECTION"
         varchar address
         varchar phone
         varchar email
+        varchar status "PENDING, APPROVED or REJECTED"
+        varchar review_note
+        timestamp created_at
         char(8) parent_org_id FK "Phase 2: branch"
     }
     USER_ACCOUNT["USER_ACCOUNT - MVP"] {
         int user_id PK
-        char(8) org_id FK
+        char(8) org_id FK "NULL only for ADMIN"
         varchar full_name
         varchar email UK
         varchar password
-        varchar role "CONTRACTOR_PM, SUPPLIER, INSPECTOR"
+        varchar role "CONTRACTOR_PM, SUPPLIER, INSPECTOR, COMPANY, ADMIN"
+        tinyint active
+        timestamp created_at
         varchar line_user_id "Phase 2: LINE"
+    }
+    ORG_DOCUMENT["ORG_DOCUMENT - MVP"] {
+        int document_id PK
+        char(8) org_id FK
+        varchar file_name
+        varchar stored_name UK
+        varchar file_type
+        int file_size
+        timestamp uploaded_at
+    }
+    INSPECTION_APPOINTMENT["INSPECTION_APPOINTMENT - MVP"] {
+        char(8) contractor_id PK,FK
+        char(8) inspection_id PK,FK
+        timestamp appointed_at
     }
     PROJECT["PROJECT - MVP"] {
         int project_id PK
@@ -282,6 +323,9 @@ erDiagram
     }
 
     ORGANIZATION ||--o{ USER_ACCOUNT : employs
+    ORGANIZATION ||--o{ ORG_DOCUMENT : "proves itself with"
+    ORGANIZATION ||--o{ INSPECTION_APPOINTMENT : "contractor appoints"
+    ORGANIZATION ||--o{ INSPECTION_APPOINTMENT : "inspection company is appointed"
     ORGANIZATION ||--o{ PROJECT : owns
     ORGANIZATION ||--o{ PURCHASE : "sells in"
     MATERIAL ||--o{ PURCHASE : "bought in"
@@ -327,7 +371,7 @@ erDiagram
     classDef mvp fill:#bfe8cf,stroke:#1f7a4d,stroke-width:3px,color:#0f2a1c
     classDef p2 fill:#fbe3a0,stroke:#b8860b,stroke-width:2px,color:#2b2100
     classDef p3 fill:#e6e9ee,stroke:#6e7781,stroke-width:2px,stroke-dasharray:5 3,color:#24292f
-    class ORGANIZATION,USER_ACCOUNT,PROJECT,MATERIAL_CATEGORY,MATERIAL,PURCHASE,DELIVERY,DELIVERY_DOCUMENT,INSPECTION,SUPPLIER_RATING mvp
+    class ORGANIZATION,USER_ACCOUNT,ORG_DOCUMENT,INSPECTION_APPOINTMENT,PROJECT,MATERIAL_CATEGORY,MATERIAL,PURCHASE,DELIVERY,DELIVERY_DOCUMENT,INSPECTION,SUPPLIER_RATING mvp
     class SUPPLIER_CONNECTION,RFQ,QUOTATION,NOTIFICATION,PAYMENT_REQUEST,SUBSCRIPTION,FEATURED_LISTING,ESG_RECORD p2
     class DOCUMENT_EXTRACTION,PROJECT_BUDGET,DELIVERY_TRACKING_POINT,ERP_SYNC_LOG,DELIVERY_RISK_SCORE p3
 ```
@@ -336,8 +380,10 @@ erDiagram
 
 | Table | What it stores | Key | Stories / use cases |
 |---|---|---|---|
-| ORGANIZATION | Contractor and supplier companies | `org_id` (8-digit company id) | US1, US2, US5 |
-| USER_ACCOUNT | Users; each one belongs to a company and has one role | `user_id` | US1 / UC1 |
+| ORGANIZATION | Contractor, supplier and third-party inspection companies, with the approval status (PENDING / APPROVED / REJECTED) | `org_id` (8-digit company id) | US1, US2, US5 |
+| USER_ACCOUNT | Users; each one belongs to a company and has one role (the website administrator has no company); `active = 0` switches a user off | `user_id` | US1 / UC1 |
+| ORG_DOCUMENT | Proof documents (PDF/JPG/PNG) that a company uploads when it registers; only the administrator opens them | `document_id` | UC1 (registration) |
+| INSPECTION_APPOINTMENT | A contractor appoints a third-party inspection company; its inspectors then see the deliveries of the contractor | `contractor_id` + `inspection_id` | UC1, UC8 |
 | PROJECT | Projects of a contractor, with the contract retention rate | `project_id` | US2, US3, UC10 |
 | MATERIAL_CATEGORY | Categories to search the catalog: Labor, Equipment, Material, Other | `category_id` | US2 |
 | MATERIAL | Catalog of materials, labor and equipment | `material_id` (8-digit id) | US2 / UC2 |
@@ -349,7 +395,11 @@ erDiagram
 
 ## 5. Business rules (relationships and cardinality)
 
-* A company has zero or many users; a user belongs to exactly one company.
+* A company has zero or many users; a user belongs to exactly one company (only the website administrator belongs to none).
+* A company registers with one company account (role COMPANY) and stays PENDING until the administrator approves it. Only APPROVED companies can be chosen in the registration of a user, and only their users can sign in.
+* A company has zero or many proof documents (ORG_DOCUMENT).
+* A contractor can appoint zero or many third-party inspection companies, and an inspection company can be appointed by zero or many contractors (INSPECTION_APPOINTMENT).
+* An inspector sees the deliveries of the projects of his own company and of the contractors that appointed his company.
 * A contractor has zero or many projects; a project belongs to exactly one contractor.
 * A material belongs to exactly one category; a category has zero or many materials.
 * A supplier has zero or many purchases; a purchase is from exactly one supplier and for exactly one material.

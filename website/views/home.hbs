@@ -11,11 +11,18 @@
       <p>Use <strong>Assigned deliveries</strong> in the menu to update the status of your deliveries,
          <strong>Quality documents</strong> to add the delivery notes and test reports,
          and <strong>My rating and history</strong> to see how the contractors rated you.</p>
+    {{else if isCompany}}
+      <p>Use <strong>Users of my company</strong> in the menu to see the people who registered for {{user.orgName}} and to switch an account off or on.
+         {{#if isContractorCompany}}Use <strong>Inspection companies</strong> to appoint a third-party inspection company for your projects.{{/if}}
+         {{#if isInspectionCompany}}<strong>Contractors that appointed us</strong> shows whose deliveries your inspectors can inspect.{{/if}}</p>
+    {{else if isAdmin}}
+      <p>Use <strong>Companies</strong> in the menu to check and approve the companies that registered,
+         and <strong>All users</strong> to see who works for which company.</p>
     {{else}}
       <p>The pages for your role are not ready yet.</p>
     {{/if}}
   {{else}}
     <h1 class="h2">Material Delivery Closed-Loop</h1>
-    <p>Please <a href="/login" hx-boost="true" hx-target="#main">sign in</a> to continue.</p>
+    <p>Please <a href="/login" hx-boost="true" hx-target="#main">sign in</a> to continue, or <a href="/register" hx-boost="true" hx-target="#main">register</a> if you are new.</p>
   {{/if}}
 </div>

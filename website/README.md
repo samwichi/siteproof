@@ -1,11 +1,11 @@
 # SiteProof website
 
 Express 5 + express-handlebars + mysql2 + HTMX 4 + Bootstrap 5 (the technology of the laboratories).
-Extra packages: `cookie-parser` (signed login cookie, as in the Express laboratory) and `bcryptjs` (the passwords in `user_account` are bcrypt hashes).
+Extra packages: `cookie-parser` (signed login cookie, as in the Express laboratory), `bcryptjs` (the passwords in `user_account` are bcrypt hashes) and `multer` (the proof documents of a company registration are uploaded files).
 
 ## 1. Run it
 
-1. Start MySQL and run the scripts `database/01_schema.sql` to `database/06_sample_data.sql` (in this order).
+1. Start MySQL and run the scripts `database/01_schema.sql` to `database/06_sample_data.sql` (in this order). **If you already have the database from an older version, run all the scripts again** (`01_schema.sql` deletes the old database): the registration needs new tables and columns.
 2. Create the database user of the website (change the IP range if your Docker network is different):
 
    ```sql
@@ -36,6 +36,31 @@ Extra packages: `cookie-parser` (signed login cookie, as in the Express laborato
 | Contractor project manager | `pm.chen@siteproof.example.com` (Pacific Civil Works, 1 project) |
 | Inspector | `inspector.wang@siteproof.example.com`, `inspector.huang@siteproof.example.com` |
 | Supplier | `supplier.central@siteproof.example.com`, `supplier.superior@siteproof.example.com`, `supplier.cornerstone@siteproof.example.com`, `supplier.united@siteproof.example.com` |
+| Inspector of a third-party inspection company | `inspector.lee@siteproof.example.com` (Taiwan Site Inspection; appointed by Formosa Build, so he sees the deliveries of Formosa) |
+| Company account (manages the users of the company) | `company.formosa@siteproof.example.com`, `company.pacific@siteproof.example.com`, `company.tsi@siteproof.example.com` (inspection company), `company.central@siteproof.example.com` (supplier) |
+| **Website administrator** | `admin@siteproof.example.com` - password **`SiteProofAdmin#2026`** (not `siteproof123`) |
+
+The administrator of the sample data is only for the demo: before a real use create your own with `node scripts/create-admin.js <e-mail> "<full name>" <password>` and delete the demo one.
+
+## 2.1 Registration (anybody can open it from the menu: Register)
+
+There are two kinds of accounts:
+
+| | Company account | User account |
+|---|---|---|
+| Who | A contractor, a supplier or a third-party inspection company that is new on SiteProof | A contractor project manager, a supplier or an inspector |
+| How | Choose the type, enter the 8-digit company ID, name and contact data, optionally up to 3 proof documents (PDF, JPG, PNG, 5 MB each), and the e-mail and password of the company account | Choose the role, search the company in the list (name or ID), enter name, e-mail and password |
+| Can sign in | Only after the **administrator approves** the company | At once (the user is signed in after the registration) |
+| Can do | See and manage **all users of its company** (switch an account off or on); a contractor also appoints third-party inspection companies | The work of its role (deliveries, inspections, ...) |
+
+Rules:
+
+* The list of the user registration has only **approved** companies, and only the companies that fit the role (a contractor works for a contractor, a supplier for a supplier, an inspector for a contractor or for an inspection company). The server checks it again, so a changed form does not help.
+* A company that is not approved (waiting or rejected) cannot be used: nobody of it can sign in, and a user that has the page open is sent to the login page at the next click. The login page says why (a rejection shows the reason that the administrator wrote). The same happens to a user that the company account switched off.
+* The administrator sees all companies (waiting ones first) and all users, opens the proof documents, approves or rejects a company (a rejected or approved company can be changed later). The administrator does not see any delivery.
+* A contractor appoints a third-party inspection company (menu: Inspection companies). The inspectors of that company then see and inspect the deliveries of all projects of the contractor; removing the appointment stops it at once. Inspectors who registered for the contractor itself do not need an appointment.
+* The proof documents are saved in `website/uploads/` under a random name (the folder is in `.gitignore`). The server checks the first bytes of each file (a text file named `.pdf` is refused) and only the administrator can open a document.
+* A company ID that exists already (also the 500 suppliers of the given data) cannot be registered again; the message tells the user to contact the administrator.
 
 ## 3. Folders
 
@@ -44,7 +69,12 @@ website/
 ├── app.js                 starts the server: template engine, middleware, database pool, wildcard route, routers
 ├── config.example.js      database and cookie settings (copy to config.js)
 ├── routes/
-│   ├── auth.js            UC1  sign in / sign out
+│   ├── auth.js            UC1  sign in / sign out (and the message when the account is switched off or the company is not approved)
+│   ├── register.js        registration: company account (with proof documents) and user account (company list with search)
+│   ├── company.js         company account: users of the company (switch off / on) and the appointment of inspection companies
+│   ├── admin.js           administrator: all companies, approve / reject, proof documents and users of a company
+│   ├── adminUsers.js      administrator: all users with their company
+│   ├── adminDocuments.js  administrator: opens a proof document (a normal link, mounted before the wildcard route)
 │   ├── deliveries.js      UC2, UC3  contractor: create, list, edit, delete delivery records, and the detail page of one delivery   <-- first CRUD
 │   ├── inspections.js     UC8-UC10  inspector: see the supplier's quality documents, record received / accepted quantity (accepted value and retention are calculated)
 │   ├── ratings.js         UC4  contractor: complete an inspected delivery and rate the supplier (1-5)
@@ -52,14 +82,17 @@ website/
 │   ├── history.js         UC7  supplier: own average rating, score distribution and delivery history (read only)
 │   └── documents.js       UC6  supplier: add, list, edit, delete quality documents (type and file name) until the delivery is inspected
 ├── lib/
-│   ├── auth.js            loadUser (who is logged in) and requireRole('...')
+│   ├── auth.js            loadUser (who is logged in; asks the database at every request whether the account and its company are still allowed), requireRole('...'), role names, start page of each role
+│   ├── upload.js          proof documents: receive (multer), check the first bytes, save under a random name, read
 │   ├── respond.js         fail(res, message): error message in the toast, without changing the page
 │   └── listing.js         readList(): search, status filter, sorting and paging of a list (used by all the list pages)
 ├── views/
 │   ├── index.hbs          the only full page: header, navbar, div#toast, main#main, footer
 │   ├── navbar.hbs, home.hbs, login.hbs, toast.hbs
 │   ├── list/              the parts that every list shares: controls.hbs (search box and status filter), th.hbs (sortable column header), pager.hbs
-│   └── deliveries/, inspections/, ratings/, assigned/, history/, documents/     one folder for each route (index, row, rowToast, new/form, edit)
+│   └── deliveries/, inspections/, ratings/, assigned/, history/, documents/, register/, company/, admin/     one folder for each route (index, row, rowToast, new/form, edit)
+├── scripts/create-admin.js   creates a website administrator in the database
+├── uploads/               the proof documents of the companies (not in Git)
 └── public/                our own CSS / JS / images
 ```
 
@@ -72,7 +105,8 @@ website/
 Rules used in `routes/deliveries.js` (copy them in the other routes):
 
 * every query is limited to the company of the logged-in user (`req.user.orgId`), so a user cannot read or change the data of another company by changing the id in the URL;
-* an action that the business rules do not allow is checked in SQL (`AND d.status = 'SCHEDULED'`) and answered with `fail(res, 'message', status)`.
+* an action that the business rules do not allow is checked in SQL (`AND d.status = 'SCHEDULED'`) and answered with `fail(res, 'message', status)`;
+* a delete button that answers only with a message uses `hx-swap="delete"`: HTMX 4 does not swap an empty response that comes with a `<hx-partial>`, so with `outerHTML` the row would stay on the screen.
 
 ### How a list page works (search, filter, sort, paging)
 

@@ -7,16 +7,18 @@
 -- must already be loaded). To run everything again from zero, run
 -- 01_schema.sql first: it deletes the database.
 --
--- Demo password of ALL users: siteproof123 (stored as a bcrypt hash).
+-- Demo password of ALL users: siteproof123 (stored as a bcrypt hash), except the website administrator (see 6.2b).
 -- All e-mails end with @siteproof.example.com. Do not use this data in production.
 -- =====================================================================
 
 USE siteproof;
 
--- 6.1 Two contractors. The given file has only suppliers, so the contractors are new (ids 9000000x are not used by the file).
+-- 6.1 Two contractors and one third-party inspection company. The given file has only suppliers, so these are new (ids 9000000x are not used by the file).
+--     All of them are APPROVED (the default of the column status).
 INSERT INTO organization (org_id, org_name, org_type, address, phone, email) VALUES
 ('90000001', 'Formosa Build Co., Ltd.',   'CONTRACTOR', 'No. 100, Sec. 4, Civic Blvd., Da''an Dist., Taipei City',  '+886-2-5550-0101', 'office@formosabuild.example.com'),
-('90000002', 'Pacific Civil Works Ltd.',  'CONTRACTOR', 'No. 28, Zhongzheng Rd., Zhongli Dist., Taoyuan City',      '+886-3-5550-0202', 'office@pacificcivil.example.com');
+('90000002', 'Pacific Civil Works Ltd.',  'CONTRACTOR', 'No. 28, Zhongzheng Rd., Zhongli Dist., Taoyuan City',      '+886-3-5550-0202', 'office@pacificcivil.example.com'),
+('90000003', 'Taiwan Site Inspection Co., Ltd.', 'INSPECTION', 'No. 55, Sec. 2, Nanjing E. Rd., Zhongshan Dist., Taipei City', '+886-2-5550-0303', 'office@tsi.example.com');
 
 -- 6.2 Users: 2 contractor project managers, 2 site inspectors (they work for a contractor) and 4 supplier users
 --     (one for each of 4 suppliers of the given file). The password is the bcrypt hash of "siteproof123".
@@ -29,6 +31,22 @@ INSERT INTO user_account (org_id, full_name, email, password, role) VALUES
 ('28001683', 'Liu Shu-Fen',    'supplier.superior@siteproof.example.com',  '$2b$10$ypLdRc9Bqq5e/dNQlnlgKOJM2B3riql5dGNUPq0NH52VwMlu60hTa', 'SUPPLIER'),
 ('32120654', 'Yang Zhi-Wei',   'supplier.cornerstone@siteproof.example.com','$2b$10$ypLdRc9Bqq5e/dNQlnlgKOJM2B3riql5dGNUPq0NH52VwMlu60hTa', 'SUPPLIER'),
 ('15984815', 'Wu Ya-Ting',     'supplier.united@siteproof.example.com',    '$2b$10$ypLdRc9Bqq5e/dNQlnlgKOJM2B3riql5dGNUPq0NH52VwMlu60hTa', 'SUPPLIER');
+
+-- 6.2b Accounts of the registration feature (all with the demo password siteproof123, except the administrator):
+--      - the website administrator (no company: org_id is NULL). Password: SiteProofAdmin#2026. Change it before a real use
+--        (or create your own administrator with the script website/scripts/create-admin.js and delete this one);
+--      - the company accounts of both contractors, the inspection company and one supplier (they manage the users of their company);
+--      - one inspector who works for the inspection company (he sees the deliveries of a contractor only after the appointment of 6.2c).
+INSERT INTO user_account (org_id, full_name, email, password, role) VALUES
+(NULL,       'Website Administrator',          'admin@siteproof.example.com',              '$2b$10$J3sj/JNvUHDsfuv.Gr/fY.fCB7S3AFW.nybYLRqaakwwpF/FThHyS', 'ADMIN'),
+('90000001', 'Formosa Build (company account)','company.formosa@siteproof.example.com',    '$2b$10$ypLdRc9Bqq5e/dNQlnlgKOJM2B3riql5dGNUPq0NH52VwMlu60hTa', 'COMPANY'),
+('90000002', 'Pacific Civil (company account)','company.pacific@siteproof.example.com',    '$2b$10$ypLdRc9Bqq5e/dNQlnlgKOJM2B3riql5dGNUPq0NH52VwMlu60hTa', 'COMPANY'),
+('90000003', 'Taiwan Site Inspection (company account)', 'company.tsi@siteproof.example.com', '$2b$10$ypLdRc9Bqq5e/dNQlnlgKOJM2B3riql5dGNUPq0NH52VwMlu60hTa', 'COMPANY'),
+('03028108', 'Central Concrete (company account)', 'company.central@siteproof.example.com','$2b$10$ypLdRc9Bqq5e/dNQlnlgKOJM2B3riql5dGNUPq0NH52VwMlu60hTa', 'COMPANY'),
+('90000003', 'Lee Chun-Yi',                    'inspector.lee@siteproof.example.com',      '$2b$10$ypLdRc9Bqq5e/dNQlnlgKOJM2B3riql5dGNUPq0NH52VwMlu60hTa', 'INSPECTOR');
+
+-- 6.2c Formosa Build appoints the inspection company.
+INSERT INTO inspection_appointment (contractor_id, inspection_id) VALUES ('90000001', '90000003');
 
 -- 6.3 Three projects with different contract retention rates (3% to 10%).
 INSERT INTO project (org_id, project_name, retention_rate) VALUES
@@ -129,9 +147,10 @@ INSERT INTO supplier_rating (delivery_id, rated_by, score) VALUES
 (@d2, (SELECT user_id FROM user_account WHERE email = 'pm.lin@siteproof.example.com'),  3),
 (@d3, (SELECT user_id FROM user_account WHERE email = 'pm.chen@siteproof.example.com'), 2);
 
--- 6.8 Check: rows in each table (expected: organization 502, user_account 8, project 3, delivery 8, delivery_document 8, inspection 4, supplier_rating 3).
+-- 6.8 Check: rows in each table (expected: organization 503, user_account 14, inspection_appointment 1, project 3, delivery 8, delivery_document 8, inspection 4, supplier_rating 3).
 SELECT (SELECT COUNT(*) FROM organization)      AS organizations,
        (SELECT COUNT(*) FROM user_account)      AS users,
+       (SELECT COUNT(*) FROM inspection_appointment) AS appointments,
        (SELECT COUNT(*) FROM project)           AS projects,
        (SELECT COUNT(*) FROM delivery)          AS deliveries,
        (SELECT COUNT(*) FROM delivery_document) AS documents,

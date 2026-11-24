@@ -35,12 +35,13 @@ function href(path, state, changes) {
 
 // Read one page of a list.
 //   db      the promise version of the connection pool
-//   cfg     { search: [SQL expressions], statuses: [...], statusColumn, sorts: { key: SQL expression }, tieBreak, defaultOrder }
+//   cfg     { search: [SQL expressions], statuses: [...], statusColumn, sorts: { key: SQL expression }, tieBreak, defaultOrder,
+//             and optional: path, filterLabel, allLabel }
 //   select  the SELECT of the list, ending with its WHERE condition (the helper adds AND ...)
 //   params  the parameters of that WHERE condition
 // Returns { rows, list }: the rows of the page and everything the templates need (see views/list/*.hbs).
 async function readList(db, req, cfg, select, params, prepare) {
-    const path = req.baseUrl;
+    const path = cfg.path || req.baseUrl;       // the address of the list page (cfg.path when the list is not at the root of its router)
     const s = readState(req, cfg);
 
     let where = '';
@@ -83,7 +84,8 @@ async function readList(db, req, cfg, select, params, prepare) {
 
     const list = {
         path: path, q: s.q, sort: s.sort, dir: s.dir, th: th,
-        statusOptions: [{ value: '', label: 'All statuses', selected: !s.status }]
+        filterLabel: cfg.filterLabel || 'status',
+        statusOptions: [{ value: '', label: cfg.allLabel || 'All statuses', selected: !s.status }]
             .concat((cfg.statuses || []).map(v => ({ value: v, label: v, selected: v === s.status }))),
         filtered: Boolean(s.q || s.status),
         total: total, pages: pages, page: page, showPager: pages > 1,

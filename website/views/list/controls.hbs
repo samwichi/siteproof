@@ -12,7 +12,7 @@
     </div>
   </div>
   <div class="col-md-4">
-    <select class="form-select" name="status" aria-label="Filter by status">
+    <select class="form-select" name="status" aria-label="Filter by {{list.filterLabel}}">
       {{#each list.statusOptions}}
         <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
       {{/each}}
