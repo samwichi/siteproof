@@ -69,7 +69,7 @@ The ten use cases implement the five must-have functions of the Business Plan (A
 | UC5 | View assigned deliveries and update their status | Supplier | 🟩 MVP | ✅ Done | Assigned Deliveries and Status Update |
 | UC6 | Upload delivery and quality documents | Supplier | 🟩 MVP | ✅ Done | Upload Quality Documents |
 | UC7 | View own rating and delivery history | Supplier | 🟩 MVP | ✅ Done | My Rating and History |
-| UC8 | Record received quantity and review documents | Inspector | 🟩 MVP | 🔶 Partly | Inspection Queue, Inspect and Decide |
+| UC8 | Record received quantity and review documents | Inspector | 🟩 MVP | ✅ Done | Inspection Queue, Inspect and Decide |
 | UC9 | Accept, partially accept or reject a delivery | Inspector | 🟩 MVP | ✅ Done | Inspect and Decide |
 | UC10 | Calculate retention on the accepted value (system, included by UC9) | System | 🟩 MVP | ✅ Done | Inspect and Decide |
 
@@ -104,7 +104,7 @@ The MVP has no push notifications: users see delivery status on the platform. Ev
 
 ## 3. Project Status
 
-SiteProof has moved from planning to implementation. The database and the first version of the website run locally with Docker (see [website/README.md](website/README.md) for the instructions). Eight of the ten use cases work and two are partly done.
+SiteProof has moved from planning to implementation. The database and the first version of the website run locally with Docker (see [website/README.md](website/README.md) for the instructions). Nine of the ten use cases work and one is partly done.
 
 | Component | Status |
 |---|---|
@@ -127,13 +127,13 @@ SiteProof has moved from planning to implementation. The database and the first 
 | UC5 Update the delivery status | Done | Supplier sees the assigned deliveries and moves each one step by step: PREPARING, IN_TRANSIT, DELIVERED |
 | UC6 Quality documents | Done (simple) | Supplier adds, edits and deletes the document type and file name until the inspection; the file itself is not uploaded yet |
 | UC7 Supplier rating and history | Done | Supplier sees the average rating, how the scores are distributed and the history of its deliveries with the inspection result |
-| UC8 Record received quantity and review documents | Partly | Received quantity works; the inspector cannot see the documents yet |
+| UC8 Record received quantity and review documents | Done | The inspector sees the quality documents of each delivery (or a warning when there are none) in the list and in the inspection form, then records the received quantity |
 | UC9 Accept, partially accept or reject | Done | Decision from the received and accepted quantity |
 | UC10 Retention | Done | Accepted value and retention are calculated by the system (the retention rate is copied from the project at the inspection) |
 
 The whole closed loop works from the first step to the last: the contractor creates a delivery, the supplier moves it to DELIVERED, the inspector inspects it, the contractor completes it with a rating, and the supplier sees the rating.
 
-**Next:** the inspector sees the documents (UC8), the delivery detail page (UC3), then automated tests and real file upload.
+**Next:** the delivery detail page (UC3), then automated tests and real file upload.
 
 ---
 ## 4. Project Documents
@@ -216,10 +216,10 @@ graph TD
 | Upload Quality Documents | UC6 | 1 | Po-Hao | ✅ Done |
 | My Rating and History | UC7 | 1 | Po-Hao | ✅ Done |
 | Inspection Queue | UC8 | 1 | Samuel | ✅ Done |
-| Inspect and Decide | UC8, UC9, UC10 | 1 | Po-Hao | 🔶 Partly |
+| Inspect and Decide | UC8, UC9, UC10 | 1 | Po-Hao | ✅ Done |
 | Phase 2 and Phase 3 pages | — | 2 / 3 | To be assigned | ⬜ To do |
 
-Status: ✅ Done, 🔶 Partly, ⬜ To do (details in section 3.1). "Supplier Ratings" is partly done because the ratings are shown on the Complete and Rate page; "Inspect and Decide" is partly done because the inspector cannot see the quality documents yet.
+Status: ✅ Done, 🔶 Partly, ⬜ To do (details in section 3.1). "Supplier Ratings" is partly done because the ratings are shown on the Complete and Rate page.
 
 **Note:** Page ownership indicates the primary person responsible for implementation. Responsibilities may be adjusted during development.
 
