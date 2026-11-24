@@ -1,0 +1,41 @@
+<h1 class="h2">Products of {{org.name}}</h1>
+<p><a href="/admin/companies/{{org.ID}}" hx-boost="true" hx-target="#main"><i aria-hidden="true" class="bi bi-arrow-left"></i> Back to the company {{org.ID}}</a></p>
+{{#if summary.materials}}
+  <p class="text-muted">{{summary.materials}} materials in {{summary.purchases}} purchase records. The price is the lowest and the highest unit price in the records.</p>
+{{else}}
+  <p class="text-muted">This company has no purchase records, so it has no products.</p>
+{{/if}}
+{{> list/controls placeholder="Search by material name or ID"}}
+<div id="list" data-count="{{list.total}}">
+  <div class="table-responsive">
+    <table class="table table-striped table-hover table-sm">
+      <caption class="visually-hidden">Products of {{org.name}}</caption>
+      <thead>
+        <tr>
+          {{> list/th key="material" label="Material"}}
+          {{> list/th key="category" label="Category"}}
+          {{> list/th key="unit" label="Unit"}}
+          {{> list/th key="price" label="Unit price" cls="text-end"}}
+          {{> list/th key="purchases" label="Records" cls="text-end"}}
+          {{> list/th key="lastDate" label="Last record"}}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+        <tr class="align-middle">
+          <td>{{material}} <span class="text-muted small">({{ID}})</span></td>
+          <td>{{category}}</td>
+          <td>{{unit}}</td>
+          <td class="text-end text-nowrap">{{price}}</td>
+          <td class="text-end">{{purchases}}</td>
+          <td class="text-nowrap">{{lastDate}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{#unless rows.length}}
+    <p class="text-muted text-center">{{#if list.filtered}}No product matches your search.{{else}}No products.{{/if}}</p>
+  {{/unless}}
+  {{> list/pager}}
+</div>

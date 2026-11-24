@@ -70,6 +70,62 @@ app.get('/', async (req, res) => {
     res.render('admin/index', result);
 });
 
+// ---------- the products of a supplier ----------
+// A product of a supplier is a material that the supplier has purchase records for (table purchase, from the given data): the price range
+// and the number of records come from there. A company that registered itself has no records until it has some.
+// The GROUP BY is in a sub-select, so that the list helper can add its search and filter conditions to the outer WHERE.
+const SELECT_PRODUCTS = `
+    SELECT * FROM (
+        SELECT m.material_id AS ID, m.material_name AS material, c.category_name AS category, m.unit AS unit,
+               COUNT(*) AS purchases, MIN(p.unit_price) AS minPrice, MAX(p.unit_price) AS maxPrice,
+               DATE_FORMAT(MAX(p.purchase_date), '%Y-%m-%d') AS lastDate
+        FROM purchase p
+        JOIN material m ON m.material_id = p.material_id
+        JOIN material_category c ON c.category_id = m.category_id
+        WHERE p.org_id = ?
+        GROUP BY m.material_id, m.material_name, c.category_name, m.unit
+    ) AS t
+    WHERE 1 = 1`;
+
+const PRODUCTS = {
+    search: ['t.ID', 't.material'],
+    statuses: ['Material', 'Labor', 'Equipment', 'Other'],      // the 4 categories of the table material_category
+    statusColumn: 't.category',
+    filterLabel: 'category',
+    allLabel: 'All categories',
+    sorts: { material: 't.material', category: 't.category', unit: 't.unit', price: 't.minPrice', purchases: 't.purchases', lastDate: 't.lastDate' },
+    tieBreak: 't.ID',
+    defaultOrder: 't.purchases DESC, t.material'
+};
+
+const money = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+function prepareProduct(row) {
+    row.unit = /[?\uFFFD]/.test(row.unit || '?') ? '-' : row.unit;          // some units of the given data are damaged (a "?" instead of the character)
+    row.price = Number(row.minPrice) === Number(row.maxPrice) ? money(row.minPrice) : money(row.minPrice) + ' - ' + money(row.maxPrice);
+    return row;
+}
+
+// The numbers for the summary on the page of the company.
+async function productSummary(id) {
+    const [[total]] = await db().execute(
+        'SELECT COUNT(DISTINCT p.material_id) AS materials, COUNT(*) AS purchases FROM purchase p WHERE p.org_id = ?', [id]);
+    const [categories] = await db().execute(
+        `SELECT c.category_name AS name, COUNT(DISTINCT p.material_id) AS n
+         FROM purchase p JOIN material m ON m.material_id = p.material_id JOIN material_category c ON c.category_id = m.category_id
+         WHERE p.org_id = ? GROUP BY c.category_name ORDER BY n DESC`, [id]);
+    return { materials: Number(total.materials), purchases: Number(total.purchases), categories: categories };
+}
+
+app.get('/companies/:id/products', async (req, res) => {
+    const [orgs] = await db().execute('SELECT org_id, org_name, org_type FROM organization WHERE org_id = ?', [req.params.id]);
+    if (orgs.length === 0) return fail(res, 'Company not found.', 404);
+    const cfg = Object.assign({}, PRODUCTS, { path: '/admin/companies/' + orgs[0].org_id + '/products' });   // the id comes from the database
+    const result = await readList(db(), req, cfg, SELECT_PRODUCTS, [orgs[0].org_id], prepareProduct);
+    result.org = { ID: orgs[0].org_id, name: orgs[0].org_name };
+    result.summary = await productSummary(orgs[0].org_id);
+    res.render('admin/products', result);
+});
+
 // ---------- the page of one company ----------
 const USERS_SHOWN = 200;
 async function showCompany(req, res, message, kind) {
@@ -89,6 +145,9 @@ async function showCompany(req, res, message, kind) {
          FROM organization o WHERE o.org_name = ? AND o.org_id <> ? ORDER BY o.org_id LIMIT 20`, [orgs[0].org_name, req.params.id]);
     sameName.forEach(prepare);
 
+    const products = await productSummary(req.params.id);
+    products.any = products.materials > 0;
+
     const [accounts] = await db().execute(
         "SELECT full_name AS name, email, active FROM user_account WHERE org_id = ? AND role = 'COMPANY' ORDER BY user_id", [req.params.id]);
     const [documents] = await db().execute(
@@ -99,7 +158,7 @@ async function showCompany(req, res, message, kind) {
     users.forEach(u => { u.roleName = ROLE_NAMES[u.role]; u.isActive = (u.active === 1); });
     const [[counted]] = await db().execute("SELECT COUNT(*) AS n FROM user_account WHERE org_id = ? AND role <> 'COMPANY'", [req.params.id]);
 
-    res.render('admin/company', { org: org, sameName: sameName, sameNameMany: sameName.length > 1, accounts: accounts, documents: documents, users: users,
+    res.render('admin/company', { org: org, products: products, sameName: sameName, sameNameMany: sameName.length > 1, accounts: accounts, documents: documents, users: users,
                                   userTotal: Number(counted.n), moreUsers: Number(counted.n) > users.length, message: message, kind: kind });
 }
 
