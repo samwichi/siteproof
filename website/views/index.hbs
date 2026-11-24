@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{title}}</title>
+  <link rel="icon" type="image/png" href="/images/favicon.png">
   <script src="/htmx.min.js"></script>
 
   <link rel="stylesheet" href="/bootstrap.min.css">
@@ -12,8 +13,10 @@
 </head>
 <body class="container">
   <header class="text-center my-3">
-    <h1><i class="bi bi-truck"></i> SiteProof</h1>
-    <p class="text-muted">Smart Delivery &amp; Supplier Management Platform</p>
+    {{!-- The logo already contains the name and the tagline, so it replaces the title text. --}}
+    <a href="/" hx-boost="true" hx-target="#main">
+      <img src="/images/siteproof-logo.png" alt="SiteProof - Material Delivery &amp; Supplier Management" class="img-fluid" style="max-height: 90px;">
+    </a>
   </header>
   {{> navbar}}
   <div id="toast"></div>
