@@ -1,0 +1,9 @@
+{{!-- The options of the material <select> (also used by GET /deliveries/materials). --}}
+<option value="" selected disabled>{{#if materialTotal}}Choose a material ({{#if materialMore}}the first {{materialShown}} of {{materialTotal}}, search or pick a category to narrow down{{else}}{{materialTotal}} found{{/if}}){{else}}No material found{{/if}}</option>
+{{#each groups}}
+  <optgroup label="{{category}}">
+    {{#each items}}
+      <option value="{{material_id}}">{{material_name}} ({{unit}})</option>
+    {{/each}}
+  </optgroup>
+{{/each}}
