@@ -1,6 +1,9 @@
-{{!-- A message for div#toast. HTMX 4 takes the <hx-partial> out of the response and puts its content in #toast. --}}
+{{!-- A message for div#toast. HTMX 4 takes the <hx-partial> out of the response and puts its content in #toast.
+      Success messages disappear after 4 seconds; errors (seconds = 10) stay longer and can be closed with the button. --}}
 <hx-partial hx-target="#toast" hx-swap="innerHTML">
-  <div class="alert alert-{{kind}} py-2 my-2" hx-on::after:process="setTimeout(() => this.remove(), 4000)">
+  <div class="alert alert-{{kind}} alert-dismissible shadow py-2 my-2" role="alert"
+       hx-on::after:process="setTimeout(() => this.remove(), {{#if seconds}}{{seconds}}{{else}}4{{/if}}000)">
     {{message}}
+    <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
 </hx-partial>

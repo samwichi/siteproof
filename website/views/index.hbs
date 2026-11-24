@@ -11,7 +11,11 @@
   <link rel="stylesheet" href="/bootstrap-icons.min.css">
   <script src="/bootstrap.bundle.min.js"></script>
 </head>
-<body class="container">
+<body class="container" hx-indicator:inherited="#loading">
+  {{!-- A thin bar at the top of the window, visible while HTMX waits for the server (class htmx-request). --}}
+  <div id="loading" class="htmx-indicator position-fixed top-0 start-0 w-100" style="z-index: 2200;" aria-hidden="true">
+    <div class="progress" style="height: 4px;"><div class="progress-bar progress-bar-striped progress-bar-animated w-100"></div></div>
+  </div>
   <header class="text-center my-3">
     {{!-- The logo already contains the name and the tagline, so it replaces the title text. --}}
     <a href="/" hx-boost="true" hx-target="#main">
@@ -19,7 +23,8 @@
     </a>
   </header>
   {{> navbar}}
-  <div id="toast"></div>
+  {{!-- Messages stay visible in the corner of the window, also when the user scrolled down to a row. --}}
+  <div id="toast" class="position-fixed top-0 end-0 p-3" style="z-index: 2100; width: min(28rem, 100%);" aria-live="polite"></div>
   <main id="main" {{#where}} hx-trigger="load" hx-get="{{.}}" {{/where}} hx-history-elt>
     {{> home}}
   </main>

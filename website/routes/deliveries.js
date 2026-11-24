@@ -3,6 +3,7 @@
 // A delivery can be edited or deleted only while its status is SCHEDULED (before the supplier starts to work on it).
 const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
+const { readList, like } = require('../lib/listing');
 const app = express.Router();
 
 // The promise version of the connection pool injected by app.js (same mysql2 package as in the laboratory, but with async/await).
@@ -50,10 +51,24 @@ async function findDelivery(id, orgId) {
     return rows.length === 1 ? prepare(rows[0]) : null;
 }
 
-// Show the whole list in main#main, with an optional message in the toast.
-async function showList(res, orgId, message) {
-    const [rows] = await db().execute(SELECT_DELIVERIES + ' ORDER BY d.slot_start DESC, d.delivery_id DESC', [orgId]);
-    res.render('deliveries/index', { rows: rows.map(prepare), message: message, kind: 'success' });
+// Search, status filter and sorting of the list (see lib/listing.js).
+const LIST = {
+    search: ['CAST(d.delivery_id AS CHAR)', 'p.project_name', 's.org_name', 'm.material_name'],
+    statuses: STEPS,
+    statusColumn: 'd.status',
+    sorts: {
+        ID: 'd.delivery_id', project: 'p.project_name', supplier: 's.org_name', material: 'm.material_name',
+        quantity: 'd.ordered_quantity', value: 'd.delivery_value', slot: 'd.slot_start',
+        status: "FIELD(d.status, 'SCHEDULED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED', 'INSPECTED', 'COMPLETED')"
+    },
+    tieBreak: 'd.delivery_id DESC',
+    defaultOrder: 'd.slot_start DESC, d.delivery_id DESC'
+};
+
+// Show the page of the list that the user asked for (?q=&status=&sort=&dir=&page=) in main#main, with an optional message in the toast.
+async function showList(req, res, message) {
+    const data = await readList(db(), req, LIST, SELECT_DELIVERIES, [req.user.orgId], prepare);
+    res.render('deliveries/index', Object.assign(data, { message: message, kind: 'success' }));
 }
 
 // The browser sends 2026-11-24T08:00 (datetime-local); MySQL wants a space.
@@ -70,15 +85,32 @@ function checkFields(quantity, value, start, end) {
 
 // ---------- R: list ----------
 app.get('/', async (req, res) => {
-    await showList(res, req.user.orgId);
+    await showList(req, res);
+});
+
+// The suppliers whose name contains the text (500 suppliers are too many for a normal <select>, so only the first 50 are sent).
+const SUPPLIER_LIMIT = 50;
+async function findSuppliers(text) {
+    const q = String(text || '').trim().slice(0, 100);
+    const where = q ? ' AND org_name LIKE ?' : '';
+    const args = q ? [like(q)] : [];
+    const [[counted]] = await db().execute("SELECT COUNT(*) AS n FROM organization WHERE org_type = 'SUPPLIER'" + where, args);
+    const [suppliers] = await db().execute(
+        "SELECT org_id, org_name FROM organization WHERE org_type = 'SUPPLIER'" + where + ' ORDER BY org_name LIMIT ' + SUPPLIER_LIMIT, args);
+    const total = Number(counted.n);
+    return { suppliers: suppliers, total: total, shown: suppliers.length, more: total > suppliers.length };
+}
+
+// ---------- C: the <option>s of the supplier <select> while the user types in the search box (must be before /:id routes) ----------
+app.get('/suppliers', async (req, res) => {
+    res.render('deliveries/supplierOptions', await findSuppliers(req.query.q));
 });
 
 // ---------- C: the form to create a delivery (must be before /:id routes) ----------
 app.get('/new', async (req, res) => {
     const [projects] = await db().execute(
         'SELECT project_id, project_name FROM project WHERE org_id = ? ORDER BY project_name', [req.user.orgId]);
-    const [suppliers] = await db().execute(
-        "SELECT org_id, org_name FROM organization WHERE org_type = 'SUPPLIER' ORDER BY org_name");
+    const found = await findSuppliers('');
     const [materials] = await db().execute(
         `SELECT m.material_id, m.material_name, m.unit, c.category_name
          FROM material m JOIN material_category c ON c.category_id = m.category_id
@@ -94,7 +126,7 @@ app.get('/new', async (req, res) => {
         }
         g.items.push(m);
     }
-    res.render('deliveries/new', { projects: projects, suppliers: suppliers, groups: groups });
+    res.render('deliveries/new', Object.assign(found, { projects: projects, groups: groups }));
 });
 
 // ---------- C: create ----------
@@ -118,7 +150,7 @@ app.post('/', async (req, res) => {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [b.project_id, b.org_id, b.material_id, req.user.id, quantity, value,
              toDatetime(b.slot_start), toDatetime(b.slot_end)]);
-        await showList(res, req.user.orgId, 'Delivery #' + result.insertId + ' created.');
+        await showList(req, res, 'Delivery #' + result.insertId + ' created.');
     }
     catch (err) {
         fail(res, sqlMessage(err));

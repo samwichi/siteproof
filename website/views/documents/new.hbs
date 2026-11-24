@@ -2,7 +2,7 @@
 {{#unless deliveries.length}}
   <div class="alert alert-warning">You have no delivery that can receive documents (the inspected deliveries are closed).</div>
 {{/unless}}
-<form class="row g-3" hx-post="/documents" hx-target="#main" hx-push-url="/documents">
+<form class="row g-3" hx-post="/documents" hx-target="#main" hx-push-url="/documents" hx-disable="findAll button">
   <div class="col-12">
     <label class="form-label" for="delivery_id">Delivery</label>
     <select class="form-select" id="delivery_id" name="delivery_id" required>

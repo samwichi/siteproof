@@ -13,7 +13,7 @@
   <td class="text-nowrap">
     {{#if nextStatus}}
       {{!-- The hidden field "from" is the status that the user sees: the server moves the delivery only if it is still in that status. --}}
-      <form hx-put="/assigned/{{ID}}" hx-target="closest tr" hx-swap="outerHTML"
+      <form hx-put="/assigned/{{ID}}" hx-target="closest tr" hx-swap="outerHTML" hx-disable="findAll button"
             hx-confirm="Change delivery #{{ID}} from {{status}} to {{nextStatus}}?">
         <input type="hidden" name="from" value="{{status}}">
         <button type="submit" class="btn btn-sm btn-primary">

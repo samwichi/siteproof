@@ -5,6 +5,7 @@
 // only while the status is INSPECTED (after the contractor completes the delivery it is closed).
 const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
+const { readList } = require('../lib/listing');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -62,11 +63,22 @@ function checkQuantities(received, accepted, ordered) {
     return null;
 }
 
+// Search, status filter and sorting of the list (see lib/listing.js).
+const LIST = {
+    search: ['CAST(d.delivery_id AS CHAR)', 'p.project_name', 's.org_name', 'm.material_name'],
+    statuses: Object.keys(BADGES),
+    statusColumn: 'd.status',
+    sorts: {
+        ID: 'd.delivery_id', project: 'p.project_name', supplier: 's.org_name', material: 'm.material_name',
+        ordered: 'd.ordered_quantity', status: "FIELD(d.status, 'SCHEDULED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED', 'INSPECTED', 'COMPLETED')"
+    },
+    tieBreak: 'd.delivery_id DESC',
+    defaultOrder: "d.status = 'DELIVERED' DESC, d.slot_start DESC"
+};
+
 // ---------- R: the list (deliveries waiting for inspection first) ----------
 app.get('/', async (req, res) => {
-    const SQL = SELECT_ROWS + " ORDER BY d.status = 'DELIVERED' DESC, d.slot_start DESC";
-    const [rows] = await db().execute(SQL, [req.user.orgId]);
-    res.render('inspections/index', { rows: rows.map(prepare) });
+    res.render('inspections/index', await readList(db(), req, LIST, SELECT_ROWS, [req.user.orgId], prepare));
 });
 
 // ---------- C: the form to inspect a delivery ----------
