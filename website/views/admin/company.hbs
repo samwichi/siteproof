@@ -39,6 +39,31 @@
   </div>
 </div>
 
+{{#if sameName.length}}
+<div class="alert alert-warning my-3" role="region" aria-labelledby="sameNameTitle">
+  <h2 class="h5" id="sameNameTitle"><i aria-hidden="true" class="bi bi-exclamation-triangle-fill"></i> {{sameName.length}} other {{#if sameNameMany}}companies have{{else}}company has{{/if}} the same name</h2>
+  <p class="mb-2">Check the ID, the phone and the address before you approve: it can be a second registration of the same company, or a different company with the same name.</p>
+  <div class="table-responsive">
+    <table class="table table-sm table-borderless mb-0 bg-transparent">
+      <caption class="visually-hidden">Companies with the same name as {{org.name}}</caption>
+      <thead><tr><th scope="col">ID</th><th scope="col">Type</th><th scope="col">Status</th><th scope="col">Phone</th><th scope="col">Address</th><th scope="col" class="text-end">Users</th></tr></thead>
+      <tbody>
+        {{#each sameName}}
+        <tr>
+          <td class="text-nowrap"><a href="/admin/companies/{{ID}}" hx-boost="true" hx-target="#main" title="Open the page of company {{ID}}">{{ID}}</a></td>
+          <td>{{typeName}}</td>
+          <td><span class="badge text-bg-{{badge}}">{{status}}</span></td>
+          <td class="text-nowrap">{{#if phone}}{{phone}}{{else}}-{{/if}}</td>
+          <td>{{#if address}}{{address}}{{else}}-{{/if}}</td>
+          <td class="text-end">{{users}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>
+{{/if}}
+
 <div class="card my-3"><div class="card-body">
   <h2 class="h5">Decision</h2>
   <div class="d-flex flex-wrap gap-3 align-items-end">
