@@ -49,7 +49,7 @@ There are two kinds of accounts:
 | | Company account | User account |
 |---|---|---|
 | Who | A contractor, a supplier or a third-party inspection company that is new on SiteProof | A contractor project manager, a supplier or an inspector |
-| How | Choose the type, enter the 8-digit company ID, name and contact data, optionally up to 3 proof documents (PDF, JPG, PNG, 5 MB each), and the e-mail and password of the company account | Choose the role, search the company in the list (name or ID), enter name, e-mail and password |
+| How | Choose the type, enter the name and contact data (the server gives the company a random 8-digit company ID and shows it after the registration), optionally up to 3 proof documents (PDF, JPG, PNG, 5 MB each), and the e-mail and password of the company account | Choose the role, search the company in the list (name or ID), enter name, e-mail and password |
 | Can sign in | Only after the **administrator approves** the company | At once (the user is signed in after the registration) |
 | Can do | See and manage **all users of its company** (switch an account off or on); a contractor also appoints third-party inspection companies | The work of its role (deliveries, inspections, ...) |
 
@@ -60,7 +60,7 @@ Rules:
 * The administrator sees all companies (waiting ones first) and all users, opens the proof documents, approves or rejects a company (a rejected or approved company can be changed later). The administrator does not see any delivery.
 * A contractor appoints a third-party inspection company (menu: Inspection companies). The inspectors of that company then see and inspect the deliveries of all projects of the contractor; removing the appointment stops it at once. Inspectors who registered for the contractor itself do not need an appointment.
 * The proof documents are saved in `website/uploads/` under a random name (the folder is in `.gitignore`). The server checks the first bytes of each file (a text file named `.pdf` is refused) and only the administrator can open a document.
-* A company ID that exists already (also the 500 suppliers of the given data) cannot be registered again; the message tells the user to contact the administrator.
+* The company ID is not typed by the user: the server draws a random 8-digit number and draws again if the number exists already (also the 500 suppliers of the given data), so two companies never get the same ID.
 
 ## 3. Folders
 

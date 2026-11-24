@@ -11,13 +11,10 @@
       </div>
     {{/each}}
   </fieldset>
-  <div class="col-md-4">
-    <label class="form-label" for="org_id">Company ID (8 digits)</label>
-    <input class="form-control" id="org_id" name="org_id" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" required autofocus>
-  </div>
-  <div class="col-md-8">
+  <div class="col-12">
     <label class="form-label" for="org_name">Company name</label>
-    <input class="form-control" id="org_name" name="org_name" maxlength="100" required>
+    <input class="form-control" id="org_name" name="org_name" maxlength="100" aria-describedby="org-name-help" required autofocus>
+    <div id="org-name-help" class="form-text">The company ID (8 digits) is given by SiteProof after the registration.</div>
   </div>
   <div class="col-md-6">
     <label class="form-label" for="address">Address <span class="text-muted">(optional)</span></label>

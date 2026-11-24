@@ -1,9 +1,10 @@
 // Registration. Two kinds of accounts:
-//   - a COMPANY account: registers a company (contractor, supplier or third-party inspection company) with its first account and,
-//     if wanted, proof documents. The company is PENDING until the administrator approves it (routes/admin.js).
+//   - a COMPANY account: registers a company (contractor, supplier or third-party inspection company; the server gives it a random
+//     8-digit company ID) with its first account and, if wanted, proof documents. The company is PENDING until the administrator approves it (routes/admin.js).
 //   - a USER account (contractor, supplier or inspector): chooses one of the APPROVED companies and can work at once.
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const { fail } = require('../lib/respond');
 const { like } = require('../lib/listing');
 const { setLoginCookie, HOME_PAGES } = require('../lib/auth');
@@ -39,6 +40,27 @@ function checkPerson(name, email, password, password2) {
     return null;
 }
 
+// A new company ID: 8 random digits (like the ids of the given data, leading zeros are allowed). The user does not choose it, so two companies
+// cannot get the same one by mistake. A number that exists already is refused by the database (PRIMARY KEY); insertOrganization() then draws a new one.
+const newCompanyId = () => String(crypto.randomInt(0, 100000000)).padStart(8, '0');
+
+// Insert the company with a new random ID. Returns the ID that was saved. makeId can be replaced to test the retry.
+async function insertOrganization(conn, row, makeId = newCompanyId) {
+    for (let attempt = 1; attempt <= 20; attempt++) {
+        const id = makeId();
+        try {
+            await conn.execute(
+                "INSERT INTO organization (org_id, org_name, org_type, address, phone, email, status) VALUES (?, ?, ?, ?, ?, ?, 'PENDING')",
+                [id, row.name, row.type, row.address, row.phone, row.email]);
+            return id;
+        }
+        catch (err) {
+            if (!(err.errno === 1062 && /PRIMARY/.test(err.sqlMessage))) throw err;      // only "this ID exists" is tried again
+        }
+    }
+    throw new Error('No free company ID found.');
+}
+
 // ---------- the choice: company or user ----------
 app.get('/', (req, res) => {
     res.render('register/index');
@@ -54,12 +76,11 @@ app.post('/company', async (req, res) => {
     if (upload.error) return fail(res, upload.error);
 
     const b = req.body;
-    const type = text(b.org_type), id = text(b.org_id), name = text(b.org_name);
+    const type = text(b.org_type), name = text(b.org_name);
     const address = text(b.address), phone = text(b.phone), orgEmail = text(b.org_email);
     const person = text(b.full_name), email = text(b.email).toLowerCase();
 
     if (!Object.hasOwn(COMPANY_TYPES, type)) return fail(res, 'Please choose the type of your company.');
-    if (!/^\d{8}$/.test(id)) return fail(res, 'The company ID has 8 digits.');
     if (!name) return fail(res, 'Please enter the name of the company.');
     if (name.length > 100) return fail(res, 'The company name can have at most 100 characters.');
     if (address.length > 200) return fail(res, 'The address can have at most 200 characters.');
@@ -74,9 +95,7 @@ app.post('/company', async (req, res) => {
     try {
         saved = await saveFiles(upload.files);
         await conn.beginTransaction();
-        await conn.execute(
-            "INSERT INTO organization (org_id, org_name, org_type, address, phone, email, status) VALUES (?, ?, ?, ?, ?, ?, 'PENDING')",
-            [id, name, type, address || null, phone || null, orgEmail || null]);
+        const id = await insertOrganization(conn, { name: name, type: type, address: address || null, phone: phone || null, email: orgEmail || null });
         await conn.execute(
             "INSERT INTO user_account (org_id, full_name, email, password, role) VALUES (?, ?, ?, ?, 'COMPANY')",
             [id, person, email, hash]);
@@ -85,13 +104,12 @@ app.post('/company', async (req, res) => {
                 [id, f.name, f.stored, f.type, f.size]);
         }
         await conn.commit();
-        res.render('register/companyDone', { name: name, files: saved.length, many: saved.length > 1 });
+        res.render('register/companyDone', { id: id, name: name, files: saved.length, many: saved.length > 1 });
     }
     catch (err) {
         await conn.rollback().catch(() => {});
         await removeFiles(saved.map(f => f.stored));
-        if (err.errno === 1062 && /user_account|email/.test(err.sqlMessage)) return fail(res, 'This e-mail address already has an account.', 409);
-        if (err.errno === 1062) return fail(res, 'A company with this ID is already registered. If it is yours, please contact the administrator.', 409);
+        if (err.errno === 1062) return fail(res, 'This e-mail address already has an account.', 409);
         console.log('Company registration error: ', err);
         fail(res, 'The registration failed. Please try again.', 500);
     }
@@ -158,4 +176,5 @@ app.post('/user', async (req, res) => {
     }
 });
 
+app.insertOrganization = insertOrganization;     // exported only to test the retry
 module.exports = app;
