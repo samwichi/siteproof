@@ -1,18 +1,31 @@
 <h2>Inspections</h2>
 <p class="text-muted">Deliveries of your company's projects that have arrived on site. Check the quality documents of the supplier, then record the received and accepted quantity of each one.</p>
-<table class="table table-striped table-hover table-sm">
-  <thead>
-    <tr>
-      <th>ID</th><th>Project</th><th>Supplier</th><th>Material</th><th>Quality documents</th>
-      <th class="text-end">Ordered</th><th>Inspection</th><th class="text-end">Accepted value / retention (NT$)</th><th>Status</th>
-    </tr>
-  </thead>
-  <tbody>
-    {{#each rows}}
-      {{> inspections/row}}
-    {{/each}}
-  </tbody>
-</table>
-{{#unless rows.length}}
-  <p class="text-muted text-center">No deliveries have arrived yet.</p>
-{{/unless}}
+{{> list/controls placeholder="Search by ID, project, supplier or material"}}
+<div id="list">
+  <div class="table-responsive">
+    <table class="table table-striped table-hover table-sm">
+      <thead>
+        <tr>
+          {{> list/th key="ID" label="ID"}}
+          {{> list/th key="project" label="Project"}}
+          {{> list/th key="supplier" label="Supplier"}}
+          {{> list/th key="material" label="Material"}}
+          <th>Quality documents</th>
+          {{> list/th key="ordered" label="Ordered" cls="text-end"}}
+          <th>Inspection</th>
+          <th class="text-end">Accepted value / retention (NT$)</th>
+          {{> list/th key="status" label="Status"}}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+          {{> inspections/row}}
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{#unless rows.length}}
+    <p class="text-muted text-center">{{#if list.filtered}}No delivery matches your search.{{else}}No deliveries have arrived yet.{{/if}}</p>
+  {{/unless}}
+  {{> list/pager}}
+</div>

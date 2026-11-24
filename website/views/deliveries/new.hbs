@@ -2,7 +2,7 @@
 {{#unless projects.length}}
   <div class="alert alert-warning">Your company has no project yet, so a delivery cannot be created.</div>
 {{/unless}}
-<form class="row g-3" hx-post="/deliveries" hx-target="#main" hx-push-url="/deliveries">
+<form class="row g-3" hx-post="/deliveries" hx-target="#main" hx-push-url="/deliveries" hx-disable="findAll button">
   <div class="col-md-6">
     <label class="form-label" for="project_id">Project</label>
     <select class="form-select" id="project_id" name="project_id" required>
@@ -13,12 +13,12 @@
     </select>
   </div>
   <div class="col-md-6">
-    <label class="form-label" for="org_id">Supplier</label>
+    <label class="form-label" for="supplier_search">Supplier</label>
+    {{!-- Typing here asks the server for the matching suppliers and replaces the options of the <select> below. --}}
+    <input class="form-control mb-1" type="search" id="supplier_search" name="q" placeholder="Type a part of the supplier name to search" autocomplete="off"
+           hx-get="/deliveries/suppliers" hx-trigger="input delay:300ms" hx-target="#org_id" hx-swap="innerHTML" hx-sync="this:replace">
     <select class="form-select" id="org_id" name="org_id" required>
-      <option value="" selected disabled>Choose a supplier</option>
-      {{#each suppliers}}
-        <option value="{{org_id}}">{{org_name}}</option>
-      {{/each}}
+      {{> deliveries/supplierOptions}}
     </select>
   </div>
   <div class="col-12">

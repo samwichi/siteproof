@@ -3,7 +3,7 @@
   <td colspan="9">
     <form class="row g-2 align-items-end"
           {{#if isNew}}hx-post="/inspections/{{ID}}"{{else}}hx-put="/inspections/{{ID}}"{{/if}}
-          hx-target="closest tr" hx-swap="outerHTML">
+          hx-target="closest tr" hx-swap="outerHTML" hx-disable="findAll button">
       <div class="col-12">
         <strong>Delivery #{{ID}}</strong> - {{material}} ({{supplier}}, {{project}}). Ordered: {{ordered}} {{unit}}
       </div>

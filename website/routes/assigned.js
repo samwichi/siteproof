@@ -6,6 +6,7 @@
 // or a change made meanwhile cannot move the delivery two steps.
 const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
+const { readList } = require('../lib/listing');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -51,12 +52,23 @@ async function findAssigned(id, orgId) {
     return rows.length === 1 ? prepare(rows[0]) : null;
 }
 
-// ---------- R: list (the deliveries that still need work first, the nearest time slot first) ----------
+// Search, status filter and sorting of the list (see lib/listing.js).
+const LIST = {
+    search: ['CAST(d.delivery_id AS CHAR)', 'c.org_name', 'p.project_name', 'm.material_name'],
+    statuses: Object.keys(BADGES),
+    statusColumn: 'd.status',
+    sorts: {
+        ID: 'd.delivery_id', contractor: 'c.org_name', material: 'm.material_name', quantity: 'd.ordered_quantity',
+        slot: 'd.slot_start', documents: 'documents', status: "FIELD(d.status, 'SCHEDULED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED', 'INSPECTED', 'COMPLETED')"
+    },
+    tieBreak: 'd.delivery_id DESC',
+    // the deliveries that still need work first, the nearest time slot first
+    defaultOrder: "d.status IN ('INSPECTED', 'COMPLETED'), d.slot_start, d.delivery_id"
+};
+
+// ---------- R: list ----------
 app.get('/', async (req, res) => {
-    const SQL = SELECT_ASSIGNED +
-        " ORDER BY d.status IN ('INSPECTED', 'COMPLETED'), d.slot_start, d.delivery_id";
-    const [rows] = await db().execute(SQL, [req.user.orgId]);
-    res.render('assigned/index', { rows: rows.map(prepare) });
+    res.render('assigned/index', await readList(db(), req, LIST, SELECT_ASSIGNED, [req.user.orgId], prepare));
 });
 
 // ---------- U: move the delivery one step forward ----------

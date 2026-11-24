@@ -1,7 +1,7 @@
 {{!-- The edit form replaces the whole table row. A <form> cannot be placed between <tr> and <td>, so the form is inside one wide cell. --}}
 <tr class="table-warning">
   <td colspan="7">
-    <form class="row g-2 align-items-end" hx-put="/documents/{{ID}}" hx-target="closest tr" hx-swap="outerHTML">
+    <form class="row g-2 align-items-end" hx-put="/documents/{{ID}}" hx-target="closest tr" hx-swap="outerHTML" hx-disable="findAll button">
       <div class="col-12">
         <strong>Document #{{ID}}</strong> - delivery #{{deliveryId}} ({{material}}, {{project}})
       </div>

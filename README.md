@@ -111,7 +111,7 @@ SiteProof has moved from planning to implementation. The database and the first 
 | Business Plan | Revised (v3) |
 | System Requirements | Defined |
 | Website Architecture | Defined |
-| Frontend Development | In progress: pages for the three roles (contractor, supplier, inspector) with Handlebars, HTMX and Bootstrap |
+| Frontend Development | In progress: pages for the three roles (contractor, supplier, inspector) with Handlebars, HTMX and Bootstrap; every list has search, status filter, sorting and paging, a loading bar and error messages that stay in the corner of the window |
 | Backend Development | In progress: Express routes with sign-in, role check and company-level data isolation |
 | Database Design | MVP tables implemented in MySQL, loaded with the given data and with sample data ([ERModel.md](ERModel.md)) |
 | System Testing | Started: each function is tested by hand with the sample data; no automated tests yet |

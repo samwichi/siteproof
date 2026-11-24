@@ -2,7 +2,7 @@
 
 // Error: the main swap is skipped (HX-Reswap: none), so the form or table row that the user is working on stays on the screen.
 function fail(res, message, status = 400) {
-    res.status(status).set('HX-Reswap', 'none').render('toast', { message: message, kind: 'danger' });
+    res.status(status).set('HX-Reswap', 'none').render('toast', { message: message, kind: 'danger', seconds: 10 });
 }
 
 // Turn a MySQL error into a short message for the user.

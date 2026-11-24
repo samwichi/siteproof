@@ -1,0 +1,30 @@
+{{!-- The pager under a list (the page numbers only when there is more than one page) and the sort state for the search form. --}}
+{{#if list.sort}}
+  {{!-- These two fields belong to the search form (form="listForm"), so a new search keeps the sort order. --}}
+  <input type="hidden" form="listForm" name="sort" value="{{list.sort}}">
+  <input type="hidden" form="listForm" name="dir" value="{{list.dir}}">
+{{/if}}
+{{#if list.total}}
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <small class="text-muted">{{list.from}}-{{list.to}} of {{list.total}}</small>
+    {{#if list.showPager}}
+      <nav aria-label="Pages">
+        <ul class="pagination pagination-sm mb-0">
+          {{#if list.prevHref}}
+            <li class="page-item"><a class="page-link" href="{{list.prevHref}}" aria-label="Previous page" hx-boost="true" hx-target="#list" hx-select="#list" hx-swap="outerHTML">&laquo;</a></li>
+          {{else}}
+            <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+          {{/if}}
+          {{#each list.numbers}}
+            <li class="page-item {{#if current}}active{{/if}}"><a class="page-link" href="{{href}}" hx-boost="true" hx-target="#list" hx-select="#list" hx-swap="outerHTML">{{n}}</a></li>
+          {{/each}}
+          {{#if list.nextHref}}
+            <li class="page-item"><a class="page-link" href="{{list.nextHref}}" aria-label="Next page" hx-boost="true" hx-target="#list" hx-select="#list" hx-swap="outerHTML">&raquo;</a></li>
+          {{else}}
+            <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+          {{/if}}
+        </ul>
+      </nav>
+    {{/if}}
+  </div>
+{{/if}}

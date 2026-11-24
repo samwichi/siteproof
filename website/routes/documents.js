@@ -5,6 +5,7 @@
 // Only the document type and the file name are stored (the file itself is not uploaded in this version).
 const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
+const { readList } = require('../lib/listing');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -47,10 +48,24 @@ async function findDocument(id, orgId) {
     return rows.length === 1 ? prepare(rows[0]) : null;
 }
 
-// Show the whole list in main#main, with an optional message in the toast.
-async function showList(res, orgId, message) {
-    const [rows] = await db().execute(SELECT_DOCUMENTS + ' ORDER BY doc.document_id DESC', [orgId]);
-    res.render('documents/index', { rows: rows.map(prepare), message: message, kind: 'success' });
+// Search, status filter and sorting of the list (see lib/listing.js).
+const LIST = {
+    search: ['CAST(doc.document_id AS CHAR)', 'CAST(d.delivery_id AS CHAR)', 'p.project_name', 'm.material_name',
+             'doc.doc_type', 'doc.file_name', 'u.full_name'],
+    statuses: ['SCHEDULED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED', 'INSPECTED', 'COMPLETED'],
+    statusColumn: 'd.status',
+    sorts: {
+        ID: 'doc.document_id', delivery: 'd.delivery_id', material: 'm.material_name', docType: 'doc.doc_type',
+        fileName: 'doc.file_name', uploadedBy: 'u.full_name', status: "FIELD(d.status, 'SCHEDULED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED', 'INSPECTED', 'COMPLETED')"
+    },
+    tieBreak: 'doc.document_id DESC',
+    defaultOrder: 'doc.document_id DESC'
+};
+
+// Show the page of the list that the user asked for (?q=&status=&sort=&dir=&page=) in main#main, with an optional message in the toast.
+async function showList(req, res, message) {
+    const data = await readList(db(), req, LIST, SELECT_DOCUMENTS, [req.user.orgId], prepare);
+    res.render('documents/index', Object.assign(data, { message: message, kind: 'success' }));
 }
 
 // Check the document type and the file name (PDF or JPG, as in the data model). Returns an error message, or null when they are fine.
@@ -66,7 +81,7 @@ function checkFields(docType, fileName) {
 
 // ---------- R: list ----------
 app.get('/', async (req, res) => {
-    await showList(res, req.user.orgId);
+    await showList(req, res);
 });
 
 // ---------- C: the form to add a document (must be before /:id routes) ----------
@@ -103,7 +118,7 @@ app.post('/', async (req, res) => {
         if (result.affectedRows === 0) {
             return fail(res, 'Please choose one of your deliveries that is not inspected yet.', 409);
         }
-        await showList(res, req.user.orgId, 'Document "' + fileName + '" added.');
+        await showList(req, res, 'Document "' + fileName + '" added.');
     }
     catch (err) {
         fail(res, sqlMessage(err));

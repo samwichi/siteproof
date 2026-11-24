@@ -53,10 +53,12 @@ website/
 │   └── documents.js       UC6  supplier: add, list, edit, delete quality documents (type and file name) until the delivery is inspected
 ├── lib/
 │   ├── auth.js            loadUser (who is logged in) and requireRole('...')
-│   └── respond.js         fail(res, message): error message in the toast, without changing the page
+│   ├── respond.js         fail(res, message): error message in the toast, without changing the page
+│   └── listing.js         readList(): search, status filter, sorting and paging of a list (used by all the list pages)
 ├── views/
 │   ├── index.hbs          the only full page: header, navbar, div#toast, main#main, footer
 │   ├── navbar.hbs, home.hbs, login.hbs, toast.hbs
+│   ├── list/              the parts that every list shares: controls.hbs (search box and status filter), th.hbs (sortable column header), pager.hbs
 │   └── deliveries/, inspections/, ratings/, assigned/, history/, documents/     one folder for each route (index, row, rowToast, new/form, edit)
 └── public/                our own CSS / JS / images
 ```
@@ -71,6 +73,12 @@ Rules used in `routes/deliveries.js` (copy them in the other routes):
 
 * every query is limited to the company of the logged-in user (`req.user.orgId`), so a user cannot read or change the data of another company by changing the id in the URL;
 * an action that the business rules do not allow is checked in SQL (`AND d.status = 'SCHEDULED'`) and answered with `fail(res, 'message', status)`.
+
+### How a list page works (search, filter, sort, paging)
+
+Each list route defines a small `LIST` object (the columns to search, the allowed statuses, the sortable columns) and calls `readList(...)` from `lib/listing.js`. The user can only choose one of the listed sort keys, so no text of the user reaches the SQL.
+In the template, the search form, the column headers and the pager are the shared partials in `views/list/`. They ask for the same page with `?q=&status=&sort=&dir=&page=`; HTMX takes only `<div id="list">` out of the answer (`hx-select`) and updates the address (`hx-push-url`), so reload, back button and links work. The search box is outside `#list`, so the cursor stays in it while the list changes.
+To add the same to a new list: copy `LIST` and the `index.hbs` structure of `routes/inspections.js`.
 
 ## 5. Git
 
