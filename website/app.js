@@ -20,6 +20,8 @@ app.set('views', './views');
 
 // ---- Middleware ----
 app.use(express.urlencoded({ extended: true }));
+// Express 5 leaves req.body undefined when a request has no body; an empty object lets the routes read req.body.x without an error.
+app.use((req, res, next) => { req.body = req.body || {}; next(); });
 app.use(cookieParser(configs.cookieSecret));
 app.use(express.static('public'));
 app.use(express.static('node_modules/htmx.org/dist'));
@@ -77,13 +79,13 @@ const ratings = require('./routes/ratings');
 ratings.connection = connection;
 app.use('/ratings', requireRole('CONTRACTOR_PM'), ratings);
 
+const assigned = require('./routes/assigned');
+assigned.connection = connection;
+app.use('/assigned', requireRole('SUPPLIER'), assigned);
+
 const documents = require('./routes/documents');
 documents.connection = connection;
 app.use('/documents', requireRole('SUPPLIER'), documents);
-
-const status = require('./routes/status');
-status.connection = connection;
-app.use('/status', requireRole('SUPPLIER'), status);
 
 // ---- Errors that nobody handled (for example a failed query inside an async route) ----
 app.use((err, req, res, next) => {
