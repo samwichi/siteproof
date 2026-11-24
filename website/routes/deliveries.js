@@ -114,13 +114,35 @@ app.get('/materials', async (req, res) => {
     res.render('deliveries/materialResponse', await findMaterials(db(), req.query.material_q, req.query.category));
 });
 
+// A listed product of an approved supplier (routes/catalog.js shows them), with the values that the new delivery form needs.
+async function findCatalogProduct(id) {
+    const [rows] = await db().execute(
+        `SELECT sp.org_id AS supplierId, s.org_name AS supplier, sp.material_id AS materialId, m.material_name AS material, m.unit AS unit,
+                CAST(sp.price_min AS DOUBLE) AS priceMin, CAST(sp.price_max AS DOUBLE) AS priceMax,
+                CAST(sp.min_order_qty AS DOUBLE) AS minOrder, sp.lead_time_days AS leadTime, sp.note AS note
+         FROM supplier_product sp
+         JOIN organization s ON s.org_id = sp.org_id
+         JOIN material m     ON m.material_id = sp.material_id
+         WHERE sp.product_id = ? AND sp.active = 1 AND s.org_type = 'SUPPLIER' AND s.status = 'APPROVED'`, [id]);
+    if (rows.length !== 1) return null;
+    const p = rows[0];
+    p.samePrice = (p.priceMin === p.priceMax);
+    p.priceMid = Math.round((p.priceMin + p.priceMax) / 2 * 100) / 100;
+    p.priceMinText = p.priceMin.toLocaleString('en-US');          // 2400 -> 2,400 (the form shows the range as a help)
+    p.priceMaxText = p.priceMax.toLocaleString('en-US');
+    return p;
+}
+
 // ---------- C: the form to create a delivery (must be before /:id routes) ----------
 app.get('/new', async (req, res) => {
     const [projects] = await db().execute(
         'SELECT project_id, project_name FROM project WHERE org_id = ? ORDER BY project_name', [req.user.orgId]);
     const suppliers = await findSuppliers('');
     const materials = await findMaterials(db(), '', 0);
-    res.render('deliveries/new', Object.assign(suppliers, materials, { projects: projects }));
+    // Opened from "Find products" (?product=ID): the supplier and the material of that listed product are chosen already.
+    const product = req.query.product ? await findCatalogProduct(req.query.product) : null;
+    res.render('deliveries/new', Object.assign(suppliers, materials,
+        { projects: projects, product: product, productMissing: Boolean(req.query.product) && !product }));
 });
 
 // ---------- C: create ----------

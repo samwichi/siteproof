@@ -74,6 +74,14 @@ Rules:
 * The catalog is filled at the start from the purchases of the given data (step 4.11 of `database/04_transform_load.sql`): each supplier offers the materials it has sold, with the lowest and highest unit price as the range. The demo suppliers also offer the materials of their sample deliveries (step 6.7b).
 * An existing database gets the new table with `database/08_upgrade_supplier_products.sql`.
 
+## 2.3 Find products (menu of a contractor)
+
+* The contractor searches the **listed** products of all **approved** suppliers by material, supplier or note, and filters by category. The same material is shown together with the cheapest supplier first, so the suppliers of a material are easy to compare.
+* Each row shows the price range per unit, the minimum order, the lead time and the **supplier rating** (the average of all the ratings that contractors gave this supplier, with the number of ratings). Every column can be sorted (for example by rating).
+* **Order** opens the new delivery form with the supplier and the material already chosen: the price range, minimum order and lead time are shown, the quantity starts at the minimum order and the unit price at the middle of the range (the contractor changes it to the agreed price). "Choose another supplier or material" goes back to the normal form.
+* If the supplier unlisted or deleted the product meanwhile, the form says so and shows the normal supplier and material pickers.
+* Later (phase 2) the button "Order" can become "Add to a request for quotation".
+
 ## 3. Folders
 
 ```
@@ -89,6 +97,7 @@ website/
 │   ├── adminUsers.js      administrator: all users with their company
 │   ├── adminDocuments.js  administrator: opens a proof document (a normal link, mounted before the wildcard route)
 │   ├── deliveries.js      UC2, UC3  contractor: create, list, edit, delete delivery records, and the detail page of one delivery   <-- first CRUD
+│   ├── catalog.js         contractor: "Find products": search the listed products of the approved suppliers; "Order" opens the new delivery form
 │   ├── inspections.js     UC8-UC10  inspector: see the supplier's quality documents, record received / accepted quantity (accepted value and retention are calculated)
 │   ├── ratings.js         UC4  contractor: complete an inspected delivery and rate the supplier (1-5)
 │   ├── assigned.js        UC5  supplier: list the assigned deliveries and move each one forward (PREPARING, IN_TRANSIT, DELIVERED)
