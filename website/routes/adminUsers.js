@@ -5,7 +5,7 @@ const { ROLE_NAMES } = require('../lib/auth');
 const app = express.Router();
 
 const SELECT_USERS = `
-    SELECT u.user_id AS ID, u.full_name AS name, u.email AS email, u.role AS role, u.active AS active,
+    SELECT u.user_id AS ID, u.full_name AS name, u.email AS email, u.role AS role, u.active AS active, u.status AS approval,
            u.org_id AS orgId, o.org_name AS company, DATE_FORMAT(u.created_at, '%Y-%m-%d') AS registered
     FROM user_account u LEFT JOIN organization o ON o.org_id = u.org_id
     WHERE 1 = 1`;
@@ -24,6 +24,8 @@ const LIST = {
 function prepare(row) {
     row.roleName = ROLE_NAMES[row.role];
     row.isActive = (row.active === 1);
+    row.isWaiting = (row.approval === 'PENDING');
+    row.isRejected = (row.approval === 'REJECTED');
     return row;
 }
 

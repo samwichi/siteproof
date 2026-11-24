@@ -106,6 +106,7 @@ async function readList(db, req, cfg, select, params, prepare) {
     const list = {
         path: path, q: s.q, sort: s.sort, dir: s.dir, th: th,
         filterLabel: cfg.filterLabel || 'status',
+        hasStatus: Boolean(cfg.statuses && cfg.statuses.length),          // a list without statuses (projects) has no status filter
         statusOptions: [{ value: '', label: cfg.allLabel || 'All statuses', selected: !s.status }]
             .concat((cfg.statuses || []).map(v => ({ value: v, label: v, selected: v === s.status }))),
         filters: (cfg.filters || []).map(f => ({

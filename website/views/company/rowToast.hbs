@@ -1,3 +1,4 @@
-{{!-- One table row plus a message in div#toast. --}}
+{{!-- One table row plus a message in div#toast, and the new number of waiting registrations for the badge in the menu. --}}
 {{> company/row}}
 {{> toast}}
+<hx-partial hx-target="#waitingBadge" hx-swap="outerHTML">{{> company/waitingBadge}}</hx-partial>

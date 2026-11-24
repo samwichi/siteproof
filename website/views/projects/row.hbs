@@ -1,0 +1,19 @@
+<tr class="align-middle">
+  <td class="text-nowrap">
+    {{#if canDelete}}
+      <button type="button" class="btn btn-sm btn-danger"
+            hx-delete="/projects/{{ID}}" hx-target="closest tr" hx-swap="delete"
+            hx-confirm="Delete the project {{name}}?" title="Delete the project {{name}}" aria-label="Delete the project {{name}}">
+        <i aria-hidden="true" class="bi bi-trash3-fill"></i>
+      </button>
+    {{/if}}
+    <button type="button" class="btn btn-sm btn-primary"
+          hx-get="/projects/{{ID}}/edit" hx-target="closest tr" hx-swap="outerHTML" title="Edit the project {{name}}" aria-label="Edit the project {{name}}">
+      <i aria-hidden="true" class="bi bi-pencil"></i>
+    </button>
+  </td>
+  <td>{{name}}</td>
+  <td class="text-end">{{retentionPercent}} %</td>
+  <td class="text-end">{{deliveries}}</td>
+  <td class="text-end">{{open}}</td>
+</tr>

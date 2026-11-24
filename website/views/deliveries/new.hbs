@@ -1,6 +1,6 @@
 <h1 class="h2">New delivery</h1>
 {{#unless projects.length}}
-  <div class="alert alert-warning">Your company has no project yet, so a delivery cannot be created.</div>
+  <div class="alert alert-warning">Your company has no project yet, so a delivery cannot be created. Please ask the company account of {{user.orgName}} to create the project (menu Projects).</div>
 {{/unless}}
 <form class="row g-3" hx-post="/deliveries" hx-target="#main" hx-push-url="/deliveries" hx-disable="findAll button">
   <div class="col-md-6">

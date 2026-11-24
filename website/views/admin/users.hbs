@@ -22,7 +22,7 @@
           <td>{{email}}</td>
           <td>{{roleName}}</td>
           <td>{{#if orgId}}<a class="d-inline-block py-1" href="/admin/companies/{{orgId}}" hx-boost="true" hx-target="#main">{{company}}</a>{{else}}-{{/if}}</td>
-          <td>{{#if isActive}}<span class="badge text-bg-success">Active</span>{{else}}<span class="badge text-bg-secondary">Switched off</span>{{/if}}</td>
+          <td>{{#if isWaiting}}<span class="badge text-bg-warning">Waiting for the company</span>{{else}}{{#if isRejected}}<span class="badge text-bg-danger">Rejected by the company</span>{{else}}{{#if isActive}}<span class="badge text-bg-success">Active</span>{{else}}<span class="badge text-bg-secondary">Switched off</span>{{/if}}{{/if}}{{/if}}</td>
           <td class="text-nowrap">{{registered}}</td>
         </tr>
         {{/each}}

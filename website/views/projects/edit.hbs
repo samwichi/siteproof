@@ -1,0 +1,25 @@
+{{!-- The edit form replaces the whole table row; the form is inside one wide cell (a <form> cannot be placed between <tr> and <td>). --}}
+<tr class="table-warning">
+  <td colspan="5">
+    <form class="row g-2 align-items-end" hx-put="/projects/{{ID}}" hx-target="closest tr" hx-swap="outerHTML" hx-disable="findAll button">
+      <div class="col-md-6">
+        <label class="form-label" for="name-{{ID}}">Project</label>
+        <input class="form-control" id="name-{{ID}}" autofocus name="project_name" value="{{name}}" maxlength="100" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="retention-{{ID}}">Retention rate (%)</label>
+        <input class="form-control" id="retention-{{ID}}" type="number" name="retention_percent" value="{{retentionPercent}}" min="0" max="100" step="0.1" required>
+      </div>
+      <div class="col-md-3 text-nowrap">
+        {{!-- Both buttons have the name "action": the route reads req.body.action to know which one was clicked. --}}
+        <button type="submit" class="btn btn-success" title="Update" aria-label="Update the project {{name}}" name="action" value="update">
+          <i aria-hidden="true" class="bi bi-check-lg"></i>
+        </button>
+        <button type="submit" class="btn btn-warning" title="Cancel" aria-label="Cancel" name="action" value="cancel" formnovalidate>
+          <i aria-hidden="true" class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      {{#if deliveries}}<div class="form-text col-12">A new retention rate is used for the next inspections; the inspections that were already recorded keep their rate.</div>{{/if}}
+    </form>
+  </td>
+</tr>

@@ -16,9 +16,12 @@
         {{/if}}
         {{#if isCompany}}
         <li class="nav-item">
-          <a class="nav-link" href="/company"><i aria-hidden="true" class="bi bi-people"></i> Users of my company</a>
+          <a class="nav-link" href="/company"><i aria-hidden="true" class="bi bi-people"></i> Users of my company {{> company/waitingBadge}}</a>
         </li>
         {{#if isContractorCompany}}
+        <li class="nav-item">
+          <a class="nav-link" href="/projects"><i aria-hidden="true" class="bi bi-buildings"></i> Projects</a>
+        </li>
         <li class="nav-item">
           <a class="nav-link" href="/company/appointments"><i aria-hidden="true" class="bi bi-clipboard2-check"></i> Inspection companies</a>
         </li>

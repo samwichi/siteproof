@@ -1,5 +1,5 @@
 <h1 class="h2">Users of {{user.orgName}}</h1>
-<p class="text-muted">These people registered for your company and can work at once. Switch an account off when somebody leaves the company: the person cannot sign in any more, and the data of the company stays.</p>
+<p class="text-muted">These people registered for your company. A new registration <strong>waits for your approval</strong>: check that the person really works for {{user.orgName}} before you approve it (only then the person can sign in). Switch an account off when somebody leaves the company: the person cannot sign in any more, and the data of the company stays.</p>
 {{> list/controls placeholder="Search by name or e-mail"}}
 <div id="list" data-count="{{list.total}}">
   <div class="table-responsive">

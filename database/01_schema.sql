@@ -32,6 +32,9 @@ CREATE TABLE organization (
 --       COMPANY                             the company account (one per company): sees and manages the users of its company;
 --       ADMIN                               the website administrator: belongs to no company (org_id is NULL) and approves the companies.
 --     active = 0 means that the company account (or the administrator) has switched the user off: the user cannot sign in.
+--     status: a person who registers as a user is PENDING until the company account of the chosen company approves (APPROVED) or
+--     rejects (REJECTED) the registration, so nobody can work for a company only by choosing it in the list. Accounts that are created
+--     directly (company accounts, the administrator, the sample data) are APPROVED.
 CREATE TABLE user_account (
     user_id    INT AUTO_INCREMENT PRIMARY KEY,
     org_id     CHAR(8),
@@ -40,6 +43,7 @@ CREATE TABLE user_account (
     password   VARCHAR(255) NOT NULL,
     role       VARCHAR(20)  NOT NULL CHECK (role IN ('CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR', 'COMPANY', 'ADMIN')),
     active     TINYINT(1)   NOT NULL DEFAULT 1,
+    status     VARCHAR(10)  NOT NULL DEFAULT 'APPROVED' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
     created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (org_id) REFERENCES organization (org_id),
     CHECK ((role = 'ADMIN' AND org_id IS NULL) OR (role <> 'ADMIN' AND org_id IS NOT NULL))
@@ -69,13 +73,14 @@ CREATE TABLE inspection_appointment (
     FOREIGN KEY (inspection_id) REFERENCES organization (org_id)
 );
 
--- 1.6 Projects of a contractor, with the retention rate of the contract (0.05 = 5%).
+-- 1.6 Projects of a contractor, with the retention rate of the contract (0.05 = 5%). The company account of the contractor manages them.
 CREATE TABLE project (
     project_id     INT AUTO_INCREMENT PRIMARY KEY,
     org_id         CHAR(8)      NOT NULL,
     project_name   VARCHAR(100) NOT NULL,
     retention_rate DECIMAL(4,3) NOT NULL CHECK (retention_rate BETWEEN 0 AND 1),
-    FOREIGN KEY (org_id) REFERENCES organization (org_id)
+    FOREIGN KEY (org_id) REFERENCES organization (org_id),
+    UNIQUE (org_id, project_name)      -- two projects of the same contractor cannot have the same name
 );
 
 -- 1.7 Categories to search the catalog: labor (man), equipment (machine), material and other.

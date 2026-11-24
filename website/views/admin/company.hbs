@@ -94,7 +94,7 @@
     <tbody>
       {{#each users}}
       <tr><td>{{name}}</td><td>{{email}}</td><td>{{roleName}}</td>
-          <td>{{#if isActive}}<span class="badge text-bg-success">Active</span>{{else}}<span class="badge text-bg-secondary">Switched off</span>{{/if}}</td></tr>
+          <td>{{#if isWaiting}}<span class="badge text-bg-warning">Waiting for the company</span>{{else}}{{#if isRejected}}<span class="badge text-bg-danger">Rejected by the company</span>{{else}}{{#if isActive}}<span class="badge text-bg-success">Active</span>{{else}}<span class="badge text-bg-secondary">Switched off</span>{{/if}}{{/if}}{{/if}}</td></tr>
       {{/each}}
     </tbody>
   </table>

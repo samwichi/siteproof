@@ -11,6 +11,7 @@
       <input class="form-control" type="search" name="q" value="{{list.q}}" placeholder="{{placeholder}}" aria-label="Search">
     </div>
   </div>
+  {{#if list.hasStatus}}
   <div class="{{#if list.filters.length}}col-6 col-lg-2{{else}}col-md-4{{/if}}">
     <select class="form-select" name="status" aria-label="Filter by {{list.filterLabel}}">
       {{#each list.statusOptions}}
@@ -18,6 +19,7 @@
       {{/each}}
     </select>
   </div>
+  {{/if}}
   {{#each list.filters}}
   <div class="col-6 col-lg-2">
     <select class="form-select" name="{{name}}" aria-label="Filter by {{label}}">
