@@ -1,0 +1,27 @@
+<tr class="align-middle">
+  <td>{{ID}}</td>
+  <td>{{contractor}}<br><small class="text-muted">{{project}}</small></td>
+  <td class="text-truncate" style="max-width: 260px;" title="{{material}}">{{material}}</td>
+  <td class="text-end text-nowrap">{{quantity}} {{unit}}</td>
+  <td class="text-nowrap">{{slotStart}} - {{slotEnd}}</td>
+  <td>
+    <a href="/documents" hx-boost="true" hx-target="#main" title="Open the quality documents">
+      <i class="bi bi-file-earmark-text"></i> {{documents}}
+    </a>
+  </td>
+  <td><span class="badge text-bg-{{badge}}">{{status}}</span></td>
+  <td class="text-nowrap">
+    {{#if nextStatus}}
+      {{!-- The hidden field "from" is the status that the user sees: the server moves the delivery only if it is still in that status. --}}
+      <form hx-put="/assigned/{{ID}}" hx-target="closest tr" hx-swap="outerHTML"
+            hx-confirm="Change delivery #{{ID}} from {{status}} to {{nextStatus}}?">
+        <input type="hidden" name="from" value="{{status}}">
+        <button type="submit" class="btn btn-sm btn-primary">
+          <i class="bi bi-arrow-right-circle-fill"></i> {{nextLabel}}
+        </button>
+      </form>
+    {{else}}
+      <span class="text-muted">-</span>
+    {{/if}}
+  </td>
+</tr>

@@ -25,7 +25,7 @@ app.post('/login', async (req, res) => {
     // Each role starts on its own page.
     if (u.role === 'CONTRACTOR_PM') res.redirect('/deliveries');
     else if (u.role === 'INSPECTOR') res.redirect('/inspections');
-    else if (u.role === 'SUPPLIER') res.redirect('/documents');
+    else if (u.role === 'SUPPLIER') res.redirect('/assigned');
     else res.redirect('/');
 });
 
