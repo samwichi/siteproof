@@ -386,7 +386,7 @@ erDiagram
 | USER_ACCOUNT | Users; each one belongs to a company and has one role (the website administrator has no company); a new user is `PENDING` until the company account approves it; `active = 0` switches a user off | `user_id` | US1 / UC1 |
 | ORG_DOCUMENT | Proof documents (PDF/JPG/PNG) that a company uploads when it registers; only the administrator opens them | `document_id` | UC1 (registration) |
 | INSPECTION_APPOINTMENT | A contractor appoints a third-party inspection company; its inspectors then see the deliveries of the contractor | `contractor_id` + `inspection_id` | UC1, UC8 |
-| PROJECT | Projects of a contractor, with the contract retention rate | `project_id` | US2, US3, UC10 |
+| PROJECT | Projects of a contractor, with the contract retention rate (managed by the company account; the name is unique in the company) | `project_id` | US2, US3, UC10 |
 | MATERIAL_CATEGORY | Categories to search the catalog: Labor, Equipment, Material, Other | `category_id` | US2 |
 | MATERIAL | Catalog of materials, labor and equipment | `material_id` (8-digit id) | US2 / UC2 |
 | PURCHASE | Past purchases from suppliers (loaded from the data given in class) | `purchase_id` | US3, US7 |

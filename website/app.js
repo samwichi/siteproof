@@ -100,6 +100,10 @@ const register = require('./routes/register');
 register.connection = connection;
 app.use('/register', register);
 
+const projects = require('./routes/projects');
+projects.connection = connection;
+app.use('/projects', requireRole('COMPANY'), projects);          // only the company account of a contractor (checked in the router)
+
 const company = require('./routes/company');
 company.connection = connection;
 app.use('/company', requireRole('COMPANY'), company);

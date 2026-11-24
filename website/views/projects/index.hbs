@@ -1,0 +1,43 @@
+<h1 class="h2">Projects</h1>
+<p class="text-muted">The project managers of {{user.orgName}} choose one of these projects when they create a delivery. The retention rate of the contract is kept from the accepted value of each inspected delivery.</p>
+<form class="row g-2 mb-4 align-items-end" hx-post="/projects" hx-target="#main" hx-disable="findAll button">
+  <div class="col-md-6">
+    <label class="form-label" for="project_name">New project</label>
+    <input class="form-control" id="project_name" name="project_name" maxlength="100" placeholder="Name of the project" required>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label" for="retention_percent">Retention rate (%)</label>
+    <input class="form-control" id="retention_percent" name="retention_percent" type="number" min="0" max="100" step="0.1" value="5" required aria-describedby="retention-help">
+  </div>
+  <div class="col-md-3">
+    <button class="btn btn-success w-100"><i aria-hidden="true" class="bi bi-plus-circle-fill"></i> Create project</button>
+  </div>
+  <div id="retention-help" class="form-text col-12 mt-1">Usually 5 to 10 % of the accepted value, as written in the contract.</div>
+</form>
+{{> list/controls placeholder="Search by project name"}}
+<div id="list" data-count="{{list.total}}">
+  <div class="table-responsive">
+    <table class="table table-striped table-hover table-sm">
+      <caption class="visually-hidden">Projects</caption>
+      <thead>
+        <tr>
+          <th scope="col"><span class="visually-hidden">Actions</span></th>
+          {{> list/th key="name" label="Project"}}
+          {{> list/th key="retention" label="Retention rate" cls="text-end"}}
+          {{> list/th key="deliveries" label="Deliveries" cls="text-end"}}
+          {{> list/th key="open" label="Not completed" cls="text-end"}}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+          {{> projects/row}}
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{#unless rows.length}}
+    <p class="text-muted text-center">{{#if list.filtered}}No project matches your search.{{else}}No project yet. Create the first project above: without a project your project managers cannot create deliveries.{{/if}}</p>
+  {{/unless}}
+  {{> list/pager}}
+</div>
+{{#if message}}{{> toast}}{{/if}}

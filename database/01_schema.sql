@@ -73,13 +73,14 @@ CREATE TABLE inspection_appointment (
     FOREIGN KEY (inspection_id) REFERENCES organization (org_id)
 );
 
--- 1.6 Projects of a contractor, with the retention rate of the contract (0.05 = 5%).
+-- 1.6 Projects of a contractor, with the retention rate of the contract (0.05 = 5%). The company account of the contractor manages them.
 CREATE TABLE project (
     project_id     INT AUTO_INCREMENT PRIMARY KEY,
     org_id         CHAR(8)      NOT NULL,
     project_name   VARCHAR(100) NOT NULL,
     retention_rate DECIMAL(4,3) NOT NULL CHECK (retention_rate BETWEEN 0 AND 1),
-    FOREIGN KEY (org_id) REFERENCES organization (org_id)
+    FOREIGN KEY (org_id) REFERENCES organization (org_id),
+    UNIQUE (org_id, project_name)      -- two projects of the same contractor cannot have the same name
 );
 
 -- 1.7 Categories to search the catalog: labor (man), equipment (machine), material and other.

@@ -5,7 +5,7 @@ Extra packages: `cookie-parser` (signed login cookie, as in the Express laborato
 
 ## 1. Run it
 
-1. Start MySQL and run the scripts `database/01_schema.sql` to `database/06_sample_data.sql` (in this order). **If you already have the database from an older version, run all the scripts again** (`01_schema.sql` deletes the old database): the registration needs new tables and columns. If you want to keep your data, `database/07_upgrade_user_approval.sql` adds only the new column of the user approval.
+1. Start MySQL and run the scripts `database/01_schema.sql` to `database/06_sample_data.sql` (in this order). **If you already have the database from an older version, run all the scripts again** (`01_schema.sql` deletes the old database): the registration needs new tables and columns. If you want to keep your data, `database/07_upgrade_user_approval.sql` adds only the new column and rule of the user approval and the projects.
 2. Create the database user of the website (change the IP range if your Docker network is different):
 
    ```sql
@@ -51,12 +51,13 @@ There are two kinds of accounts:
 | Who | A contractor, a supplier or a third-party inspection company that is new on SiteProof | A contractor project manager, a supplier or an inspector |
 | How | Choose the type, enter the name and contact data (the server gives the company a random 8-digit company ID and shows it after the registration), optionally up to 3 proof documents (PDF, JPG, PNG, 5 MB each), and the e-mail and password of the company account | Choose the role, search the company in the list (name or ID), enter name, e-mail and password |
 | Can sign in | Only after the **administrator approves** the company | Only after the **company account of the company approves** the user |
-| Can do | See and manage **all users of its company** (approve or reject a new registration, switch an account off or on); a contractor also appoints third-party inspection companies | The work of its role (deliveries, inspections, ...) |
+| Can do | See and manage **all users of its company** (approve or reject a new registration, switch an account off or on); a contractor also creates the **projects** and appoints third-party inspection companies | The work of its role (deliveries, inspections, ...) |
 
 Rules:
 
 * The list of the user registration has only **approved** companies **with a company account**, and only the companies that fit the role (a contractor works for a contractor, a supplier for a supplier, an inspector for a contractor or for an inspection company). The server checks it again, so a changed form does not help. The 500 suppliers of the given data have no company account, so their people register the company first.
 * A new user is **waiting** (`user_account.status = 'PENDING'`) until the company account approves or rejects the registration (menu: Users of my company; the waiting ones are first and the menu shows how many wait). Before, anybody could choose a company in the list and work for it at once (for example inspect and reject its deliveries). A waiting or rejected user cannot sign in, and the login page says why. A rejected registration can still be approved later; an approved user is switched off instead of rejected.
+* The company account of a contractor manages the **projects** (menu: Projects): name and retention rate in percent. The name is unique in the company. A project can be deleted only while it has no delivery. A new retention rate is used for the next inspections; the recorded inspections keep the rate that they copied. Without a project the project managers cannot create a delivery, so a new contractor creates its first project here.
 * A company that is not approved (waiting or rejected) cannot be used: nobody of it can sign in, and a user that has the page open is sent to the login page at the next click. The login page says why (a rejection shows the reason that the administrator wrote). The same happens to a user that the company account switched off.
 * The administrator sees all companies (waiting ones first) and all users, opens the proof documents, approves or rejects a company (a rejected or approved company can be changed later). The administrator does not see any delivery.
 * The company list of the administrator shows the ID, name, type, phone, e-mail, address, status, users, documents and the registration date. Filters: status, type and "accounts". The normal view ("With an account") shows the companies that somebody registered for and the waiting ones; the 500 companies of the given data have no account, so they are hidden until the filter is "All companies" (a hint says how many). The filter "Same name as another" and the yellow mark "N more with this name" show companies with the same name: in the given data they are different companies (other ID, phone and address), so they are never merged. On the page of a company the administrator sees a warning with the other companies of the same name before approving.
@@ -74,6 +75,7 @@ website/
 │   ├── auth.js            UC1  sign in / sign out (and the message when the account is switched off or the company is not approved)
 │   ├── register.js        registration: company account (with proof documents) and user account (company list with search)
 │   ├── company.js         company account: users of the company (approve / reject a registration, switch off / on) and the appointment of inspection companies
+│   ├── projects.js        company account of a contractor: create, list, edit, delete the projects (name, retention rate)
 │   ├── admin.js           administrator: all companies, approve / reject, proof documents and users of a company
 │   ├── adminUsers.js      administrator: all users with their company
 │   ├── adminDocuments.js  administrator: opens a proof document (a normal link, mounted before the wildcard route)
