@@ -1,5 +1,26 @@
-<tr class="align-middle{{#unless isActive}} table-secondary{{/unless}}">
+<tr class="align-middle{{#if isWaiting}} table-warning{{/if}}{{#if isOff}} table-secondary{{/if}}{{#if isRejected}} table-secondary{{/if}}">
   <td class="text-nowrap">
+    {{#if isWaiting}}
+      <button type="button" class="btn btn-sm btn-success"
+            hx-put="/company/users/{{ID}}/approval" hx-vals='{"decision": "APPROVED"}' hx-target="closest tr" hx-swap="outerHTML"
+            title="Approve the registration of {{name}}" aria-label="Approve the registration of {{name}}">
+        <i aria-hidden="true" class="bi bi-check-lg"></i> Approve
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-danger"
+            hx-put="/company/users/{{ID}}/approval" hx-vals='{"decision": "REJECTED"}' hx-target="closest tr" hx-swap="outerHTML"
+            hx-confirm="Reject the registration of {{name}} ({{email}})? The person cannot sign in."
+            title="Reject the registration of {{name}}" aria-label="Reject the registration of {{name}}">
+        <i aria-hidden="true" class="bi bi-x-lg"></i> Reject
+      </button>
+    {{/if}}
+    {{#if isRejected}}
+      <button type="button" class="btn btn-sm btn-outline-success"
+            hx-put="/company/users/{{ID}}/approval" hx-vals='{"decision": "APPROVED"}' hx-target="closest tr" hx-swap="outerHTML"
+            hx-confirm="Approve {{name}} after all? The person can then sign in."
+            title="Approve {{name}} after all" aria-label="Approve {{name}} after all">
+        <i aria-hidden="true" class="bi bi-arrow-counterclockwise"></i> Approve
+      </button>
+    {{/if}}
     {{#if isActive}}
       <button type="button" class="btn btn-sm btn-danger"
             hx-put="/company/users/{{ID}}" hx-vals='{"active": "0"}' hx-target="closest tr" hx-swap="outerHTML"
@@ -7,7 +28,8 @@
             title="Switch off the account of {{name}}" aria-label="Switch off the account of {{name}}">
         <i aria-hidden="true" class="bi bi-person-slash"></i>
       </button>
-    {{else}}
+    {{/if}}
+    {{#if isOff}}
       <button type="button" class="btn btn-sm btn-success"
             hx-put="/company/users/{{ID}}" hx-vals='{"active": "1"}' hx-target="closest tr" hx-swap="outerHTML"
             title="Switch on the account of {{name}}" aria-label="Switch on the account of {{name}}">
@@ -18,6 +40,11 @@
   <td>{{name}}</td>
   <td>{{email}}</td>
   <td>{{roleName}}</td>
-  <td>{{#if isActive}}<span class="badge text-bg-success">Active</span>{{else}}<span class="badge text-bg-secondary">Switched off</span>{{/if}}</td>
+  <td>
+    {{#if isWaiting}}<span class="badge text-bg-warning">Waiting for approval</span>{{/if}}
+    {{#if isActive}}<span class="badge text-bg-success">Active</span>{{/if}}
+    {{#if isOff}}<span class="badge text-bg-secondary">Switched off</span>{{/if}}
+    {{#if isRejected}}<span class="badge text-bg-danger">Rejected</span>{{/if}}
+  </td>
   <td class="text-nowrap">{{registered}}</td>
 </tr>

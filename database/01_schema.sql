@@ -32,6 +32,9 @@ CREATE TABLE organization (
 --       COMPANY                             the company account (one per company): sees and manages the users of its company;
 --       ADMIN                               the website administrator: belongs to no company (org_id is NULL) and approves the companies.
 --     active = 0 means that the company account (or the administrator) has switched the user off: the user cannot sign in.
+--     status: a person who registers as a user is PENDING until the company account of the chosen company approves (APPROVED) or
+--     rejects (REJECTED) the registration, so nobody can work for a company only by choosing it in the list. Accounts that are created
+--     directly (company accounts, the administrator, the sample data) are APPROVED.
 CREATE TABLE user_account (
     user_id    INT AUTO_INCREMENT PRIMARY KEY,
     org_id     CHAR(8),
@@ -40,6 +43,7 @@ CREATE TABLE user_account (
     password   VARCHAR(255) NOT NULL,
     role       VARCHAR(20)  NOT NULL CHECK (role IN ('CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR', 'COMPANY', 'ADMIN')),
     active     TINYINT(1)   NOT NULL DEFAULT 1,
+    status     VARCHAR(10)  NOT NULL DEFAULT 'APPROVED' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
     created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (org_id) REFERENCES organization (org_id),
     CHECK ((role = 'ADMIN' AND org_id IS NULL) OR (role <> 'ADMIN' AND org_id IS NOT NULL))

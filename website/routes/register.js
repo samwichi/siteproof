@@ -1,13 +1,13 @@
 // Registration. Two kinds of accounts:
 //   - a COMPANY account: registers a company (contractor, supplier or third-party inspection company; the server gives it a random
 //     8-digit company ID) with its first account and, if wanted, proof documents. The company is PENDING until the administrator approves it (routes/admin.js).
-//   - a USER account (contractor, supplier or inspector): chooses one of the APPROVED companies and can work at once.
+//   - a USER account (contractor, supplier or inspector): chooses one of the APPROVED companies that have a company account. The user is
+//     PENDING until that company account approves the registration (routes/company.js), so nobody can work for a company only by choosing it.
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { fail } = require('../lib/respond');
 const { like } = require('../lib/listing');
-const { setLoginCookie, HOME_PAGES } = require('../lib/auth');
 const { readFiles, saveFiles, removeFiles, MAX_FILES } = require('../lib/upload');
 const app = express.Router();
 
@@ -124,13 +124,15 @@ app.get('/user', async (req, res) => {
 });
 
 // The approved companies that the role can work for and whose name or ID contains the text (the first 50; type to narrow down).
+// Only companies with an active company account are listed: somebody of the company must approve the new user.
 const COMPANY_LIMIT = 50;
+const HAS_COMPANY_ACCOUNT = " AND EXISTS (SELECT 1 FROM user_account c WHERE c.org_id = organization.org_id AND c.role = 'COMPANY' AND c.active = 1)";
 async function findCompanies(role, textToFind) {
     const types = ROLE_COMPANIES[role];
     if (!types) return { chosen: false, companies: [], total: 0, shown: 0, more: false };
     const q = text(textToFind).slice(0, 100);
     const marks = types.map(() => '?').join(', ');
-    const where = " WHERE status = 'APPROVED' AND org_type IN (" + marks + ')' + (q ? ' AND (org_name LIKE ? OR org_id LIKE ?)' : '');
+    const where = " WHERE status = 'APPROVED' AND org_type IN (" + marks + ')' + HAS_COMPANY_ACCOUNT + (q ? ' AND (org_name LIKE ? OR org_id LIKE ?)' : '');
     const args = types.concat(q ? [like(q), like(q)] : []);
     const [[counted]] = await db().execute('SELECT COUNT(*) AS n FROM organization' + where, args);
     const [rows] = await db().execute('SELECT org_id, org_name, org_type FROM organization' + where + ' ORDER BY org_name LIMIT ' + COMPANY_LIMIT, args);
@@ -155,19 +157,19 @@ app.post('/user', async (req, res) => {
     if (message) return fail(res, message);
 
     try {
-        // The company must be approved and of the right type for the role (the browser could send anything).
+        // The company must be approved, of the right type for the role and have a company account (the browser could send anything).
         const marks = ROLE_COMPANIES[role].map(() => '?').join(', ');
         const [orgs] = await db().execute(
-            "SELECT org_id FROM organization WHERE org_id = ? AND status = 'APPROVED' AND org_type IN (" + marks + ')', [orgId].concat(ROLE_COMPANIES[role]));
+            "SELECT org_id, org_name FROM organization WHERE org_id = ? AND status = 'APPROVED' AND org_type IN (" + marks + ')' + HAS_COMPANY_ACCOUNT,
+            [orgId].concat(ROLE_COMPANIES[role]));
         if (orgs.length === 0) return fail(res, 'Please choose a company from the list.', 404);
 
         const hash = await bcrypt.hash(String(b.password), 10);
-        const [result] = await db().execute(
-            'INSERT INTO user_account (org_id, full_name, email, password, role) VALUES (?, ?, ?, ?, ?)', [orgId, name, email, hash, role]);
+        await db().execute(
+            "INSERT INTO user_account (org_id, full_name, email, password, role, status) VALUES (?, ?, ?, ?, ?, 'PENDING')", [orgId, name, email, hash, role]);
 
-        // The account can be used at once: sign in and open the page of the role (HX-Redirect loads the whole page, so the menu changes).
-        setLoginCookie(res, { user_id: result.insertId, org_id: orgId, full_name: name, role: role });
-        res.set('HX-Redirect', HOME_PAGES[role]).send('');
+        // The user cannot sign in yet: the company account of the company has to approve the registration first.
+        res.render('register/userDone', { name: name, company: orgs[0].org_name });
     }
     catch (err) {
         if (err.errno === 1062) return fail(res, 'This e-mail address already has an account.', 409);

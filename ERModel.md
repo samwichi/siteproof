@@ -38,6 +38,7 @@ erDiagram
         varchar password
         varchar role "CONTRACTOR_PM, SUPPLIER, INSPECTOR, COMPANY, ADMIN"
         tinyint active "0 = switched off"
+        varchar status "PENDING, APPROVED, REJECTED (by the company account)"
         timestamp created_at
     }
     ORG_DOCUMENT {
@@ -158,6 +159,7 @@ erDiagram
         varchar password
         varchar role "CONTRACTOR_PM, SUPPLIER, INSPECTOR, COMPANY, ADMIN"
         tinyint active
+        varchar status
         timestamp created_at
         varchar line_user_id "Phase 2: LINE"
     }
@@ -381,7 +383,7 @@ erDiagram
 | Table | What it stores | Key | Stories / use cases |
 |---|---|---|---|
 | ORGANIZATION | Contractor, supplier and third-party inspection companies, with the approval status (PENDING / APPROVED / REJECTED) | `org_id` (8-digit company id) | US1, US2, US5 |
-| USER_ACCOUNT | Users; each one belongs to a company and has one role (the website administrator has no company); `active = 0` switches a user off | `user_id` | US1 / UC1 |
+| USER_ACCOUNT | Users; each one belongs to a company and has one role (the website administrator has no company); a new user is `PENDING` until the company account approves it; `active = 0` switches a user off | `user_id` | US1 / UC1 |
 | ORG_DOCUMENT | Proof documents (PDF/JPG/PNG) that a company uploads when it registers; only the administrator opens them | `document_id` | UC1 (registration) |
 | INSPECTION_APPOINTMENT | A contractor appoints a third-party inspection company; its inspectors then see the deliveries of the contractor | `contractor_id` + `inspection_id` | UC1, UC8 |
 | PROJECT | Projects of a contractor, with the contract retention rate | `project_id` | US2, US3, UC10 |

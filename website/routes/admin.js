@@ -95,8 +95,11 @@ async function showCompany(req, res, message, kind) {
         'SELECT document_id AS id, file_name AS name, file_type AS type, file_size AS size, DATE_FORMAT(uploaded_at, \'%Y-%m-%d\') AS uploaded FROM org_document WHERE org_id = ? ORDER BY document_id', [req.params.id]);
     documents.forEach(d => { d.kb = Math.max(1, Math.round(d.size / 1024)); });
     const [users] = await db().execute(
-        "SELECT full_name AS name, email, role, active FROM user_account WHERE org_id = ? AND role <> 'COMPANY' ORDER BY full_name LIMIT " + USERS_SHOWN, [req.params.id]);
-    users.forEach(u => { u.roleName = ROLE_NAMES[u.role]; u.isActive = (u.active === 1); });
+        "SELECT full_name AS name, email, role, active, status FROM user_account WHERE org_id = ? AND role <> 'COMPANY' ORDER BY full_name LIMIT " + USERS_SHOWN, [req.params.id]);
+    users.forEach(u => {
+        u.roleName = ROLE_NAMES[u.role]; u.isActive = (u.active === 1);
+        u.isWaiting = (u.status === 'PENDING'); u.isRejected = (u.status === 'REJECTED');
+    });
     const [[counted]] = await db().execute("SELECT COUNT(*) AS n FROM user_account WHERE org_id = ? AND role <> 'COMPANY'", [req.params.id]);
 
     res.render('admin/company', { org: org, sameName: sameName, sameNameMany: sameName.length > 1, accounts: accounts, documents: documents, users: users,

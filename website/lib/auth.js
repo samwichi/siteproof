@@ -1,6 +1,6 @@
 // Login helpers. The login state is kept in one signed cookie called "user" (same idea as the cookie-parser laboratory).
 // The cookie only says WHO the user is. On every request the database is asked again whether the account may still be used
-// (the user is not switched off and the company is APPROVED), so a company account that switches a user off, or an administrator
+// (the company account approved the user, the user is not switched off and the company is APPROVED), so a company account that switches a user off, or an administrator
 // that rejects a company, takes effect immediately and not only after the cookie expires.
 
 // The names that the pages show for the roles.
@@ -35,11 +35,12 @@ function loadUser(db) {
         if (!c || !c.id) return next();
 
         const [rows] = await db.execute(
-            `SELECT u.user_id, u.org_id, u.full_name, u.role, u.active, o.org_name, o.org_type, o.status
+            `SELECT u.user_id, u.org_id, u.full_name, u.role, u.active, u.status AS user_status, o.org_name, o.org_type, o.status,
+                    (SELECT COUNT(*) FROM user_account w WHERE u.role = 'COMPANY' AND w.org_id = u.org_id AND w.status = 'PENDING') AS waiting
              FROM user_account u LEFT JOIN organization o ON o.org_id = u.org_id
              WHERE u.user_id = ?`, [c.id]);
         const u = rows[0];
-        const allowed = u && u.active === 1 && (u.role === 'ADMIN' || u.status === 'APPROVED');
+        const allowed = u && u.active === 1 && u.user_status === 'APPROVED' && (u.role === 'ADMIN' || u.status === 'APPROVED');
         if (!allowed) {
             res.clearCookie('user');           // the account does not exist any more, is switched off, or its company is not approved
             return next();
@@ -56,6 +57,7 @@ function loadUser(db) {
         res.locals.isAdmin = (u.role === 'ADMIN');
         res.locals.isContractorCompany = (u.role === 'COMPANY' && u.org_type === 'CONTRACTOR');
         res.locals.isInspectionCompany = (u.role === 'COMPANY' && u.org_type === 'INSPECTION');
+        res.locals.waitingUsers = Number(u.waiting);     // registrations that the company account has to approve (badge in the menu)
         next();
     };
 }

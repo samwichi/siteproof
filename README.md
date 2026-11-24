@@ -120,7 +120,7 @@ SiteProof has moved from planning to implementation. The database and the first 
 
 | Use case | Status | What works now |
 |---|---|---|
-| UC1 Sign in and registration | Done | Sign in and sign out; each role starts on its own page; other roles cannot open the page. Registration of a company (with proof documents; the website administrator approves it) and of users (they choose an approved company, with a search box); the company account sees and manages the users of its company; a contractor appoints third-party inspection companies; the administrator account sees all companies and users ([website/README.md](website/README.md), section 2.1) |
+| UC1 Sign in and registration | Done | Sign in and sign out; each role starts on its own page; other roles cannot open the page. Registration of a company (with proof documents; the website administrator approves it) and of users (they choose an approved company, with a search box, and can sign in only after the company account approves them); the company account approves, rejects and switches off the users of its company; a contractor appoints third-party inspection companies; the administrator account sees all companies and users ([website/README.md](website/README.md), section 2.1) |
 | UC2 Create a delivery record | Done | Contractor creates, edits and deletes delivery records (edit and delete only while SCHEDULED) |
 | UC3 View delivery status, history, retention and ratings | Done | List with status for the contractor, and a detail page for each delivery: progress, order, documents, inspection, retention and rating in one place |
 | UC4 Complete a delivery and rate the supplier | Done | Rating 1 to 5, can be changed or deleted |

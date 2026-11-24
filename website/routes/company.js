@@ -11,25 +11,33 @@ const app = express.Router();
 const db = () => app.connection.promise();
 
 // ---------- the users of the company ----------
+// The state of a user as the company account sees it: a new registration WAITING for a decision, ACTIVE, SWITCHED OFF or REJECTED.
+const USER_STATE = "CASE WHEN u.status = 'PENDING' THEN 'WAITING' WHEN u.status = 'REJECTED' THEN 'REJECTED' "
+                 + "WHEN u.active = 1 THEN 'ACTIVE' ELSE 'SWITCHED OFF' END";
+
 const SELECT_USERS = `
-    SELECT u.user_id AS ID, u.full_name AS name, u.email AS email, u.role AS role, u.active AS active,
+    SELECT u.user_id AS ID, u.full_name AS name, u.email AS email, u.role AS role, u.active AS active, u.status AS approval,
            DATE_FORMAT(u.created_at, '%Y-%m-%d') AS registered
     FROM user_account u
     WHERE u.org_id = ? AND u.role <> 'COMPANY'`;
 
 const LIST = {
     search: ['u.full_name', 'u.email'],
-    statuses: ['ACTIVE', 'SWITCHED OFF'],
-    statusColumn: "IF(u.active = 1, 'ACTIVE', 'SWITCHED OFF')",
-    sorts: { name: 'u.full_name', email: 'u.email', role: 'u.role', status: 'u.active', registered: 'u.created_at' },
+    statuses: ['WAITING', 'ACTIVE', 'SWITCHED OFF', 'REJECTED'],
+    statusColumn: USER_STATE,
+    sorts: { name: 'u.full_name', email: 'u.email', role: 'u.role', status: "FIELD(" + USER_STATE + ", 'WAITING', 'ACTIVE', 'SWITCHED OFF', 'REJECTED')",
+             registered: 'u.created_at' },
     tieBreak: 'u.user_id',
-    defaultOrder: 'u.full_name',
+    defaultOrder: "u.status = 'PENDING' DESC, u.full_name",      // the registrations that wait for a decision first
     allLabel: 'All users'
 };
 
 function prepare(row) {
     row.roleName = ROLE_NAMES[row.role];
-    row.isActive = (row.active === 1);
+    row.isWaiting = (row.approval === 'PENDING');
+    row.isRejected = (row.approval === 'REJECTED');
+    row.isActive = (row.approval === 'APPROVED' && row.active === 1);
+    row.isOff = (row.approval === 'APPROVED' && row.active !== 1);
     return row;
 }
 
@@ -46,13 +54,45 @@ app.get('/', async (req, res) => {
 app.put('/users/:id', async (req, res) => {
     const user = await findUser(req.params.id, req.user.orgId);
     if (!user) return fail(res, 'User not found.', 404);
+    if (user.approval !== 'APPROVED') return fail(res, 'Approve or reject the registration of ' + user.name + ' first.', 409);
     const active = (req.body.active === '1') ? 1 : 0;
     try {
-        await db().execute("UPDATE user_account SET active = ? WHERE user_id = ? AND org_id = ? AND role <> 'COMPANY'",
+        await db().execute("UPDATE user_account SET active = ? WHERE user_id = ? AND org_id = ? AND role <> 'COMPANY' AND status = 'APPROVED'",
             [active, req.params.id, req.user.orgId]);
         const fresh = await findUser(req.params.id, req.user.orgId);
         fresh.message = active ? fresh.name + ' can sign in again.' : fresh.name + ' is switched off and cannot sign in.';
         fresh.kind = 'success';
+        res.render('company/rowToast', fresh);
+    }
+    catch (err) {
+        fail(res, sqlMessage(err));
+    }
+});
+
+// ---------- U: approve or reject a new registration (PENDING -> APPROVED or REJECTED; a rejected person can still be approved later) ----------
+app.put('/users/:id/approval', async (req, res) => {
+    const user = await findUser(req.params.id, req.user.orgId);
+    if (!user) return fail(res, 'User not found.', 404);
+    const decision = req.body.decision;
+    if (decision !== 'APPROVED' && decision !== 'REJECTED') return fail(res, 'Please approve or reject the registration.');
+    if (decision === 'REJECTED' && user.approval !== 'PENDING') return fail(res, 'Only a waiting registration can be rejected. Switch the account off instead.', 409);
+    if (decision === 'APPROVED' && user.approval === 'APPROVED') return fail(res, user.name + ' is already approved.', 409);
+    try {
+        // The condition on the old status makes sure that a double click or a decision made meanwhile does not change anything.
+        const [result] = await db().execute(
+            "UPDATE user_account SET status = ?, active = 1 WHERE user_id = ? AND org_id = ? AND role <> 'COMPANY' AND status = ?",
+            [decision, req.params.id, req.user.orgId, user.approval]);
+        const fresh = await findUser(req.params.id, req.user.orgId);
+        if (result.affectedRows === 0) {
+            return res.render('company/rowToast', Object.assign(fresh, { message: 'The registration of ' + fresh.name + ' changed meanwhile. Nothing was changed.', kind: 'warning' }));
+        }
+        fresh.message = decision === 'APPROVED'
+            ? fresh.name + ' is approved and can sign in now.'
+            : 'The registration of ' + fresh.name + ' is rejected. The person cannot sign in.';
+        fresh.kind = 'success';
+        // The new number of waiting registrations, for the badge in the menu (company/rowToast sends it with an <hx-partial>).
+        const [[w]] = await db().execute("SELECT COUNT(*) AS n FROM user_account WHERE org_id = ? AND status = 'PENDING'", [req.user.orgId]);
+        fresh.waitingUsers = Number(w.n);
         res.render('company/rowToast', fresh);
     }
     catch (err) {

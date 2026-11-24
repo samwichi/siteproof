@@ -9,7 +9,9 @@ const ERRORS = {
     wrong: 'Wrong e-mail or password.',
     inactive: 'This account has been switched off. Please ask the account of your company.',
     pending: 'Your company has not been approved yet. The administrator is checking the documents; please try again later.',
-    rejected: 'Your company was not approved. Please contact the administrator.'
+    rejected: 'Your company was not approved. Please contact the administrator.',
+    userPending: 'Your registration is waiting for the approval of the company account of your company. Please try again later.',
+    userRejected: 'The company account of your company did not approve your registration. Please contact your company.'
 };
 
 // The login form (a fragment shown inside main#main).
@@ -22,7 +24,7 @@ app.get('/login', (req, res) => {
 
 // Check the e-mail and password (stored as a bcrypt hash in user_account).
 app.post('/login', async (req, res) => {
-    const SQL = `SELECT u.user_id, u.org_id, u.full_name, u.password, u.role, u.active, o.status, o.review_note
+    const SQL = `SELECT u.user_id, u.org_id, u.full_name, u.password, u.role, u.active, u.status AS user_status, o.status, o.review_note
                  FROM user_account u LEFT JOIN organization o ON o.org_id = u.org_id
                  WHERE u.email = ?`;
     const [rows] = await app.connection.promise().execute(SQL, [String(req.body.email || '').trim()]);
@@ -34,6 +36,8 @@ app.post('/login', async (req, res) => {
 
     // The password is right. Now: is the account allowed to work? (The administrator belongs to no company.)
     const u = rows[0];
+    if (u.user_status === 'PENDING') return res.redirect('/login?error=userPending');
+    if (u.user_status === 'REJECTED') return res.redirect('/login?error=userRejected');
     if (u.active !== 1) return res.redirect('/login?error=inactive');
     if (u.role !== 'ADMIN' && u.status === 'PENDING') return res.redirect('/login?error=pending');
     if (u.role !== 'ADMIN' && u.status === 'REJECTED') {

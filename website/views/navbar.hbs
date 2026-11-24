@@ -16,7 +16,7 @@
         {{/if}}
         {{#if isCompany}}
         <li class="nav-item">
-          <a class="nav-link" href="/company"><i aria-hidden="true" class="bi bi-people"></i> Users of my company</a>
+          <a class="nav-link" href="/company"><i aria-hidden="true" class="bi bi-people"></i> Users of my company {{> company/waitingBadge}}</a>
         </li>
         {{#if isContractorCompany}}
         <li class="nav-item">
