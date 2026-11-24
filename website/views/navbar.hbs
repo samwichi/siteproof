@@ -14,6 +14,29 @@
           <a class="nav-link" href="/ratings"><i aria-hidden="true" class="bi bi-star"></i> Complete and rate</a>
         </li>
         {{/if}}
+        {{#if isCompany}}
+        <li class="nav-item">
+          <a class="nav-link" href="/company"><i aria-hidden="true" class="bi bi-people"></i> Users of my company</a>
+        </li>
+        {{#if isContractorCompany}}
+        <li class="nav-item">
+          <a class="nav-link" href="/company/appointments"><i aria-hidden="true" class="bi bi-clipboard2-check"></i> Inspection companies</a>
+        </li>
+        {{/if}}
+        {{#if isInspectionCompany}}
+        <li class="nav-item">
+          <a class="nav-link" href="/company/appointments"><i aria-hidden="true" class="bi bi-building"></i> Contractors that appointed us</a>
+        </li>
+        {{/if}}
+        {{/if}}
+        {{#if isAdmin}}
+        <li class="nav-item">
+          <a class="nav-link" href="/admin"><i aria-hidden="true" class="bi bi-buildings"></i> Companies</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/admin/users"><i aria-hidden="true" class="bi bi-people"></i> All users</a>
+        </li>
+        {{/if}}
         {{#if isInspector}}
         <li class="nav-item">
           <a class="nav-link" href="/inspections"><i aria-hidden="true" class="bi bi-clipboard-check"></i> Inspections</a>
@@ -33,12 +56,13 @@
       </ul>
       <div class="d-flex align-items-center">
         {{#if user}}
-          <span class="navbar-text me-3"><i aria-hidden="true" class="bi bi-person-circle"></i> {{user.name}} ({{user.role}})</span>
+          <span class="navbar-text me-3"><i aria-hidden="true" class="bi bi-person-circle"></i> {{user.name}} ({{user.roleName}}{{#if user.orgName}}, {{user.orgName}}{{/if}})</span>
           {{!-- The logout form must reload the whole page, so it is not boosted. --}}
           <form action="/logout" method="post" hx-boost="false">
             <button class="btn btn-outline-dark btn-sm"><i aria-hidden="true" class="bi bi-box-arrow-right"></i> Sign out</button>
           </form>
         {{else}}
+          <a class="btn btn-outline-dark btn-sm me-2" href="/register"><i aria-hidden="true" class="bi bi-person-plus"></i> Register</a>
           <a class="btn btn-primary btn-sm" href="/login"><i aria-hidden="true" class="bi bi-box-arrow-in-right"></i> Sign in</a>
         {{/if}}
       </div>

@@ -62,7 +62,7 @@ The ten use cases implement the five must-have functions of the Business Plan (A
 
 | ID | Use case | Role | Scope | Status | Page(s) |
 |---|---|---|---|---|---|
-| UC1 | Sign in with a role-based account | All | 🟩 MVP | ✅ Done | Home / Sign in |
+| UC1 | Sign in with a role-based account (and register a company or a user) | All | 🟩 MVP | ✅ Done | Home / Sign in |
 | UC2 | Create a delivery record | Contractor | 🟩 MVP | ✅ Done | Create Delivery Record |
 | UC3 | View delivery status, history, retention and supplier ratings | Contractor | 🟩 MVP | ✅ Done | My Deliveries, Delivery Detail, Supplier Ratings |
 | UC4 | Complete a delivery and rate the supplier (1–5) | Contractor | 🟩 MVP | ✅ Done | Complete and Rate Supplier |
@@ -112,7 +112,7 @@ SiteProof has moved from planning to implementation. The database and the first 
 | System Requirements | Defined |
 | Website Architecture | Defined |
 | Frontend Development | In progress: pages for the three roles (contractor, supplier, inspector) with Handlebars, HTMX and Bootstrap; every list has search, status filter, sorting and paging, a loading bar and error messages that stay in the corner of the window; the new-delivery form has a search box for the supplier and a material picker with category buttons and a search box; accessible and usable with the keyboard only (skip link, real buttons, labelled form fields, focus moves to the right place after each update); checked with axe-core: 0 violations |
-| Backend Development | In progress: Express routes with sign-in, role check and company-level data isolation |
+| Backend Development | In progress: Express routes with sign-in, registration, role check (checked in the database at every request) and company-level data isolation |
 | Database Design | MVP tables implemented in MySQL, loaded with the given data and with sample data ([ERModel.md](ERModel.md)) |
 | System Testing | Started: each function is tested by hand with the sample data; no automated tests yet |
 
@@ -120,7 +120,7 @@ SiteProof has moved from planning to implementation. The database and the first 
 
 | Use case | Status | What works now |
 |---|---|---|
-| UC1 Sign in | Done | Sign in and sign out; each role starts on its own page; other roles cannot open the page |
+| UC1 Sign in and registration | Done | Sign in and sign out; each role starts on its own page; other roles cannot open the page. Registration of a company (with proof documents; the website administrator approves it) and of users (they choose an approved company, with a search box); the company account sees and manages the users of its company; a contractor appoints third-party inspection companies; the administrator account sees all companies and users ([website/README.md](website/README.md), section 2.1) |
 | UC2 Create a delivery record | Done | Contractor creates, edits and deletes delivery records (edit and delete only while SCHEDULED) |
 | UC3 View delivery status, history, retention and ratings | Done | List with status for the contractor, and a detail page for each delivery: progress, order, documents, inspection, retention and rating in one place |
 | UC4 Complete a delivery and rate the supplier | Done | Rating 1 to 5, can be changed or deleted |

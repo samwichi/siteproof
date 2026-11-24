@@ -1,0 +1,23 @@
+<tr class="align-middle{{#unless isActive}} table-secondary{{/unless}}">
+  <td class="text-nowrap">
+    {{#if isActive}}
+      <button type="button" class="btn btn-sm btn-danger"
+            hx-put="/company/users/{{ID}}" hx-vals='{"active": "0"}' hx-target="closest tr" hx-swap="outerHTML"
+            hx-confirm="Switch off the account of {{name}}? The person cannot sign in any more."
+            title="Switch off the account of {{name}}" aria-label="Switch off the account of {{name}}">
+        <i aria-hidden="true" class="bi bi-person-slash"></i>
+      </button>
+    {{else}}
+      <button type="button" class="btn btn-sm btn-success"
+            hx-put="/company/users/{{ID}}" hx-vals='{"active": "1"}' hx-target="closest tr" hx-swap="outerHTML"
+            title="Switch on the account of {{name}}" aria-label="Switch on the account of {{name}}">
+        <i aria-hidden="true" class="bi bi-person-check"></i>
+      </button>
+    {{/if}}
+  </td>
+  <td>{{name}}</td>
+  <td>{{email}}</td>
+  <td>{{roleName}}</td>
+  <td>{{#if isActive}}<span class="badge text-bg-success">Active</span>{{else}}<span class="badge text-bg-secondary">Switched off</span>{{/if}}</td>
+  <td class="text-nowrap">{{registered}}</td>
+</tr>

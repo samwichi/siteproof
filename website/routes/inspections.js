@@ -1,6 +1,7 @@
 // UC8, UC9, UC10: the site inspector checks the quality documents of a delivery and records the received and accepted quantity.
 // The system calculates the accepted value and the retention (Business Plan v3, section 5.4).
-// An inspector only sees the deliveries of the projects of his own company (p.org_id = the company of the logged-in user).
+// An inspector sees the deliveries of the projects of his own company (a contractor's own inspector) and of the contractors that appointed
+// his company as third-party inspection company (table inspection_appointment). Nothing else (see SCOPE).
 // Rules: a delivery can be inspected only when its status is DELIVERED; the inspection can be changed or deleted
 // only while the status is INSPECTED (after the contractor completes the delivery it is closed).
 const express = require('express');
@@ -11,6 +12,10 @@ const app = express.Router();
 const db = () => app.connection.promise();
 
 const BADGES = { DELIVERED: 'warning', INSPECTED: 'dark', COMPLETED: 'success' };
+
+// Which projects the inspector may work on. It needs the company of the user twice (see scope()).
+const SCOPE = `(p.org_id = ? OR p.org_id IN (SELECT a.contractor_id FROM inspection_appointment a WHERE a.inspection_id = ?))`;
+const scope = orgId => [orgId, orgId];
 
 // One row of the inspection list. Accepted value = delivery value x accepted / ordered; retention = accepted value x rate.
 const SELECT_ROWS = `
@@ -32,7 +37,7 @@ const SELECT_ROWS = `
     JOIN organization s    ON s.org_id = d.org_id
     JOIN material m        ON m.material_id = d.material_id
     LEFT JOIN inspection i ON i.delivery_id = d.delivery_id
-    WHERE p.org_id = ? AND d.status IN ('DELIVERED', 'INSPECTED', 'COMPLETED')`;
+    WHERE ${SCOPE} AND d.status IN ('DELIVERED', 'INSPECTED', 'COMPLETED')`;
 
 // Add the values that the template needs (Handlebars cannot compare values, so we do it here).
 function prepare(row) {
@@ -50,7 +55,7 @@ function prepare(row) {
 }
 
 async function findRow(id, orgId) {
-    const [rows] = await db().execute(SELECT_ROWS + ' AND d.delivery_id = ?', [orgId, id]);
+    const [rows] = await db().execute(SELECT_ROWS + ' AND d.delivery_id = ?', [...scope(orgId), id]);
     return rows.length === 1 ? prepare(rows[0]) : null;
 }
 
@@ -78,7 +83,7 @@ const LIST = {
 
 // ---------- R: the list (deliveries waiting for inspection first) ----------
 app.get('/', async (req, res) => {
-    res.render('inspections/index', await readList(db(), req, LIST, SELECT_ROWS, [req.user.orgId], prepare));
+    res.render('inspections/index', await readList(db(), req, LIST, SELECT_ROWS, scope(req.user.orgId), prepare));
 });
 
 // ---------- C: the form to inspect a delivery ----------
@@ -109,8 +114,8 @@ app.post('/:id', async (req, res) => {
             `INSERT INTO inspection (delivery_id, inspector_id, received_quantity, accepted_quantity, retention_rate)
              SELECT d.delivery_id, ?, ?, ?, p.retention_rate
              FROM delivery d JOIN project p ON p.project_id = d.project_id
-             WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'DELIVERED'`,
-            [req.user.id, received, accepted, req.params.id, req.user.orgId]);
+             WHERE d.delivery_id = ? AND ${SCOPE} AND d.status = 'DELIVERED'`,
+            [req.user.id, received, accepted, req.params.id, ...scope(req.user.orgId)]);
         if (result.affectedRows === 0) return fail(res, 'Only DELIVERED deliveries can be inspected.', 409);
 
         await db().execute("UPDATE delivery SET status = 'INSPECTED' WHERE delivery_id = ?", [req.params.id]);
@@ -152,8 +157,8 @@ app.put('/:id', async (req, res) => {
              JOIN delivery d ON d.delivery_id = i.delivery_id
              JOIN project p  ON p.project_id = d.project_id
              SET i.received_quantity = ?, i.accepted_quantity = ?, i.inspector_id = ?
-             WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'INSPECTED'`,
-            [received, accepted, req.user.id, req.params.id, req.user.orgId]);
+             WHERE d.delivery_id = ? AND ${SCOPE} AND d.status = 'INSPECTED'`,
+            [received, accepted, req.user.id, req.params.id, ...scope(req.user.orgId)]);
 
         const fresh = await findRow(req.params.id, req.user.orgId);
         fresh.message = 'Inspection of delivery #' + req.params.id + ' updated: ' + fresh.decision + '.';
@@ -172,8 +177,8 @@ app.delete('/:id', async (req, res) => {
             `DELETE i FROM inspection i
              JOIN delivery d ON d.delivery_id = i.delivery_id
              JOIN project p  ON p.project_id = d.project_id
-             WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'INSPECTED'`,
-            [req.params.id, req.user.orgId]);
+             WHERE d.delivery_id = ? AND ${SCOPE} AND d.status = 'INSPECTED'`,
+            [req.params.id, ...scope(req.user.orgId)]);
         if (result.affectedRows === 0) return fail(res, 'Only inspections of INSPECTED deliveries can be deleted.', 409);
 
         await db().execute("UPDATE delivery SET status = 'DELIVERED' WHERE delivery_id = ?", [req.params.id]);

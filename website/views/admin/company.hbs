@@ -1,0 +1,79 @@
+<h1 class="h2">{{org.name}} <span class="badge text-bg-{{org.badge}} fs-6 align-middle">{{org.status}}</span></h1>
+<p><a href="/admin" hx-boost="true" hx-target="#main"><i aria-hidden="true" class="bi bi-arrow-left"></i> All companies</a></p>
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card h-100"><div class="card-body">
+      <h2 class="h5">Company</h2>
+      <dl class="row mb-0">
+        <dt class="col-sm-4">Company ID</dt><dd class="col-sm-8">{{org.ID}}</dd>
+        <dt class="col-sm-4">Type</dt><dd class="col-sm-8">{{org.typeName}}</dd>
+        <dt class="col-sm-4">Address</dt><dd class="col-sm-8">{{#if org.address}}{{org.address}}{{else}}-{{/if}}</dd>
+        <dt class="col-sm-4">Phone</dt><dd class="col-sm-8">{{#if org.phone}}{{org.phone}}{{else}}-{{/if}}</dd>
+        <dt class="col-sm-4">E-mail</dt><dd class="col-sm-8">{{#if org.email}}{{org.email}}{{else}}-{{/if}}</dd>
+        <dt class="col-sm-4">Registered</dt><dd class="col-sm-8">{{org.registered}}</dd>
+        {{#if org.note}}<dt class="col-sm-4">Reason of the rejection</dt><dd class="col-sm-8">{{org.note}}</dd>{{/if}}
+      </dl>
+    </div></div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card h-100"><div class="card-body">
+      <h2 class="h5">Company account</h2>
+      {{#each accounts}}
+        <p class="mb-1">{{name}} - {{email}} {{#unless active}}<span class="badge text-bg-secondary">Switched off</span>{{/unless}}</p>
+      {{else}}
+        <p class="text-muted mb-1">This company has no company account (it comes from the given data).</p>
+      {{/each}}
+      <h2 class="h5 mt-3">Proof documents</h2>
+      {{#if documents.length}}
+        <ul class="list-unstyled mb-0">
+          {{#each documents}}
+            <li><i aria-hidden="true" class="bi bi-file-earmark-text"></i>
+              <a href="/admin/documents/{{id}}" target="_blank" rel="noopener" hx-boost="false">{{name}}</a>
+              <span class="text-muted">({{type}}, {{kb}} KB, {{uploaded}})</span></li>
+          {{/each}}
+        </ul>
+      {{else}}
+        <p class="text-muted mb-0">No document was sent.</p>
+      {{/if}}
+    </div></div>
+  </div>
+</div>
+
+<div class="card my-3"><div class="card-body">
+  <h2 class="h5">Decision</h2>
+  <div class="d-flex flex-wrap gap-3 align-items-end">
+    {{#unless org.isApproved}}
+      <form hx-post="/admin/companies/{{org.ID}}/approve" hx-target="#main" hx-disable="findAll button">
+        <button class="btn btn-success"><i aria-hidden="true" class="bi bi-check-circle-fill"></i> Approve the company</button>
+      </form>
+    {{/unless}}
+    {{#unless org.isRejected}}
+      <form class="d-flex gap-2 align-items-end" hx-post="/admin/companies/{{org.ID}}/reject" hx-target="#main" hx-disable="findAll button"
+            hx-confirm="Reject {{org.name}}? Nobody of this company can sign in.">
+        <div>
+          <label class="form-label mb-1" for="note">Reason (the company sees it when it tries to sign in)</label>
+          <input class="form-control" id="note" name="note" maxlength="200" size="40">
+        </div>
+        <button class="btn btn-danger"><i aria-hidden="true" class="bi bi-x-circle-fill"></i> {{#if org.isApproved}}Switch the company off{{else}}Reject the company{{/if}}</button>
+      </form>
+    {{/unless}}
+  </div>
+  <p class="text-muted mt-2 mb-0">A company that is not approved cannot be used: nobody of it can sign in, and it is not in the list of the user registration.</p>
+</div></div>
+
+<h2 class="h5">Users of the company ({{userTotal}})</h2>
+<div class="table-responsive">
+  <table class="table table-striped table-sm">
+    <caption class="visually-hidden">Users of the company</caption>
+    <thead><tr><th scope="col">Name</th><th scope="col">E-mail</th><th scope="col">Role</th><th scope="col">Status</th></tr></thead>
+    <tbody>
+      {{#each users}}
+      <tr><td>{{name}}</td><td>{{email}}</td><td>{{roleName}}</td>
+          <td>{{#if isActive}}<span class="badge text-bg-success">Active</span>{{else}}<span class="badge text-bg-secondary">Switched off</span>{{/if}}</td></tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+{{#unless users.length}}<p class="text-muted text-center">No user registered for this company yet.</p>{{/unless}}
+{{#if moreUsers}}<p class="text-muted">Only the first {{users.length}} users are shown. See "All users" in the menu for the others.</p>{{/if}}
+{{#if message}}{{> toast}}{{/if}}

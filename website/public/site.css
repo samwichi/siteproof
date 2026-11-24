@@ -8,3 +8,6 @@ main:focus, h1:focus, #list:focus { outline: none; }
 
 /* Keyboard users: a clear frame on every control that has the focus (Bootstrap already does it for most; this also covers links in tables). */
 a:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 3px solid #0d6efd; outline-offset: 2px; }
+
+/* Page numbers: at least 32 px wide, also for a one-digit number (touch target of 24 px, WCAG 2.2). */
+.pagination .page-link { min-width: 2rem; text-align: center; }

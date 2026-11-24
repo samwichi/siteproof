@@ -1,0 +1,9 @@
+{{!-- The options of the company <select> of the user registration (also used by GET /register/companies). --}}
+{{#if chosen}}
+<option value="" selected disabled>{{#if total}}Choose a company ({{#if more}}the first {{shown}} of {{total}}, type to narrow down{{else}}{{total}} found{{/if}}){{else}}No company found{{/if}}</option>
+{{#each companies}}
+  <option value="{{org_id}}">{{org_name}} ({{org_id}}){{#if typeLabel}} - {{typeLabel}}{{/if}}</option>
+{{/each}}
+{{else}}
+<option value="" selected disabled>Choose your role first</option>
+{{/if}}

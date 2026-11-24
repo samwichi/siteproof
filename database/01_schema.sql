@@ -12,25 +12,61 @@ CREATE DATABASE siteproof CHARACTER SET utf8mb4;
 -- 1.3 Use the new database.
 USE siteproof;
 
--- 1.4 Companies (contractors and suppliers). The id is the 8-digit company id; it is text because it has leading zeros.
+-- 1.4 Companies (contractors, suppliers and third-party inspection companies). The id is the 8-digit company id; it is text because it has leading zeros.
+--     A company that registers on the website starts as PENDING; the website administrator checks the proof documents and sets APPROVED or REJECTED.
+--     The companies of the given file (and the sample data) are APPROVED (the default).
 CREATE TABLE organization (
-    org_id   CHAR(8)      PRIMARY KEY,
-    org_name VARCHAR(100) NOT NULL,
-    org_type VARCHAR(20)  NOT NULL CHECK (org_type IN ('CONTRACTOR', 'SUPPLIER')),
-    address  VARCHAR(200),
-    phone    VARCHAR(30),
-    email    VARCHAR(100)
+    org_id      CHAR(8)      PRIMARY KEY,
+    org_name    VARCHAR(100) NOT NULL,
+    org_type    VARCHAR(20)  NOT NULL CHECK (org_type IN ('CONTRACTOR', 'SUPPLIER', 'INSPECTION')),
+    address     VARCHAR(200),
+    phone       VARCHAR(30),
+    email       VARCHAR(100),
+    status      VARCHAR(10)  NOT NULL DEFAULT 'APPROVED' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
+    review_note VARCHAR(200),                                  -- the reason, written by the administrator when a company is rejected
+    created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- 1.5 Users of the platform. Each user belongs to one company and has one role.
+-- 1.5 Users of the platform. Each user belongs to one company and has one role:
+--       CONTRACTOR_PM, SUPPLIER, INSPECTOR  the people who work with the deliveries (they register themselves and choose their company);
+--       COMPANY                             the company account (one per company): sees and manages the users of its company;
+--       ADMIN                               the website administrator: belongs to no company (org_id is NULL) and approves the companies.
+--     active = 0 means that the company account (or the administrator) has switched the user off: the user cannot sign in.
 CREATE TABLE user_account (
-    user_id   INT AUTO_INCREMENT PRIMARY KEY,
-    org_id    CHAR(8)      NOT NULL,
-    full_name VARCHAR(100) NOT NULL,
-    email     VARCHAR(100) NOT NULL UNIQUE,
-    password  VARCHAR(255) NOT NULL,
-    role      VARCHAR(20)  NOT NULL CHECK (role IN ('CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR')),
+    user_id    INT AUTO_INCREMENT PRIMARY KEY,
+    org_id     CHAR(8),
+    full_name  VARCHAR(100) NOT NULL,
+    email      VARCHAR(100) NOT NULL UNIQUE,
+    password   VARCHAR(255) NOT NULL,
+    role       VARCHAR(20)  NOT NULL CHECK (role IN ('CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR', 'COMPANY', 'ADMIN')),
+    active     TINYINT(1)   NOT NULL DEFAULT 1,
+    created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (org_id) REFERENCES organization (org_id),
+    CHECK ((role = 'ADMIN' AND org_id IS NULL) OR (role <> 'ADMIN' AND org_id IS NOT NULL))
+);
+
+-- 1.5b Proof documents (PDF, JPG or PNG) that a company uploads when it registers. The file itself is kept in the folder website/uploads
+--      under the random name stored_name; only the administrator can open it.
+CREATE TABLE org_document (
+    document_id INT AUTO_INCREMENT PRIMARY KEY,
+    org_id      CHAR(8)      NOT NULL,
+    file_name   VARCHAR(150) NOT NULL,
+    stored_name VARCHAR(60)  NOT NULL UNIQUE,
+    file_type   VARCHAR(10)  NOT NULL CHECK (file_type IN ('PDF', 'JPG', 'PNG')),
+    file_size   INT          NOT NULL,
+    uploaded_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (org_id) REFERENCES organization (org_id)
+);
+
+-- 1.5c A contractor appoints a third-party inspection company: the inspectors of that company can then see and inspect the deliveries
+--      of the projects of the contractor. (Inspectors who work for the contractor itself do not need an appointment.)
+CREATE TABLE inspection_appointment (
+    contractor_id CHAR(8)   NOT NULL,
+    inspection_id CHAR(8)   NOT NULL,
+    appointed_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (contractor_id, inspection_id),
+    FOREIGN KEY (contractor_id) REFERENCES organization (org_id),
+    FOREIGN KEY (inspection_id) REFERENCES organization (org_id)
 );
 
 -- 1.6 Projects of a contractor, with the retention rate of the contract (0.05 = 5%).

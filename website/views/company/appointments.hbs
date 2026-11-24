@@ -1,0 +1,57 @@
+{{#if isContractor}}
+<h1 class="h2">Inspection companies</h1>
+<p class="text-muted">The inspectors of an appointed inspection company can see and inspect the deliveries of all projects of {{user.orgName}}. Inspectors who registered for your own company do not need an appointment.</p>
+<form class="row g-2 mb-4" hx-post="/company/appointments" hx-target="#main" hx-disable="findAll button">
+  <div class="col-md-5">
+    <label class="form-label" for="inspection_search">Appoint an inspection company</label>
+    <input class="form-control" type="search" id="inspection_search" name="q" placeholder="Type a part of the name or ID to search" autocomplete="off"
+           hx-get="/company/appointments/search" hx-trigger="input delay:300ms" hx-target="#inspection_id" hx-swap="innerHTML" hx-sync="this:replace">
+  </div>
+  <div class="col-md-5">
+    <label class="form-label" for="inspection_id">Search results</label>
+    <select class="form-select" id="inspection_id" name="inspection_id" required>
+      {{> company/inspectionOptions}}
+    </select>
+  </div>
+  <div class="col-md-2 d-flex align-items-end">
+    <button class="btn btn-success w-100"><i aria-hidden="true" class="bi bi-plus-circle-fill"></i> Appoint</button>
+  </div>
+</form>
+<h2 class="h5">Appointed inspection companies</h2>
+<div class="table-responsive">
+  <table class="table table-striped table-hover table-sm">
+    <caption class="visually-hidden">Appointed inspection companies</caption>
+    <thead><tr><th scope="col"><span class="visually-hidden">Actions</span></th><th scope="col">Company</th><th scope="col">Company ID</th><th scope="col">Appointed</th></tr></thead>
+    <tbody>
+      {{#each appointed}}
+      <tr class="align-middle">
+        <td>
+          <button type="button" class="btn btn-sm btn-danger"
+                hx-delete="/company/appointments/{{ID}}" hx-target="closest tr" hx-swap="delete"
+                hx-confirm="Remove the appointment of {{name}}? Its inspectors cannot see your deliveries any more."
+                title="Remove the appointment of {{name}}" aria-label="Remove the appointment of {{name}}">
+            <i aria-hidden="true" class="bi bi-trash3-fill"></i>
+          </button>
+        </td>
+        <td>{{name}}</td><td>{{ID}}</td><td>{{since}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+{{#unless appointed.length}}<p class="text-muted text-center">No inspection company is appointed yet.</p>{{/unless}}
+{{else}}
+<h1 class="h2">Contractors that appointed {{user.orgName}}</h1>
+<p class="text-muted">Your inspectors can see and inspect the deliveries of these contractors. A contractor appoints an inspection company in its own company account.</p>
+<div class="table-responsive">
+  <table class="table table-striped table-hover table-sm">
+    <caption class="visually-hidden">Contractors that appointed your company</caption>
+    <thead><tr><th scope="col">Contractor</th><th scope="col">Company ID</th><th scope="col">Appointed</th></tr></thead>
+    <tbody>
+      {{#each appointed}}<tr><td>{{name}}</td><td>{{ID}}</td><td>{{since}}</td></tr>{{/each}}
+    </tbody>
+  </table>
+</div>
+{{#unless appointed.length}}<p class="text-muted text-center">No contractor appointed your company yet.</p>{{/unless}}
+{{/if}}
+{{#if message}}{{> toast}}{{/if}}

@@ -177,7 +177,7 @@ app.delete('/:id', async (req, res) => {
         if (result.affectedRows === 0) {
             return fail(res, 'Only documents of your deliveries that are not inspected yet can be deleted.', 409);
         }
-        // Nothing except the message: HTMX removes the row (outerHTML swap with an empty response) and shows the message in #toast.
+        // Nothing except the message: hx-swap="delete" of the button removes the row (HTMX 4 does not swap an empty response next to a partial) and the message goes to #toast.
         res.render('toast', { message: 'Document #' + req.params.id + ' deleted.', kind: 'success' });
     }
     catch (err) {

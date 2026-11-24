@@ -1,0 +1,42 @@
+<h1 class="h2">Companies</h1>
+{{#if pending}}
+  <div class="alert alert-warning py-2"><i aria-hidden="true" class="bi bi-hourglass-split"></i> {{pending}} {{#if pendingMany}}companies are{{else}}company is{{/if}} waiting for your approval (shown first).</div>
+{{else}}
+  <p class="text-muted">No company is waiting for approval. Click the ID of a company to see its documents and users.</p>
+{{/if}}
+{{> list/controls placeholder="Search by company ID, name or e-mail"}}
+<div id="list" data-count="{{list.total}}">
+  <div class="table-responsive">
+    <table class="table table-striped table-hover table-sm">
+      <caption class="visually-hidden">Companies</caption>
+      <thead>
+        <tr>
+          {{> list/th key="ID" label="ID"}}
+          {{> list/th key="name" label="Company"}}
+          {{> list/th key="type" label="Type"}}
+          {{> list/th key="status" label="Status"}}
+          {{> list/th key="users" label="Users" cls="text-end"}}
+          <th scope="col" class="text-end">Documents</th>
+          {{> list/th key="registered" label="Registered"}}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+        <tr class="align-middle">
+          <td class="text-nowrap"><a class="d-inline-block px-2 py-1" href="/admin/companies/{{ID}}" hx-boost="true" hx-target="#main" title="Open the page of {{name}}">{{ID}}</a></td>
+          <td>{{name}}</td>
+          <td>{{typeName}}</td>
+          <td><span class="badge text-bg-{{badge}}">{{status}}</span></td>
+          <td class="text-end">{{users}}</td>
+          <td class="text-end">{{documents}}</td>
+          <td class="text-nowrap">{{registered}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{#unless rows.length}}
+    <p class="text-muted text-center">No company matches your search.</p>
+  {{/unless}}
+  {{> list/pager}}
+</div>

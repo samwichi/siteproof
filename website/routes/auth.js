@@ -1,32 +1,48 @@
 // UC1: sign in with a role-based account.
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const { setLoginCookie, HOME_PAGES } = require('../lib/auth');
 const app = express.Router();
+
+// The messages of the login page. The text of a rejection comes from the administrator (a signed cookie keeps it for one request).
+const ERRORS = {
+    wrong: 'Wrong e-mail or password.',
+    inactive: 'This account has been switched off. Please ask the account of your company.',
+    pending: 'Your company has not been approved yet. The administrator is checking the documents; please try again later.',
+    rejected: 'Your company was not approved. Please contact the administrator.'
+};
 
 // The login form (a fragment shown inside main#main).
 app.get('/login', (req, res) => {
-    res.render('login', { error: req.query.error });
+    const error = ERRORS[req.query.error];
+    const note = req.signedCookies.loginNote;
+    if (note) res.clearCookie('loginNote');
+    res.render('login', { error: error, note: req.query.error === 'rejected' ? note : null, registered: req.query.registered });
 });
 
 // Check the e-mail and password (stored as a bcrypt hash in user_account).
 app.post('/login', async (req, res) => {
-    const SQL = 'SELECT user_id, org_id, full_name, password, role FROM user_account WHERE email = ?';
-    const [rows] = await app.connection.promise().execute(SQL, [req.body.email || '']);
+    const SQL = `SELECT u.user_id, u.org_id, u.full_name, u.password, u.role, u.active, o.status, o.review_note
+                 FROM user_account u LEFT JOIN organization o ON o.org_id = u.org_id
+                 WHERE u.email = ?`;
+    const [rows] = await app.connection.promise().execute(SQL, [String(req.body.email || '').trim()]);
 
-    const ok = rows.length === 1 && await bcrypt.compare(req.body.password || '', rows[0].password);
+    const ok = rows.length === 1 && await bcrypt.compare(String(req.body.password || ''), rows[0].password);
     if (!ok) {
-        return res.redirect('/login?error=1');
+        return res.redirect('/login?error=wrong');
     }
 
+    // The password is right. Now: is the account allowed to work? (The administrator belongs to no company.)
     const u = rows[0];
-    const options = { signed: true, maxAge: 3600000, httpOnly: true };    // 1 hour
-    res.cookie('user', { id: u.user_id, orgId: u.org_id, name: u.full_name, role: u.role }, options);
+    if (u.active !== 1) return res.redirect('/login?error=inactive');
+    if (u.role !== 'ADMIN' && u.status === 'PENDING') return res.redirect('/login?error=pending');
+    if (u.role !== 'ADMIN' && u.status === 'REJECTED') {
+        if (u.review_note) res.cookie('loginNote', u.review_note, { signed: true, maxAge: 60000, httpOnly: true, sameSite: 'lax' });
+        return res.redirect('/login?error=rejected');
+    }
 
-    // Each role starts on its own page.
-    if (u.role === 'CONTRACTOR_PM') res.redirect('/deliveries');
-    else if (u.role === 'INSPECTOR') res.redirect('/inspections');
-    else if (u.role === 'SUPPLIER') res.redirect('/assigned');
-    else res.redirect('/');
+    setLoginCookie(res, u);
+    res.redirect(HOME_PAGES[u.role] || '/');         // each role starts on its own page
 });
 
 app.post('/logout', (req, res) => {

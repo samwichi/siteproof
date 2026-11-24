@@ -1,0 +1,5 @@
+{{!-- The options of the inspection company <select> (also used by GET /company/appointments/search). --}}
+<option value="" selected disabled>{{#if total}}Choose an inspection company ({{#if more}}the first {{shown}} of {{total}}, type to narrow down{{else}}{{total}} found{{/if}}){{else}}No inspection company found{{/if}}</option>
+{{#each companies}}
+  <option value="{{org_id}}">{{org_name}} ({{org_id}})</option>
+{{/each}}

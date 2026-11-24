@@ -28,10 +28,10 @@ app.use(express.static('node_modules/htmx.org/dist'));
 app.use(express.static('node_modules/bootstrap/dist/css'));
 app.use(express.static('node_modules/bootstrap/dist/js'));
 app.use(express.static('node_modules/bootstrap-icons/font'));
-app.use(loadUser);                      // who is logged in? (req.user)
 
 // ---- Database: a connection pool (laboratory section 9.4) ----
 const connection = mysql.createPool(configs.db);
+app.use(loadUser(connection.promise()));   // who is logged in? (req.user)
 connection.query('SELECT 1', (err) => {
     if (err) {
         console.log('Error connecting to database: ', err);
@@ -41,6 +41,11 @@ connection.query('SELECT 1', (err) => {
         console.log('Connected to database');
     }
 });
+
+// ---- A normal link (not HTMX), so it must be before the wildcard route: the administrator opens a proof document of a company ----
+const adminDocuments = require('./routes/adminDocuments');
+adminDocuments.connection = connection;
+app.use('/admin/documents', requireRole('ADMIN'), adminDocuments);
 
 // ---- Homepage and the wildcard route (partial page updates, see laboratory section 5) ----
 app.get('/', (req, res) => {
@@ -90,6 +95,22 @@ app.use('/history', requireRole('SUPPLIER'), history);
 const documents = require('./routes/documents');
 documents.connection = connection;
 app.use('/documents', requireRole('SUPPLIER'), documents);
+
+const register = require('./routes/register');
+register.connection = connection;
+app.use('/register', register);
+
+const company = require('./routes/company');
+company.connection = connection;
+app.use('/company', requireRole('COMPANY'), company);
+
+const adminUsers = require('./routes/adminUsers');
+adminUsers.connection = connection;
+app.use('/admin/users', requireRole('ADMIN'), adminUsers);       // before /admin, so that /admin does not catch it
+
+const admin = require('./routes/admin');
+admin.connection = connection;
+app.use('/admin', requireRole('ADMIN'), admin);
 
 // ---- Errors that nobody handled (for example a failed query inside an async route) ----
 app.use((err, req, res, next) => {
