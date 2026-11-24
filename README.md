@@ -64,7 +64,7 @@ The ten use cases implement the five must-have functions of the Business Plan (A
 |---|---|---|---|---|---|
 | UC1 | Sign in with a role-based account | All | 🟩 MVP | ✅ Done | Home / Sign in |
 | UC2 | Create a delivery record | Contractor | 🟩 MVP | ✅ Done | Create Delivery Record |
-| UC3 | View delivery status, history, retention and supplier ratings | Contractor | 🟩 MVP | 🔶 Partly | My Deliveries, Delivery Detail, Supplier Ratings |
+| UC3 | View delivery status, history, retention and supplier ratings | Contractor | 🟩 MVP | ✅ Done | My Deliveries, Delivery Detail, Supplier Ratings |
 | UC4 | Complete a delivery and rate the supplier (1–5) | Contractor | 🟩 MVP | ✅ Done | Complete and Rate Supplier |
 | UC5 | View assigned deliveries and update their status | Supplier | 🟩 MVP | ✅ Done | Assigned Deliveries and Status Update |
 | UC6 | Upload delivery and quality documents | Supplier | 🟩 MVP | ✅ Done | Upload Quality Documents |
@@ -104,7 +104,7 @@ The MVP has no push notifications: users see delivery status on the platform. Ev
 
 ## 3. Project Status
 
-SiteProof has moved from planning to implementation. The database and the first version of the website run locally with Docker (see [website/README.md](website/README.md) for the instructions). Nine of the ten use cases work and one is partly done.
+SiteProof has moved from planning to implementation. The database and the first version of the website run locally with Docker (see [website/README.md](website/README.md) for the instructions). All ten use cases of the first phase work.
 
 | Component | Status |
 |---|---|
@@ -122,7 +122,7 @@ SiteProof has moved from planning to implementation. The database and the first 
 |---|---|---|
 | UC1 Sign in | Done | Sign in and sign out; each role starts on its own page; other roles cannot open the page |
 | UC2 Create a delivery record | Done | Contractor creates, edits and deletes delivery records (edit and delete only while SCHEDULED) |
-| UC3 View delivery status, history, retention and ratings | Partly | List with status for the contractor; the delivery detail page (documents, retention, rating in one place) is still to do |
+| UC3 View delivery status, history, retention and ratings | Done | List with status for the contractor, and a detail page for each delivery: progress, order, documents, inspection, retention and rating in one place |
 | UC4 Complete a delivery and rate the supplier | Done | Rating 1 to 5, can be changed or deleted |
 | UC5 Update the delivery status | Done | Supplier sees the assigned deliveries and moves each one step by step: PREPARING, IN_TRANSIT, DELIVERED |
 | UC6 Quality documents | Done (simple) | Supplier adds, edits and deletes the document type and file name until the inspection; the file itself is not uploaded yet |
@@ -133,7 +133,7 @@ SiteProof has moved from planning to implementation. The database and the first 
 
 The whole closed loop works from the first step to the last: the contractor creates a delivery, the supplier moves it to DELIVERED, the inspector inspects it, the contractor completes it with a rating, and the supplier sees the rating.
 
-**Next:** the delivery detail page (UC3), then automated tests and real file upload.
+**Next:** automated tests, real file upload, and the second phase of the product (see section 2).
 
 ---
 ## 4. Project Documents
@@ -209,7 +209,7 @@ graph TD
 | Home / Sign in | UC1 | 1 | Po-Hao | ✅ Done |
 | My Deliveries | UC3 | 1 | Samuel | ✅ Done |
 | Create Delivery Record | UC2 | 1 | Samuel | ✅ Done |
-| Delivery Detail | UC3 | 1 | Samuel | ⬜ To do |
+| Delivery Detail | UC3 | 1 | Samuel | ✅ Done |
 | Complete and Rate Supplier | UC4 | 1 | Samuel | ✅ Done |
 | Supplier Ratings | UC3 | 1 | Samuel | 🔶 Partly |
 | Assigned Deliveries and Status Update | UC5 | 1 | Po-Hao | ✅ Done |
@@ -219,7 +219,7 @@ graph TD
 | Inspect and Decide | UC8, UC9, UC10 | 1 | Po-Hao | ✅ Done |
 | Phase 2 and Phase 3 pages | — | 2 / 3 | To be assigned | ⬜ To do |
 
-Status: ✅ Done, 🔶 Partly, ⬜ To do (details in section 3.1). "Supplier Ratings" is partly done because the ratings are shown on the Complete and Rate page.
+Status: ✅ Done, 🔶 Partly, ⬜ To do (details in section 3.1). "Supplier Ratings" is partly done because the rating of each delivery is shown on the Complete and Rate page and on the Delivery Detail page, but there is no separate page with the average rating of each supplier.
 
 **Note:** Page ownership indicates the primary person responsible for implementation. Responsibilities may be adjusted during development.
 

@@ -1,4 +1,4 @@
-// UC2 / UC3: the contractor creates, lists, edits and deletes delivery records.
+// UC2 / UC3: the contractor creates, lists, edits and deletes delivery records, and opens the detail page of one delivery.
 // A contractor only sees the deliveries of the projects of his own company (p.org_id = the company of the logged-in user).
 // A delivery can be edited or deleted only while its status is SCHEDULED (before the supplier starts to work on it).
 const express = require('express');
@@ -12,6 +12,9 @@ const BADGES = {
     SCHEDULED: 'secondary', PREPARING: 'info', IN_TRANSIT: 'primary',
     DELIVERED: 'warning', INSPECTED: 'dark', COMPLETED: 'success'
 };
+
+// The life of a delivery, in order (used for the progress line on the detail page).
+const STEPS = ['SCHEDULED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED', 'INSPECTED', 'COMPLETED'];
 
 // One delivery as the user sees it. The caller adds the rest of the WHERE condition and the ORDER BY.
 const SELECT_DELIVERIES = `
@@ -120,6 +123,52 @@ app.post('/', async (req, res) => {
     catch (err) {
         fail(res, sqlMessage(err));
     }
+});
+
+// ---------- R: the detail page of one delivery (status, documents, inspection, retention and rating in one place) ----------
+// Must be after /new (a GET /new would otherwise match /:id). Same company check as everywhere: p.org_id = the user's company.
+app.get('/:id', async (req, res) => {
+    const row = await findDelivery(req.params.id, req.user.orgId);
+    if (!row) return fail(res, 'Delivery not found.', 404);
+
+    // The progress line: every status up to the current one is done.
+    const current = STEPS.indexOf(row.status);
+    row.steps = STEPS.map((name, i) => ({ name: name, done: i <= current, current: i === current }));
+
+    const [documents] = await db().execute(
+        'SELECT doc_type, file_name FROM delivery_document WHERE delivery_id = ? ORDER BY document_id', [row.ID]);
+    row.documents = documents;
+
+    // The inspection (LEFT JOIN: not every delivery has one). Accepted value = delivery value x accepted / ordered; retention = accepted value x rate.
+    const [inspections] = await db().execute(
+        `SELECT u.full_name                          AS inspector,
+                CAST(i.received_quantity AS DOUBLE)  AS received,
+                CAST(i.accepted_quantity AS DOUBLE)  AS accepted,
+                CAST(i.retention_rate * 100 AS DOUBLE) AS retentionPercent,
+                FORMAT(d.delivery_value * i.accepted_quantity / d.ordered_quantity, 0) AS acceptedValue,
+                FORMAT(d.delivery_value * i.accepted_quantity / d.ordered_quantity * i.retention_rate, 0) AS retention
+         FROM inspection i
+         JOIN delivery d      ON d.delivery_id = i.delivery_id
+         JOIN user_account u  ON u.user_id = i.inspector_id
+         WHERE i.delivery_id = ?`, [row.ID]);
+    if (inspections.length === 1) {
+        const i = inspections[0];
+        if (i.accepted === 0) i.decision = 'Rejected';
+        else if (i.accepted === i.received) i.decision = 'Accepted';
+        else i.decision = 'Partially accepted';
+        row.inspection = i;
+    }
+
+    const [ratings] = await db().execute(
+        `SELECT r.score, u.full_name AS ratedBy
+         FROM supplier_rating r JOIN user_account u ON u.user_id = r.rated_by
+         WHERE r.delivery_id = ?`, [row.ID]);
+    if (ratings.length === 1) {
+        row.rating = { stars: '★'.repeat(ratings[0].score) + '☆'.repeat(5 - ratings[0].score), score: ratings[0].score, ratedBy: ratings[0].ratedBy };
+    }
+    row.canRate = (row.status === 'INSPECTED');
+
+    res.render('deliveries/detail', row);
 });
 
 // ---------- U: the form to edit one row ----------
