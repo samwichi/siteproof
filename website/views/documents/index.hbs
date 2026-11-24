@@ -1,0 +1,24 @@
+<h2>Quality documents</h2>
+<p class="text-muted">Documents of your deliveries. They can be added, changed or deleted until the delivery is inspected.</p>
+<p>
+  <a class="btn btn-success" href="/documents/new" hx-boost="true" hx-target="#main">
+    <i class="bi bi-plus-circle-fill"></i> New document
+  </a>
+</p>
+<table class="table table-striped table-hover table-sm">
+  <thead>
+    <tr>
+      <th>ID</th><th>Delivery</th><th>Material</th><th>Document type</th>
+      <th>File name</th><th>Uploaded by</th><th>Delivery status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each rows}}
+      {{> documents/row}}
+    {{/each}}
+  </tbody>
+</table>
+{{#unless rows.length}}
+  <p class="text-muted text-center">No documents yet.</p>
+{{/unless}}
+{{#if message}}{{> toast}}{{/if}}

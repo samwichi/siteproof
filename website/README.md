@@ -45,14 +45,17 @@ website/
 ├── config.example.js      database and cookie settings (copy to config.js)
 ├── routes/
 │   ├── auth.js            UC1  sign in / sign out
-│   └── deliveries.js      UC2, UC3  contractor: create, list, edit, delete delivery records   <-- first CRUD
+│   ├── deliveries.js      UC2, UC3  contractor: create, list, edit, delete delivery records   <-- first CRUD
+│   ├── inspections.js     UC8-UC10  inspector: record received / accepted quantity (accepted value and retention are calculated)
+│   ├── ratings.js         UC4  contractor: complete an inspected delivery and rate the supplier (1-5)
+│   └── documents.js       UC6  supplier: add, list, edit, delete quality documents (type and file name) until the delivery is inspected
 ├── lib/
 │   ├── auth.js            loadUser (who is logged in) and requireRole('...')
 │   └── respond.js         fail(res, message): error message in the toast, without changing the page
 ├── views/
 │   ├── index.hbs          the only full page: header, navbar, div#toast, main#main, footer
 │   ├── navbar.hbs, home.hbs, login.hbs, toast.hbs
-│   └── deliveries/        index, row, rowToast, new, edit
+│   └── deliveries/, inspections/, ratings/, documents/     one folder for each route (index, row, rowToast, new/form, edit)
 └── public/                our own CSS / JS / images
 ```
 
