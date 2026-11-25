@@ -15,7 +15,7 @@ Attributes of a later phase inside an MVP table are marked in the comment (for e
 
 ## 2. Figure 1 - MVP data model (implemented in MySQL)
 
-12 tables.
+13 tables.
 
 ```mermaid
 erDiagram
@@ -149,7 +149,7 @@ erDiagram
 
 ## 3. Figure 2 - Full product (MVP + Phase 2 + Phase 3)
 
-23 entities: the 10 MVP tables plus 8 for Phase 2 and 5 for Phase 3.
+26 entities: the 13 MVP tables plus 8 for Phase 2 and 5 for Phase 3.
 
 ```mermaid
 erDiagram
