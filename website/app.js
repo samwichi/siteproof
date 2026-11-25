@@ -34,7 +34,9 @@ app.use(express.static('node_modules/bootstrap-icons/font'));
 // The MySQL container runs on UTC, but the users are in Taiwan: every connection uses Taiwan time (UTC+8, no summer time),
 // so NOW(), CURDATE() and the stored times are the times that the users see on their clock.
 const TIME_ZONE = '+08:00';
-const connection = mysql.createPool(Object.assign({ timezone: TIME_ZONE }, configs.db));
+// DB_NAME (optional) chooses another database, e.g. siteproof_test for the automated tests (tests/closedLoop.test.js).
+const dbConfig = Object.assign({ timezone: TIME_ZONE }, configs.db, process.env.DB_NAME ? { database: process.env.DB_NAME } : {});
+const connection = mysql.createPool(dbConfig);
 connection.on('connection', conn => conn.query("SET time_zone = '" + TIME_ZONE + "'"));
 app.use(loadUser(connection.promise()));   // who is logged in? (req.user)
 connection.query('SELECT 1', (err) => {
@@ -164,7 +166,13 @@ app.use((err, req, res, next) => {
     fail(res, 'Unexpected server error.', 500);
 });
 
-const port = process.env.PORT || 80;
-app.listen(port, function () {
-    console.log('Web server listening on port ' + port + '!');
-});
+// Listen only when the file is started (node app.js, nodemon -L app.js); a test that loads it with require('../app')
+// starts its own server on a free port (testing laboratory, section 3).
+if (require.main === module) {
+    const port = process.env.PORT || 80;
+    app.listen(port, function () {
+        console.log('Web server listening on port ' + port + '!');
+    });
+}
+app.db = connection.promise();
+module.exports = app;

@@ -88,4 +88,4 @@ function filePath(stored) {
     return /^[0-9a-f]{32}\.(pdf|jpg|png)$/.test(stored) ? path.join(FOLDER, stored) : null;
 }
 
-module.exports = { readFiles, saveFiles, removeFiles, filePath, MAX_FILES, MAX_SIZE };
+module.exports = { readFiles, saveFiles, removeFiles, filePath, detectType, cleanName, MAX_FILES, MAX_SIZE };

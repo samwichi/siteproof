@@ -114,7 +114,7 @@ SiteProof has moved from planning to implementation. The database and the first 
 | Frontend Development | In progress: pages for the five roles (contractor, supplier, inspector, company account, administrator) with Handlebars, HTMX and Bootstrap; every list has search, status filter, sorting and paging, a loading bar and error messages that stay in the corner of the window; the new-delivery form has a search box for the supplier and a material picker with category buttons and a search box; accessible and usable with the keyboard only (skip link, real buttons, labelled form fields, focus moves to the right place after each update); checked with axe-core: 0 violations |
 | Backend Development | In progress: Express routes with sign-in, registration, role check (checked in the database at every request) and company-level data isolation |
 | Database Design | MVP tables implemented in MySQL, loaded with the given data and with sample data ([ERModel.md](ERModel.md)) |
-| System Testing | Started: each function is tested by hand with the sample data; no automated tests yet |
+| System Testing | Automated tests with `node:test` (`npm test`, see [website/README.md](website/README.md)): unit tests of the login limit, file upload, role check and lists, and a system test of the whole closed loop on a separate test database; plus manual tests with the sample data |
 
 ### 3.1 Use case progress
 
@@ -141,7 +141,7 @@ The whole closed loop works from the first step to the last: the contractor crea
 
 **Security and everyday use:** the login cookie is never signed with the public example secret, wrong passwords are limited, the database uses Taiwan time, the login lasts while the user works, forgotten passwords are reset with a temporary password, inspections and ratings are saved in one transaction, and the supplier pages work on a phone ([website/README.md](website/README.md), section 2.12).
 
-**Next:** automated tests and the rest of the second phase (see section 2).
+**Next:** more automated tests (RFQ and registration) and the rest of the second phase (see section 2).
 
 ---
 ## 4. Project Documents
@@ -264,7 +264,7 @@ Frontend and backend follow the course requirements (3-tier web application) and
 | Backend | Node.js 22 + Express 5 (mysql2, cookie-parser, bcryptjs, multer) |
 | Database | MySQL 8.4 (Docker) |
 | Deployment | Docker on a local computer (cloud deployment to be decided) |
-| Testing Framework | Manual tests with sample data (automated tests to be decided) |
+| Testing Framework | Node.js built-in test runner (`node:test`, `node:assert`) |
 
 ---
 
