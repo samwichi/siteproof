@@ -174,6 +174,13 @@ Rules:
 * **Transactions:** recording or deleting an inspection or a rating and the new status of the delivery are saved together (one transaction), never only one of them.
 * **Phone:** the supplier's assigned deliveries have their buttons in the first column (no sideways scrolling to "Mark delivered"), the bell and the messages are next to the menu button, and the quotation form shows the catalog price under the material.
 
+## 2.13 History and times of a delivery
+
+* Every step and every change of a delivery is recorded with its **time and user** (table `delivery_event`): created (also by an accepted quotation), changed, declined and accepted again, prepared, on the way, delivered, inspected (and changed or deleted), completed and rated (and changed or deleted). It is written in the same transaction as the change itself.
+* The contractor's **delivery detail page** shows the time under each step of the progress line, a **History** list (time, step, person, company, note such as the quantities or the score), and whether the delivery arrived **on time**, early or late (the last arrival compared with the time slot, for example "Late by 50 min").
+* The supplier's **My rating and history** shows how many of its deliveries arrived on time.
+* The sample data has a history for every sample delivery (counted from its time slot; delivery #2 arrived late). An existing database gets the table and an approximate history of its deliveries with `database/15_upgrade_delivery_history.sql`.
+
 ## 3. Folders
 
 ```
@@ -211,6 +218,7 @@ website/
 │   ├── secret.js          the cookie secret: never the public example; a random one in website/.cookie-secret when needed
 │   ├── loginLimit.js      locks the sign in of an e-mail after 5 wrong passwords (15 minutes)
 │   ├── password.js        temporary password for a forgotten password
+│   ├── events.js          the history of a delivery: record() a step or a change with its user (delivery_event)
 │   ├── transaction.js     inTransaction(): several statements saved together or not at all
 │   ├── notify.js          writes the notifications for the routes (to the users of a company with one role, or to the inspectors of a contractor)
 │   └── materials.js       findMaterials(): the material picker (category buttons + search box) of the new delivery form and of "My products"

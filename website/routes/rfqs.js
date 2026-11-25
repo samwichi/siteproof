@@ -464,6 +464,10 @@ app.post('/:id/award', async (req, res) => {
              WHERE q.quotation_id = ?
              ORDER BY i.item_id`, [req.user.id, quotationId]);
         created = ins.affectedRows;
+        await conn.execute(
+            `INSERT INTO delivery_event (delivery_id, event, user_id, note)
+             SELECT delivery_id, 'CREATED', ?, CONCAT('From the accepted quotation of RFQ #', ?) FROM delivery WHERE quotation_id = ?`,
+            [req.user.id, rfq.ID, quotationId]);
         await conn.execute("UPDATE quotation SET status = IF(quotation_id = ?, 'ACCEPTED', 'NOT_CHOSEN') WHERE rfq_id = ?", [quotationId, rfq.ID]);
         await conn.execute("UPDATE rfq SET status = 'AWARDED' WHERE rfq_id = ?", [rfq.ID]);
         await conn.commit();

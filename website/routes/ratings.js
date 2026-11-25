@@ -7,6 +7,7 @@ const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList } = require('../lib/listing');
 const { inTransaction } = require('../lib/transaction');
+const events = require('../lib/events');
 const notify = require('../lib/notify');
 const app = express.Router();
 
@@ -103,7 +104,10 @@ app.post('/:id', async (req, res) => {
                  FROM delivery d JOIN project p ON p.project_id = d.project_id
                  WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'INSPECTED'`,
                 [req.user.id, score, req.params.id, req.user.orgId]);
-            if (r.affectedRows === 1) await conn.execute("UPDATE delivery SET status = 'COMPLETED' WHERE delivery_id = ? AND status = 'INSPECTED'", [req.params.id]);
+            if (r.affectedRows === 1) {
+                await conn.execute("UPDATE delivery SET status = 'COMPLETED' WHERE delivery_id = ? AND status = 'INSPECTED'", [req.params.id]);
+                await events.record(conn, req.params.id, 'COMPLETED', req.user.id, 'rating ' + score + '/5');
+            }
             return r;
         });
         if (result.affectedRows === 0) return fail(res, 'Only INSPECTED deliveries can be rated.', 409);
@@ -141,13 +145,16 @@ app.put('/:id', async (req, res) => {
     if (!score) return fail(res, 'Please choose a score from 1 to 5.');
 
     try {
-        await db().execute(
-            `UPDATE supplier_rating r
-             JOIN delivery d ON d.delivery_id = r.delivery_id
-             JOIN project p  ON p.project_id = d.project_id
-             SET r.score = ?, r.rated_by = ?
-             WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'COMPLETED'`,
-            [score, req.user.id, req.params.id, req.user.orgId]);
+        await inTransaction(db(), async conn => {
+            const [u] = await conn.execute(
+                `UPDATE supplier_rating r
+                 JOIN delivery d ON d.delivery_id = r.delivery_id
+                 JOIN project p  ON p.project_id = d.project_id
+                 SET r.score = ?, r.rated_by = ?
+                 WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'COMPLETED'`,
+                [score, req.user.id, req.params.id, req.user.orgId]);
+            if (u.affectedRows === 1) await events.record(conn, req.params.id, 'RATING_CHANGED', req.user.id, 'rating ' + score + '/5');
+        });
 
         const fresh = await findRow(req.params.id, req.user.orgId);
         fresh.message = 'Rating of delivery #' + req.params.id + ' changed to ' + score + '/5.';
@@ -170,7 +177,10 @@ app.delete('/:id', async (req, res) => {
                  JOIN project p  ON p.project_id = d.project_id
                  WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'COMPLETED'`,
                 [req.params.id, req.user.orgId]);
-            if (r.affectedRows === 1) await conn.execute("UPDATE delivery SET status = 'INSPECTED' WHERE delivery_id = ? AND status = 'COMPLETED'", [req.params.id]);
+            if (r.affectedRows === 1) {
+                await conn.execute("UPDATE delivery SET status = 'INSPECTED' WHERE delivery_id = ? AND status = 'COMPLETED'", [req.params.id]);
+                await events.record(conn, req.params.id, 'RATING_DELETED', req.user.id);
+            }
             return r;
         });
         if (result.affectedRows === 0) return fail(res, 'Only the rating of a COMPLETED delivery can be deleted.', 409);

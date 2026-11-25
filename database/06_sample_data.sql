@@ -147,6 +147,28 @@ INSERT INTO supplier_rating (delivery_id, rated_by, score) VALUES
 (@d2, (SELECT user_id FROM user_account WHERE email = 'pm.lin@siteproof.example.com'),  3),
 (@d3, (SELECT user_id FROM user_account WHERE email = 'pm.chen@siteproof.example.com'), 2);
 
+-- 6.7a History of the sample deliveries (table delivery_event), so that the detail page shows when each step happened.
+--      The times are counted from the time slot of each delivery; delivery #2 arrived 50 minutes after its slot (late).
+--      The supplier steps are written by the first supplier user of the company (or by the project manager when the company has none).
+INSERT INTO delivery_event (delivery_id, event, user_id, created_at)
+SELECT d.delivery_id, 'CREATED', d.created_by, d.slot_start - INTERVAL 7 DAY FROM delivery d;
+INSERT INTO delivery_event (delivery_id, event, user_id, created_at)
+SELECT d.delivery_id, e.event,
+       COALESCE((SELECT MIN(u.user_id) FROM user_account u WHERE u.org_id = d.org_id AND u.role = 'SUPPLIER'), d.created_by),
+       CASE e.event WHEN 'PREPARING' THEN d.slot_start - INTERVAL 1 DAY
+                    WHEN 'IN_TRANSIT' THEN d.slot_start - INTERVAL 1 HOUR
+                    ELSE IF(d.delivery_id = 2, d.slot_end + INTERVAL 50 MINUTE, d.slot_start + INTERVAL 20 MINUTE) END
+FROM delivery d
+JOIN (SELECT 'PREPARING' AS event, 2 AS step UNION ALL SELECT 'IN_TRANSIT', 3 UNION ALL SELECT 'DELIVERED', 4) e
+  ON e.step <= FIELD(d.status, 'SCHEDULED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED', 'INSPECTED', 'COMPLETED');
+INSERT INTO delivery_event (delivery_id, event, user_id, note, created_at)
+SELECT i.delivery_id, 'INSPECTED', i.inspector_id, CONCAT('received ', TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM i.received_quantity)), ', accepted ', TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM i.accepted_quantity))),
+       IF(i.delivery_id = 2, d.slot_end + INTERVAL 2 HOUR, d.slot_start + INTERVAL 90 MINUTE)
+FROM inspection i JOIN delivery d ON d.delivery_id = i.delivery_id;
+INSERT INTO delivery_event (delivery_id, event, user_id, note, created_at)
+SELECT r.delivery_id, 'COMPLETED', r.rated_by, CONCAT('rating ', r.score, '/5'), d.slot_end + INTERVAL 1 DAY
+FROM supplier_rating r JOIN delivery d ON d.delivery_id = r.delivery_id;
+
 -- 6.7b The demo suppliers offer the materials of their sample deliveries in the product catalog (if step 4.11 did not add them already):
 --      the price range is 10% around the unit price of the delivery; the lead time and the minimum order are examples.
 INSERT IGNORE INTO supplier_product (org_id, material_id, price_min, price_max, min_order_qty, lead_time_days)

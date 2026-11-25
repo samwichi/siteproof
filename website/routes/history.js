@@ -30,6 +30,14 @@ app.get('/', async (req, res) => {
          LEFT JOIN supplier_rating r ON r.delivery_id = d.delivery_id
          WHERE d.org_id = ?`, [orgId]);
 
+    // Punctuality: for every delivery that arrived, was its last arrival (DELIVERED in delivery_event) inside the time slot?
+    const [[punctual]] = await db().execute(
+        `SELECT COUNT(*) AS arrived, COALESCE(SUM(a.at <= d.slot_end), 0) AS onTime
+         FROM delivery d
+         JOIN (SELECT delivery_id, MAX(created_at) AS at FROM delivery_event WHERE event = 'DELIVERED' GROUP BY delivery_id) a
+           ON a.delivery_id = d.delivery_id
+         WHERE d.org_id = ? AND d.status IN ('DELIVERED', 'INSPECTED', 'COMPLETED')`, [orgId]);
+
     // How many deliveries got each score (5 to 1).
     const [counts] = await db().execute(
         `SELECT r.score AS score, COUNT(*) AS n
@@ -81,6 +89,9 @@ app.get('/', async (req, res) => {
         average: sum.average === null ? null : sum.average.toFixed(1),      // text like 3.0, so the page always shows one decimal
     };
     summary.averageStars = sum.average === null ? '' : stars(Math.round(sum.average));
+    summary.arrived = Number(punctual.arrived);
+    summary.onTime = Number(punctual.onTime);
+    summary.onTimePercent = summary.arrived ? Math.round(summary.onTime / summary.arrived * 100) : null;
 
     res.render('history/index', {
         summary: summary,

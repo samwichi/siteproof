@@ -204,6 +204,23 @@ CREATE TABLE delivery (
     FOREIGN KEY (created_by)  REFERENCES user_account (user_id)
 );
 
+-- 1.10b History of a delivery: one row for every step and every change, with the time and the user. It shows when the delivery was
+--       created, prepared, sent, delivered (on time or late), inspected and completed, and who did it, also when a step was undone.
+--       The website writes it in the same transaction as the change itself (lib/events.js).
+CREATE TABLE delivery_event (
+    event_id    INT AUTO_INCREMENT PRIMARY KEY,
+    delivery_id INT          NOT NULL,
+    event       VARCHAR(20)  NOT NULL CHECK (event IN ('CREATED', 'CHANGED', 'DECLINED', 'ACCEPTED_AGAIN', 'PREPARING', 'IN_TRANSIT',
+                                                       'DELIVERED', 'INSPECTED', 'INSPECTION_CHANGED', 'INSPECTION_DELETED',
+                                                       'COMPLETED', 'RATING_CHANGED', 'RATING_DELETED')),
+    user_id     INT          NOT NULL,
+    note        VARCHAR(200) NULL,
+    created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX (delivery_id, created_at),
+    FOREIGN KEY (delivery_id) REFERENCES delivery (delivery_id),
+    FOREIGN KEY (user_id)     REFERENCES user_account (user_id)
+);
+
 -- 1.11 Quality documents (PDF/JPG) uploaded to a delivery.
 CREATE TABLE delivery_document (
     document_id INT AUTO_INCREMENT PRIMARY KEY,

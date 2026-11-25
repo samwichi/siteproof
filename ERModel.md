@@ -15,7 +15,7 @@ Attributes of a later phase inside an MVP table are marked in the comment (for e
 
 ## 2. Figure 1 - MVP data model (implemented in MySQL)
 
-13 tables.
+14 tables.
 
 ```mermaid
 erDiagram
@@ -96,6 +96,14 @@ erDiagram
         datetime declined_at "the supplier declined it (SCHEDULED only)"
         varchar decline_reason
     }
+    DELIVERY_EVENT {
+        int event_id PK
+        int delivery_id FK
+        varchar event "CREATED, PREPARING, ..., COMPLETED, changes"
+        int user_id FK
+        varchar note
+        timestamp created_at
+    }
     DELIVERY_DOCUMENT {
         int document_id PK
         int delivery_id FK
@@ -147,6 +155,8 @@ erDiagram
     MATERIAL ||--o{ DELIVERY : "delivered in"
     USER_ACCOUNT ||--o{ DELIVERY : creates
     DELIVERY ||--o{ DELIVERY_DOCUMENT : has
+    DELIVERY ||--|{ DELIVERY_EVENT : "has history"
+    USER_ACCOUNT ||--o{ DELIVERY_EVENT : "did"
     USER_ACCOUNT ||--o{ DELIVERY_DOCUMENT : uploads
     DELIVERY ||--o| INSPECTION : "inspected by"
     USER_ACCOUNT ||--o{ INSPECTION : performs
@@ -156,7 +166,7 @@ erDiagram
 
 ## 3. Figure 2 - Full product (MVP + Phase 2 + Phase 3)
 
-30 entities: the 13 MVP tables plus 12 for Phase 2 (7 of them, the RFQ and quotation tables, the messages and the notifications, are already built) and 5 for Phase 3.
+31 entities: the 14 MVP tables plus 12 for Phase 2 (7 of them, the RFQ and quotation tables, the messages and the notifications, are already built) and 5 for Phase 3.
 
 ```mermaid
 erDiagram
@@ -239,6 +249,14 @@ erDiagram
         datetime declined_at "the supplier declined it"
         varchar decline_reason
         int payment_request_id FK "Phase 2, nullable"
+    }
+    DELIVERY_EVENT["DELIVERY_EVENT - MVP"] {
+        int event_id PK
+        int delivery_id FK
+        varchar event "CREATED, PREPARING, ..., COMPLETED, changes"
+        int user_id FK
+        varchar note
+        timestamp created_at
     }
     DELIVERY_DOCUMENT["DELIVERY_DOCUMENT - MVP"] {
         int document_id PK
@@ -408,6 +426,8 @@ erDiagram
     MATERIAL ||--o{ DELIVERY : "delivered in"
     USER_ACCOUNT ||--o{ DELIVERY : creates
     DELIVERY ||--o{ DELIVERY_DOCUMENT : has
+    DELIVERY ||--|{ DELIVERY_EVENT : "has history"
+    USER_ACCOUNT ||--o{ DELIVERY_EVENT : "did"
     USER_ACCOUNT ||--o{ DELIVERY_DOCUMENT : uploads
     DELIVERY ||--o| INSPECTION : "inspected by"
     USER_ACCOUNT ||--o{ INSPECTION : performs
@@ -450,7 +470,7 @@ erDiagram
     classDef mvp fill:#bfe8cf,stroke:#1f7a4d,stroke-width:3px,color:#0f2a1c
     classDef p2 fill:#fbe3a0,stroke:#b8860b,stroke-width:2px,color:#2b2100
     classDef p3 fill:#e6e9ee,stroke:#6e7781,stroke-width:2px,stroke-dasharray:5 3,color:#24292f
-    class ORGANIZATION,USER_ACCOUNT,ORG_DOCUMENT,INSPECTION_APPOINTMENT,PROJECT,MATERIAL_CATEGORY,MATERIAL,PURCHASE,SUPPLIER_PRODUCT,DELIVERY,DELIVERY_DOCUMENT,INSPECTION,SUPPLIER_RATING mvp
+    class ORGANIZATION,USER_ACCOUNT,ORG_DOCUMENT,INSPECTION_APPOINTMENT,PROJECT,MATERIAL_CATEGORY,MATERIAL,PURCHASE,SUPPLIER_PRODUCT,DELIVERY,DELIVERY_EVENT,DELIVERY_DOCUMENT,INSPECTION,SUPPLIER_RATING mvp
     class SUPPLIER_CONNECTION,RFQ,RFQ_ITEM,RFQ_SUPPLIER,QUOTATION,QUOTATION_ITEM,MESSAGE,NOTIFICATION,PAYMENT_REQUEST,SUBSCRIPTION,FEATURED_LISTING,ESG_RECORD p2
     class DOCUMENT_EXTRACTION,PROJECT_BUDGET,DELIVERY_TRACKING_POINT,ERP_SYNC_LOG,DELIVERY_RISK_SCORE p3
 ```
@@ -466,6 +486,7 @@ erDiagram
 | PROJECT | Projects of a contractor, with the contract retention rate (managed by the company account; the name is unique in the company) | `project_id` | US2, US3, UC10 |
 | MATERIAL_CATEGORY | Categories to search the catalog: Labor, Equipment, Material, Other | `category_id` | US2 |
 | MATERIAL | Catalog of materials, labor and equipment | `material_id` (8-digit id) | US2 / UC2 |
+| DELIVERY_EVENT | History of a delivery: every step and change (created, prepared, sent, delivered, inspected, completed, declined, changed, undone) with its time and user; shows whether the delivery arrived inside its time slot | `event_id` | US3, US7 |
 | PURCHASE | Past purchases from suppliers (loaded from the data given in class) | `purchase_id` | US3, US7 |
 | SUPPLIER_PRODUCT | Product catalog of a supplier: the materials it can provide, price range per unit, minimum order, lead time; filled from the purchases (step 4.11) and managed by the supplier; `active = 0` unlists a product | `product_id` (`org_id` + `material_id` unique) | US2, US3 |
 | DELIVERY | The single delivery record: project, supplier, material, quantity, value, time slot, status | `delivery_id` | US2, US3, US5 / UC2, UC3, UC5 |

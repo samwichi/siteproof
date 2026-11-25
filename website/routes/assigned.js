@@ -8,6 +8,8 @@ const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList } = require('../lib/listing');
 const notify = require('../lib/notify');
+const { inTransaction } = require('../lib/transaction');
+const events = require('../lib/events');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -91,9 +93,14 @@ app.put('/:id', async (req, res) => {
 
     try {
         // The condition status = from makes sure that the delivery is still in the status that the user saw.
-        const [result] = await db().execute(
-            'UPDATE delivery SET status = ? WHERE delivery_id = ? AND org_id = ? AND status = ? AND declined_at IS NULL',
-            [to, id, orgId, from]);
+        // The new status and its line in the history are saved together.
+        const result = await inTransaction(db(), async conn => {
+            const [r] = await conn.execute(
+                'UPDATE delivery SET status = ? WHERE delivery_id = ? AND org_id = ? AND status = ? AND declined_at IS NULL',
+                [to, id, orgId, from]);
+            if (r.affectedRows === 1) await events.record(conn, id, to, req.user.id);
+            return r;
+        });
 
         const fresh = await findAssigned(id, orgId);
         if (result.affectedRows === 0) {
@@ -137,9 +144,13 @@ app.put('/:id/decline', async (req, res) => {
     const reason = String(req.body.reason || '').trim();
     if (!reason) return fail(res, 'Please write the reason, so that the contractor knows what to change.');
     if (reason.length > 200) return fail(res, 'The reason can have at most 200 characters.');
-    const [result] = await db().execute(
-        "UPDATE delivery SET declined_at = NOW(), decline_reason = ? WHERE delivery_id = ? AND org_id = ? AND status = 'SCHEDULED' AND declined_at IS NULL",
-        [reason, req.params.id, req.user.orgId]);
+    const result = await inTransaction(db(), async conn => {
+        const [r] = await conn.execute(
+            "UPDATE delivery SET declined_at = NOW(), decline_reason = ? WHERE delivery_id = ? AND org_id = ? AND status = 'SCHEDULED' AND declined_at IS NULL",
+            [reason, req.params.id, req.user.orgId]);
+        if (r.affectedRows === 1) await events.record(conn, req.params.id, 'DECLINED', req.user.id, reason);
+        return r;
+    });
     if (result.affectedRows === 0) return fail(res, 'Only a SCHEDULED delivery that is not declined yet can be declined.', 409);
     const about = await notify.aboutDelivery(db(), req.params.id);
     await notify.toCompany(db(), about.contractorId, 'CONTRACTOR_PM',
@@ -150,9 +161,13 @@ app.put('/:id/decline', async (req, res) => {
 });
 
 app.delete('/:id/decline', async (req, res) => {
-    const [result] = await db().execute(
-        "UPDATE delivery SET declined_at = NULL, decline_reason = NULL WHERE delivery_id = ? AND org_id = ? AND status = 'SCHEDULED' AND declined_at IS NOT NULL",
-        [req.params.id, req.user.orgId]);
+    const result = await inTransaction(db(), async conn => {
+        const [r] = await conn.execute(
+            "UPDATE delivery SET declined_at = NULL, decline_reason = NULL WHERE delivery_id = ? AND org_id = ? AND status = 'SCHEDULED' AND declined_at IS NOT NULL",
+            [req.params.id, req.user.orgId]);
+        if (r.affectedRows === 1) await events.record(conn, req.params.id, 'ACCEPTED_AGAIN', req.user.id);
+        return r;
+    });
     if (result.affectedRows === 0) return fail(res, 'This delivery is not declined.', 409);
     const about = await notify.aboutDelivery(db(), req.params.id);
     await notify.toCompany(db(), about.contractorId, 'CONTRACTOR_PM',

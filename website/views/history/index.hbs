@@ -23,6 +23,7 @@
         <div class="text-muted">Deliveries</div>
         <div class="display-5">{{summary.deliveries}}</div>
         <small class="text-muted">{{summary.completed}} completed</small>
+        <div class="mt-2">{{#if summary.arrived}}<span class="badge text-bg-light border">On time: {{summary.onTime}} of {{summary.arrived}} ({{summary.onTimePercent}}%)</span>{{else}}<small class="text-muted">No arrival recorded yet</small>{{/if}}</div>
       </div>
     </div>
   </div>
