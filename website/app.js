@@ -139,6 +139,10 @@ app.use('/projects', requireRole('COMPANY'), projects);          // only the com
 
 const company = require('./routes/company');
 company.connection = connection;
+// The overview of the company is mounted before /company, so /company/orders is not taken by the company router.
+const companyOrders = require('./routes/companyOrders');
+companyOrders.connection = connection;
+app.use('/company/orders', requireRole('COMPANY'), companyOrders);
 app.use('/company', requireRole('COMPANY'), company);
 
 const adminUsers = require('./routes/adminUsers');

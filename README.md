@@ -135,7 +135,7 @@ Beyond the ten use cases, the supplier keeps a **product catalog** (My products)
 
 **Requests for quotation (RFQ, phase 2):** the contractor writes an RFQ for a project (materials and quantities, wanted delivery slot, last day for the quotations) and invites suppliers; the suppliers that offer the most materials in their catalog are suggested first. A draft can be changed and deleted; after **Send** it cannot be changed or deleted any more, only cancelled ([website/README.md](website/README.md), section 2.4). The invited suppliers answer with a **quotation** (a unit price for each material, lead time, note) and can change or withdraw it until the last day (section 2.5). The contractor **compares the quotations side by side** and **accepts** one: the deliveries are created automatically for that supplier and continue in the closed loop above (section 2.6). The whole story of the assignment works: supplier products → RFQ → quotations → decision → delivery → inspection → rating.
 
-**Notifications:** every user has a bell in the menu with the number of new notifications: a new delivery, a status change, a delivery that arrived and must be inspected, an inspection result, a rating, an RFQ, a quotation, a decision or a new registration ([website/README.md](website/README.md), section 2.7). **Messages:** the contractor, the supplier and the inspectors talk about a delivery in its conversation, and the contractor asks each invited supplier questions about an RFQ in a private conversation (section 2.8).
+**Notifications:** every user has a bell in the menu with the number of new notifications: a new delivery, a status change, a delivery that arrived and must be inspected, an inspection result, a rating, an RFQ, a quotation, a decision or a new registration ([website/README.md](website/README.md), section 2.7). **Messages:** the contractor, the supplier and the inspectors talk about a delivery in its conversation, and the contractor asks each invited supplier questions about an RFQ in a private conversation (section 2.8). **Company overview:** the company account sees all the orders of its company with totals (deliveries, values, retention, ratings, inspections), read only (section 2.11).
 
 The whole closed loop works from the first step to the last: the contractor creates a delivery, the supplier moves it to DELIVERED, the inspector inspects it, the contractor completes it with a rating, and the supplier sees the rating.
 
@@ -195,6 +195,8 @@ graph TD
     HOME --> COM["Company Account Area"]:::p1
     HOME --> ADM["Administrator Area"]:::p1
     COM --> M1["Approve Users, Projects, Inspection Companies<br/>UC1<br/>Owner: Po-Hao"]:::p1
+    COM --> M2["Company Overview<br/>All Orders and Totals<br/>Owner: Po-Hao"]:::p1
+    HOME --> ALL["Every User: Notifications, Messages, My Account<br/>Owner: Po-Hao"]:::p1
     ADM --> A1["Approve Companies, See All Users<br/>UC1<br/>Owner: Po-Hao"]:::p1
     CON --> C6["Find Products<br/>Product Catalog<br/>Owner: Po-Hao"]:::p1
     SUP --> S4["My Products<br/>Product Catalog<br/>Owner: Po-Hao"]:::p1
@@ -240,6 +242,10 @@ graph TD
 | My Products (supplier) | Product catalog | 1 | Po-Hao | ✅ Done |
 | Requests for Quotation (contractor: create, send, compare, accept) | RFQ (phase 2) | 2 | Po-Hao | ✅ Done |
 | Quotations (supplier: send, change, withdraw) | RFQ (phase 2) | 2 | Po-Hao | ✅ Done |
+| Company Overview (all orders of the company, totals) | UC3 | 2 | Po-Hao | ✅ Done |
+| Notifications (every user) | Phase 2 | 2 | Po-Hao | ✅ Done |
+| Messages (contractor, supplier, inspector) | Phase 2 | 2 | Po-Hao | ✅ Done |
+| My Account (change the password) | UC1 | 2 | Po-Hao | ✅ Done |
 | Phase 2 and Phase 3 pages | — | 2 / 3 | To be assigned | ⬜ To do |
 
 Status: ✅ Done, 🔶 Partly, ⬜ To do (details in section 3.1). "Supplier Ratings" is partly done because the rating of each delivery is shown on the Complete and Rate page and on the Delivery Detail page, but there is no separate page with the average rating of each supplier.

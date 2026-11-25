@@ -152,6 +152,18 @@ Rules:
 * **Decline:** a supplier can **decline** a SCHEDULED delivery with a reason (for example "we can deliver on Thursday, not on Tuesday"). The delivery stays SCHEDULED but cannot be moved on; the contractor gets a notification and sees the reason in the list and on the detail page. When the contractor changes the delivery, the supplier is asked again; the supplier can also accept it after all. An existing database gets the two columns with `database/13_upgrade_decline.sql`.
 * **My account:** a click on the own name in the menu opens the account page: name, e-mail, role, and **change the password** (the current password is needed; the new one has at least 8 characters).
 
+## 2.11 Company overview (menu of a company account)
+
+* The company account sees **everything its company does**, read only, with totals at the top. The list has search, status filter, sorting and paging like the other lists.
+
+| Company | Totals | List |
+|---|---|---|
+| Contractor | deliveries not completed, declined by a supplier, ordered value, accepted value, retention kept, RFQs waiting for quotations | every delivery of every project (filter by project): supplier, value, status, inspection and retention, rating, who ordered it |
+| Supplier | deliveries to prepare or bring, value of completed deliveries, average rating, quotations sent / accepted, listed products | every delivery that the contractors ordered from the company |
+| Inspection company | deliveries waiting for an inspection, inspections recorded, rejected deliveries, contractors served | every inspection of its inspectors |
+
+* Every query is limited to the company of the company account; another company sees nothing of it.
+
 ## 3. Folders
 
 ```
@@ -161,6 +173,7 @@ website/
 ├── routes/
 │   ├── auth.js            UC1  sign in / sign out (and the message when the account is switched off or the company is not approved)
 │   ├── register.js        registration: company account (with proof documents) and user account (company list with search)
+│   ├── companyOrders.js   company account: overview of all the orders of the company with totals (read only)
 │   ├── company.js         company account: users of the company (approve / reject a registration, switch off / on) and the appointment of inspection companies
 │   ├── projects.js        company account of a contractor: create, list, edit, delete the projects (name, retention rate)
 │   ├── admin.js           administrator: all companies, approve / reject, proof documents and users of a company
