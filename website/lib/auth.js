@@ -36,7 +36,10 @@ function loadUser(db) {
 
         const [rows] = await db.execute(
             `SELECT u.user_id, u.org_id, u.full_name, u.role, u.active, u.status AS user_status, o.org_name, o.org_type, o.status,
-                    (SELECT COUNT(*) FROM user_account w WHERE u.role = 'COMPANY' AND w.org_id = u.org_id AND w.status = 'PENDING') AS waiting
+                    (SELECT COUNT(*) FROM user_account w WHERE u.role = 'COMPANY' AND w.org_id = u.org_id AND w.status = 'PENDING') AS waiting,
+                    (SELECT COUNT(*) FROM rfq_supplier rs JOIN rfq r ON r.rfq_id = rs.rfq_id
+                     WHERE u.role = 'SUPPLIER' AND rs.org_id = u.org_id AND r.status = 'SENT' AND r.due_date >= CURDATE()
+                       AND NOT EXISTS (SELECT 1 FROM quotation q WHERE q.rfq_id = rs.rfq_id AND q.org_id = rs.org_id)) AS openRfqs
              FROM user_account u LEFT JOIN organization o ON o.org_id = u.org_id
              WHERE u.user_id = ?`, [c.id]);
         const u = rows[0];
@@ -58,6 +61,7 @@ function loadUser(db) {
         res.locals.isContractorCompany = (u.role === 'COMPANY' && u.org_type === 'CONTRACTOR');
         res.locals.isInspectionCompany = (u.role === 'COMPANY' && u.org_type === 'INSPECTION');
         res.locals.waitingUsers = Number(u.waiting);     // registrations that the company account has to approve (badge in the menu)
+        res.locals.openRfqs = Number(u.openRfqs);        // requests for quotation that wait for an answer of a supplier (badge in the menu)
         next();
     };
 }

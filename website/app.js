@@ -96,6 +96,10 @@ const assigned = require('./routes/assigned');
 assigned.connection = connection;
 app.use('/assigned', requireRole('SUPPLIER'), assigned);
 
+const quotations = require('./routes/quotations');
+quotations.connection = connection;
+app.use('/quotations', requireRole('SUPPLIER'), quotations);
+
 const products = require('./routes/products');
 products.connection = connection;
 app.use('/products', requireRole('SUPPLIER'), products);

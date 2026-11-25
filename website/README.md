@@ -91,6 +91,14 @@ Rules:
 * The project managers of the same company see and work on the same RFQs; nobody sees the RFQs of another company.
 * An existing database gets the new tables with `database/09_upgrade_rfq.sql`. The sample data has one sent RFQ (Concrete and cement for floor 12) for the demo.
 
+## 2.5 Quotations (menu of a supplier: RFQs)
+
+* The supplier sees the RFQs that were **sent** to its company (never the drafts, never the RFQs of other suppliers). The menu shows how many wait for an answer.
+* On the page of an RFQ the supplier enters a **unit price for every material** (the form starts with the middle of its own catalog price range and shows that range), a lead time and a note, and sends the quotation. The amount of each line and the total are calculated.
+* Until the last day, and as long as the contractor has not decided, the supplier can **change** or **withdraw** (delete) the quotation. After that it is read only, and the page says whether it was accepted.
+* The supplier never sees the prices of the other suppliers. The database allows a quotation only for an invited supplier (foreign key to RFQ_SUPPLIER) and only one per supplier and RFQ.
+* Sending, changing and withdrawing lock the RFQ row in a transaction, so a quotation cannot change while the contractor accepts one.
+
 ## 3. Folders
 
 ```
@@ -113,7 +121,8 @@ website/
 │   ├── assigned.js        UC5  supplier: list the assigned deliveries and move each one forward (PREPARING, IN_TRANSIT, DELIVERED)
 │   ├── history.js         UC7  supplier: own average rating, score distribution and delivery history (read only)
 │   ├── documents.js       UC6  supplier: add quality documents at any time; edit or delete them until the delivery is inspected (type and file name)
-│   └── products.js        supplier: the product catalog of the company ("My products"): add, list, edit, unlist / list again, delete
+│   ├── products.js        supplier: the product catalog of the company ("My products"): add, list, edit, unlist / list again, delete
+│   └── quotations.js      supplier: the RFQs sent to the company; send, change, withdraw a quotation until the last day
 ├── lib/
 │   ├── auth.js            loadUser (who is logged in; asks the database at every request whether the account and its company are still allowed), requireRole('...'), role names, start page of each role
 │   ├── upload.js          proof documents: receive (multer), check the first bytes, save under a random name, read

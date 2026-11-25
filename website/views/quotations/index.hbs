@@ -1,0 +1,40 @@
+<h1 class="h2">Requests for quotation</h1>
+<p class="text-muted">The contractors that invited {{user.orgName}} to send a price. Answer before the last day; you can change or withdraw your quotation until then. The other suppliers never see your prices.</p>
+{{> list/controls placeholder="Search by ID, title, contractor or project"}}
+<div id="list" data-count="{{list.total}}">
+  <div class="table-responsive">
+    <table class="table table-striped table-hover table-sm">
+      <caption class="visually-hidden">Requests for quotation sent to your company</caption>
+      <thead>
+        <tr>
+          {{> list/th key="ID" label="ID"}}
+          {{> list/th key="title" label="Title"}}
+          {{> list/th key="contractor" label="Contractor"}}
+          <th scope="col" class="text-end">Materials</th>
+          {{> list/th key="due" label="Last day"}}
+          {{> list/th key="slot" label="Delivery"}}
+          <th scope="col" class="text-end">Your total (NT$)</th>
+          {{> list/th key="state" label="Status"}}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+        <tr class="align-middle">
+          <td><a class="d-inline-block px-2 py-1" href="/quotations/{{ID}}" hx-boost="true" hx-target="#main" title="Open RFQ #{{ID}}">{{ID}}</a></td>
+          <td><a href="/quotations/{{ID}}" hx-boost="true" hx-target="#main">{{title}}</a><div class="small text-muted">{{project}}</div></td>
+          <td>{{contractor}}</td>
+          <td class="text-end">{{items}}</td>
+          <td class="text-nowrap">{{due}}</td>
+          <td class="text-nowrap">{{slotDay}}</td>
+          <td class="text-end">{{#if total}}{{total}}{{else}}<span class="text-muted">-</span>{{/if}}</td>
+          <td><span class="badge text-bg-{{badge}}">{{state}}</span></td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{#unless rows.length}}
+    <p class="text-muted text-center">{{#if list.filtered}}No RFQ matches your search.{{else}}No contractor has sent a request for quotation to your company yet. Keep your products up to date (menu My products): contractors invite the suppliers that offer the materials they need.{{/if}}</p>
+  {{/unless}}
+  {{> list/pager}}
+</div>
