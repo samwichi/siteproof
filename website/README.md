@@ -287,4 +287,13 @@ npm test
 GRANT ALL ON siteproof_test.* TO 'siteproof'@'172.17.%';
 ```
 
-Without `config.js` or without MySQL these tests are skipped and the others still run.
+The container of section 1 only has the website folder (`/app`), so the system test cannot see `database/01_schema.sql`. Copy it once into the container (it stays there until the container is deleted); run these in the repository folder:
+
+```
+docker exec SiteProof mkdir -p /database
+docker cp database\01_schema.sql SiteProof:/database/
+```
+
+Or set `SCHEMA_FILE` to the path of the file. Copy it again after `01_schema.sql` changes.
+
+Without `config.js`, without MySQL or without `01_schema.sql` these tests are skipped (with the reason) and the others still run.

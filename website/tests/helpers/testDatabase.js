@@ -18,8 +18,17 @@ function settings() {
     return Object.assign({}, config.db, { database: undefined, multipleStatements: true, timezone: '+08:00', connectTimeout: 5000 });
 }
 
+// The file database/01_schema.sql: SCHEMA_FILE, else the folder of the repository, else /database in the container
+// (the container only has the website folder, see website/README.md "Automated tests"). null when none of them exists.
+function schemaFile() {
+    const candidates = [process.env.SCHEMA_FILE, path.join(__dirname, '..', '..', '..', 'database', '01_schema.sql'), '/database/01_schema.sql']
+        .filter(file => file);
+    return candidates.find(file => fs.existsSync(file)) || null;
+}
+
 // null when MySQL can be used, otherwise the reason why the tests are skipped.
 async function available() {
+    if (!schemaFile()) return 'database/01_schema.sql not found (set SCHEMA_FILE, see website/README.md)';
     const s = settings();
     if (!s) return 'config.js is missing (copy config.example.js)';
     try {
@@ -35,7 +44,7 @@ async function available() {
 // Make the empty test database again from 01_schema.sql and add a small world: one contractor with a project (5% retention),
 // one supplier, one material, and three users (project manager, supplier, inspector). Returns the ids that the tests need.
 async function create() {
-    const schema = fs.readFileSync(path.join(__dirname, '..', '..', '..', 'database', '01_schema.sql'), 'utf8')
+    const schema = fs.readFileSync(schemaFile(), 'utf8')
         .replace('DROP DATABASE IF EXISTS siteproof;', 'DROP DATABASE IF EXISTS ' + NAME + ';')
         .replace('CREATE DATABASE siteproof ', 'CREATE DATABASE ' + NAME + ' ')
         .replace('USE siteproof;', 'USE ' + NAME + ';');
