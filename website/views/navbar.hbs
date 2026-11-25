@@ -11,6 +11,9 @@
           <a class="nav-link" href="/catalog"><i aria-hidden="true" class="bi bi-search"></i> Find products</a>
         </li>
         <li class="nav-item">
+          <a class="nav-link" href="/rfqs"><i aria-hidden="true" class="bi bi-envelope-paper"></i> RFQs</a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" href="/deliveries"><i aria-hidden="true" class="bi bi-box-seam"></i> My deliveries</a>
         </li>
         <li class="nav-item">
@@ -49,6 +52,9 @@
         </li>
         {{/if}}
         {{#if isSupplier}}
+        <li class="nav-item">
+          <a class="nav-link" href="/quotations"><i aria-hidden="true" class="bi bi-envelope-paper"></i> RFQs {{> quotations/openBadge}}</a>
+        </li>
         <li class="nav-item">
           <a class="nav-link" href="/products"><i aria-hidden="true" class="bi bi-boxes"></i> My products</a>
         </li>

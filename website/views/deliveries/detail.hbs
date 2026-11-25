@@ -25,6 +25,7 @@
         <li class="list-group-item"><strong>Quantity:</strong> {{quantity}} {{unit}}</li>
         <li class="list-group-item"><strong>Value:</strong> NT$ {{value}}</li>
         <li class="list-group-item"><strong>Time slot:</strong> {{slotStart}} - {{slotEnd}}</li>
+        {{#if source}}<li class="list-group-item"><strong>From:</strong> <a href="/rfqs/{{source.rfqId}}" hx-boost="true" hx-target="#main">RFQ #{{source.rfqId}} {{source.rfqTitle}}</a> (accepted quotation)</li>{{/if}}
       </ul>
     </div>
   </div>

@@ -1,0 +1,63 @@
+{{!-- One request for quotation as the supplier sees it, with the form of the quotation of the company. --}}
+<p>
+  <a class="btn btn-outline-secondary btn-sm" href="/quotations" hx-boost="true" hx-target="#main">
+    <i aria-hidden="true" class="bi bi-arrow-left"></i> Back to the requests for quotation
+  </a>
+</p>
+<h1 class="h2">RFQ #{{ID}}: {{title}} <span class="badge text-bg-{{badge}} fs-6 align-middle">{{state}}</span></h1>
+
+{{#if canSubmit}}<div class="alert alert-warning py-2"><i aria-hidden="true" class="bi bi-hourglass-split"></i> {{contractor}} waits for your quotation until <strong>{{due}}</strong>.</div>{{/if}}
+{{#if canChange}}<div class="alert alert-primary py-2"><i aria-hidden="true" class="bi bi-check2-circle"></i> Your quotation was sent on {{submittedAt}} by {{submittedBy}}. You can change or withdraw it until <strong>{{due}}</strong>.</div>{{/if}}
+{{#if quotationStatus}}{{#unless canChange}}
+  <div class="alert {{#if accepted}}alert-success{{else}}alert-secondary{{/if}} py-2">
+    {{#if accepted}}<i aria-hidden="true" class="bi bi-trophy"></i> <strong>Your quotation was accepted.</strong> The deliveries are in your list of assigned deliveries.{{/if}}
+    {{#if notChosen}}The contractor chose another quotation.{{/if}}
+    {{#if stillSubmitted}}The RFQ is closed: the last day has passed{{#if cancelled}} or the contractor cancelled it{{/if}}.{{/if}}
+  </div>
+{{/unless}}{{/if}}
+{{#unless hasQuotation}}{{#unless open}}<div class="alert alert-secondary py-2">This RFQ is closed{{#if cancelled}}: the contractor cancelled it{{else}}: the last day has passed or the contractor has decided{{/if}}. Your company did not send a quotation.</div>{{/unless}}{{/unless}}
+
+<div class="card mb-3">
+  <div class="card-header"><i aria-hidden="true" class="bi bi-info-circle"></i> Request of {{contractor}}</div>
+  <ul class="list-group list-group-flush">
+    <li class="list-group-item"><strong>Project:</strong> {{project}}</li>
+    <li class="list-group-item"><strong>Wanted delivery:</strong> {{slotStart}} - {{slotEnd}}</li>
+    <li class="list-group-item"><strong>Last day for the quotation:</strong> {{due}}</li>
+    {{#if note}}<li class="list-group-item"><strong>Note of the contractor:</strong> {{note}}</li>{{/if}}
+  </ul>
+</div>
+
+<form class="card mb-3" {{#if canSubmit}}hx-post="/quotations/{{ID}}"{{/if}}{{#if canChange}}hx-put="/quotations/{{ID}}"{{/if}} hx-target="#main" hx-disable="findAll button">
+  <div class="card-header"><i aria-hidden="true" class="bi bi-receipt"></i> {{#if hasQuotation}}Your quotation{{#if total}} · total NT$ {{total}}{{/if}}{{else}}Your quotation{{/if}}</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <caption class="visually-hidden">Unit prices of your quotation</caption>
+      <thead><tr>
+        <th scope="col">Material</th><th scope="col" class="text-end">Quantity</th><th scope="col">Your catalog</th>
+        <th scope="col" class="text-end">Unit price (NT$)</th>{{#if hasQuotation}}<th scope="col" class="text-end">Amount (NT$)</th>{{/if}}
+      </tr></thead>
+      <tbody>
+        {{#each items}}
+        <tr>
+          <td>{{material}}</td>
+          <td class="text-end text-nowrap">{{quantity}} {{unit}}</td>
+          <td class="small text-nowrap">{{#if inCatalog}}{{catalogMin}}{{#unless samePrice}} - {{catalogMax}}{{/unless}} / {{unit}}{{else}}<span class="text-muted">Not in your catalog</span>{{/if}}</td>
+          <td class="text-end">
+            {{#if ../canSubmit}}{{> quotations/priceInput}}{{else}}{{#if ../canChange}}{{> quotations/priceInput}}{{else}}{{unitPrice}}{{/if}}{{/if}}
+          </td>
+          {{#if ../hasQuotation}}<td class="text-end">{{lineTotal}}</td>{{/if}}
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{#if canSubmit}}{{> quotations/formEnd}}{{/if}}
+  {{#if canChange}}{{> quotations/formEnd}}{{/if}}
+  {{#unless canSubmit}}{{#unless canChange}}{{#if hasQuotation}}
+    <div class="card-body border-top small">
+      <strong>Lead time:</strong> {{#if leadTime}}{{leadTime}} days{{else}}-{{/if}}{{#if quotationNote}} · <strong>Note:</strong> {{quotationNote}}{{/if}}
+    </div>
+  {{/if}}{{/unless}}{{/unless}}
+</form>
+{{#if message}}{{> toast}}{{/if}}
+<hx-partial hx-target="#openRfqBadge" hx-swap="outerHTML">{{> quotations/openBadge}}</hx-partial>

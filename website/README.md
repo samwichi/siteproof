@@ -82,6 +82,31 @@ Rules:
 * If the supplier unlisted or deleted the product meanwhile, the form says so and shows the normal supplier and material pickers.
 * Later (phase 2) the button "Order" can become "Add to a request for quotation".
 
+## 2.4 Requests for quotation (menu of a contractor: RFQs)
+
+* **New RFQ**: title, project, wanted delivery time slot, last day for the quotations (on or before the delivery day, not in the past) and a note for the suppliers. It is saved as a **DRAFT**.
+* On the page of the draft the contractor adds the **materials** with their quantities (the material picker hides the materials that are in the RFQ already; the quantity can be changed in the row) and **invites suppliers**. For each material the page shows how many listed suppliers offer it and their price range; the supplier list shows first the suppliers that offer the most materials of the RFQ in their catalog.
+* **Send** needs at least one material and one supplier, and dates that have not passed. After sending, the RFQ **cannot be changed or deleted** (the server refuses it, also if somebody sends the request by hand); the contractor can only **cancel** it, and it stays in the list.
+* A draft can be edited or deleted (with its materials and suppliers, in one transaction).
+* The project managers of the same company see and work on the same RFQs; nobody sees the RFQs of another company.
+* An existing database gets the new tables with `database/09_upgrade_rfq.sql`. The sample data has one sent RFQ (Concrete and cement for floor 12) for the demo.
+
+## 2.5 Quotations (menu of a supplier: RFQs)
+
+* The supplier sees the RFQs that were **sent** to its company (never the drafts, never the RFQs of other suppliers). The menu shows how many wait for an answer.
+* On the page of an RFQ the supplier enters a **unit price for every material** (the form starts with the middle of its own catalog price range and shows that range), a lead time and a note, and sends the quotation. The amount of each line and the total are calculated.
+* Until the last day, and as long as the contractor has not decided, the supplier can **change** or **withdraw** (delete) the quotation. After that it is read only, and the page says whether it was accepted.
+* The supplier never sees the prices of the other suppliers. The database allows a quotation only for an invited supplier (foreign key to RFQ_SUPPLIER) and only one per supplier and RFQ.
+* Sending, changing and withdrawing lock the RFQ row in a transaction, so a quotation cannot change while the contractor accepts one.
+
+## 2.6 Compare the quotations and accept one (contractor, page of a sent RFQ)
+
+* The quotations are shown **side by side**: the unit price of every material, the total, the lead time, the note and the rating of the supplier. The cheapest total is first and marked "Cheapest"; the lowest price of each material is shown in bold green.
+* **Accept** (with a confirmation) does everything in one transaction: it creates **one delivery per material** for that supplier (status SCHEDULED, the quantity of the RFQ, the value = quantity × quoted unit price, the wanted time slot of the RFQ), marks the quotation ACCEPTED and the others NOT_CHOSEN, and sets the RFQ to AWARDED. It cannot be undone.
+* The new deliveries follow the normal closed loop (supplier status updates, documents, inspection, retention, rating). Their detail page shows the RFQ they came from, and the RFQ page links to them.
+* A quotation of a supplier that is not approved any more, or without a price for every material, cannot be accepted; an awarded or cancelled RFQ cannot be awarded again.
+* The contractor can accept before the last day (the page says that the suppliers can still answer) or wait until it.
+
 ## 3. Folders
 
 ```
@@ -98,12 +123,14 @@ website/
 │   ├── adminDocuments.js  administrator: opens a proof document (a normal link, mounted before the wildcard route)
 │   ├── deliveries.js      UC2, UC3  contractor: create, list, edit, delete delivery records, and the detail page of one delivery   <-- first CRUD
 │   ├── catalog.js         contractor: "Find products": search the listed products of the approved suppliers; "Order" opens the new delivery form
+│   ├── rfqs.js            contractor: requests for quotation: create, list, edit, delete (only drafts), materials, invited suppliers, send, cancel; compare the quotations and accept one (creates the deliveries)
 │   ├── inspections.js     UC8-UC10  inspector: see the supplier's quality documents, record received / accepted quantity (accepted value and retention are calculated)
 │   ├── ratings.js         UC4  contractor: complete an inspected delivery and rate the supplier (1-5)
 │   ├── assigned.js        UC5  supplier: list the assigned deliveries and move each one forward (PREPARING, IN_TRANSIT, DELIVERED)
 │   ├── history.js         UC7  supplier: own average rating, score distribution and delivery history (read only)
 │   ├── documents.js       UC6  supplier: add quality documents at any time; edit or delete them until the delivery is inspected (type and file name)
-│   └── products.js        supplier: the product catalog of the company ("My products"): add, list, edit, unlist / list again, delete
+│   ├── products.js        supplier: the product catalog of the company ("My products"): add, list, edit, unlist / list again, delete
+│   └── quotations.js      supplier: the RFQs sent to the company; send, change, withdraw a quotation until the last day
 ├── lib/
 │   ├── auth.js            loadUser (who is logged in; asks the database at every request whether the account and its company are still allowed), requireRole('...'), role names, start page of each role
 │   ├── upload.js          proof documents: receive (multer), check the first bytes, save under a random name, read

@@ -1,0 +1,48 @@
+<h1 class="h2">Requests for quotation</h1>
+<p class="text-muted">Ask several suppliers for a price before you order. A draft can be changed or deleted; after you send it, the invited suppliers answer with a quotation until the last day, and you accept the best one.</p>
+<p>
+  <a class="btn btn-success" href="/rfqs/new" hx-boost="true" hx-target="#main">
+    <i aria-hidden="true" class="bi bi-plus-circle-fill"></i> New RFQ
+  </a>
+</p>
+{{> list/controls placeholder="Search by ID, title or project"}}
+<div id="list" data-count="{{list.total}}">
+  <div class="table-responsive">
+    <table class="table table-striped table-hover table-sm">
+      <caption class="visually-hidden">Requests for quotation</caption>
+      <thead>
+        <tr>
+          {{> list/th key="ID" label="ID"}}
+          {{> list/th key="title" label="Title"}}
+          {{> list/th key="project" label="Project"}}
+          <th scope="col" class="text-end">Materials</th>
+          <th scope="col" class="text-end">Suppliers</th>
+          {{> list/th key="quotations" label="Quotations" cls="text-end"}}
+          {{> list/th key="due" label="Last day"}}
+          {{> list/th key="slot" label="Delivery"}}
+          {{> list/th key="status" label="Status"}}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+        <tr class="align-middle">
+          <td><a class="d-inline-block px-2 py-1" href="/rfqs/{{ID}}" hx-boost="true" hx-target="#main" title="Open RFQ #{{ID}}">{{ID}}</a></td>
+          <td><a href="/rfqs/{{ID}}" hx-boost="true" hx-target="#main">{{title}}</a></td>
+          <td>{{project}}</td>
+          <td class="text-end">{{items}}</td>
+          <td class="text-end">{{suppliers}}</td>
+          <td class="text-end">{{quotations}}</td>
+          <td class="text-nowrap">{{due}}</td>
+          <td class="text-nowrap">{{slotDay}}</td>
+          <td><span class="badge text-bg-{{badge}}">{{status}}</span></td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{#unless rows.length}}
+    <p class="text-muted text-center">{{#if list.filtered}}No RFQ matches your search.{{else}}No request for quotation yet. Click "New RFQ" to ask suppliers for prices.{{/if}}</p>
+  {{/unless}}
+  {{> list/pager}}
+</div>
+{{#if message}}{{> toast}}{{/if}}

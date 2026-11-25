@@ -1,0 +1,218 @@
+{{!-- The page of one RFQ. Every action of a draft answers with this whole page, so the items, the suppliers and the buttons stay up to date. --}}
+<p>
+  <a class="btn btn-outline-secondary btn-sm" href="/rfqs" hx-boost="true" hx-target="#main">
+    <i aria-hidden="true" class="bi bi-arrow-left"></i> Back to the requests for quotation
+  </a>
+</p>
+<h1 class="h2">RFQ #{{ID}}: {{title}} <span class="badge text-bg-{{badge}} fs-6 align-middle">{{status}}</span></h1>
+
+{{#if isDraft}}
+  <div class="alert alert-secondary py-2">
+    <i aria-hidden="true" class="bi bi-pencil-square"></i> This is a <strong>draft</strong>: nobody sees it yet. Add the materials, invite the suppliers, then click <strong>Send</strong>.
+    After sending, the RFQ cannot be changed or deleted any more.
+  </div>
+{{/if}}
+{{#if isSent}}
+  <div class="alert alert-primary py-2">
+    <i aria-hidden="true" class="bi bi-send"></i> Sent on {{sentAt}}. The invited suppliers can answer until <strong>{{due}}</strong>{{#if duePassed}} (this day has passed){{/if}}.
+  </div>
+{{/if}}
+
+<div class="card mb-3">
+  <div class="card-header d-flex flex-wrap gap-2 align-items-center">
+    <span class="me-auto"><i aria-hidden="true" class="bi bi-info-circle"></i> General data</span>
+    {{#if isDraft}}
+      <a class="btn btn-sm btn-primary" href="/rfqs/{{ID}}/edit" hx-boost="true" hx-target="#main"><i aria-hidden="true" class="bi bi-pencil"></i> Edit</a>
+      <button type="button" class="btn btn-sm btn-danger" hx-delete="/rfqs/{{ID}}" hx-target="#main"
+              hx-confirm="Delete the draft RFQ #{{ID}} with its materials and suppliers?">
+        <i aria-hidden="true" class="bi bi-trash3-fill"></i> Delete
+      </button>
+      <button type="button" class="btn btn-sm btn-success" hx-post="/rfqs/{{ID}}/send" hx-target="#main" {{#unless canSend}}disabled aria-describedby="send-help"{{/unless}}
+              hx-confirm="Send RFQ #{{ID}} to {{suppliers.length}} supplier(s)? After sending it cannot be changed or deleted any more.">
+        <i aria-hidden="true" class="bi bi-send-fill"></i> Send
+      </button>
+    {{/if}}
+    {{#if isSent}}
+      <button type="button" class="btn btn-sm btn-danger" hx-post="/rfqs/{{ID}}/cancel" hx-target="#main"
+              hx-confirm="Cancel RFQ #{{ID}}? The suppliers see that it was cancelled, and no quotation can be accepted any more.">
+        <i aria-hidden="true" class="bi bi-x-circle"></i> Cancel the RFQ
+      </button>
+    {{/if}}
+  </div>
+  <ul class="list-group list-group-flush">
+    <li class="list-group-item"><strong>Project:</strong> {{project}}</li>
+    <li class="list-group-item"><strong>Wanted delivery:</strong> {{slotStart}} - {{slotEnd}}</li>
+    <li class="list-group-item"><strong>Last day for the quotations:</strong> {{due}}</li>
+    {{#if note}}<li class="list-group-item"><strong>Note:</strong> {{note}}</li>{{/if}}
+    <li class="list-group-item text-muted small">Created by {{createdBy}}</li>
+  </ul>
+  {{#if isDraft}}{{#unless canSend}}<div id="send-help" class="card-footer small text-muted">To send it, add at least one material and invite at least one supplier.</div>{{/unless}}{{/if}}
+</div>
+
+<div class="card mb-3">
+  <div class="card-header"><i aria-hidden="true" class="bi bi-boxes"></i> Materials ({{items.length}})</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <caption class="visually-hidden">Materials of the RFQ</caption>
+      <thead><tr>
+        <th scope="col">Material</th><th scope="col" class="text-end">Quantity</th><th scope="col">In the catalog</th>
+        {{#if isDraft}}<th scope="col"><span class="visually-hidden">Actions</span></th>{{/if}}
+      </tr></thead>
+      <tbody>
+        {{#each items}}
+        <tr>
+          <td>{{material}} <div class="small text-muted">{{category}}</div></td>
+          <td class="text-end text-nowrap">
+            {{#if ../isDraft}}
+              <form class="d-inline-flex gap-1 justify-content-end" hx-put="/rfqs/{{../ID}}/items/{{itemId}}" hx-target="#main" hx-disable="findAll button">
+                <input class="form-control form-control-sm text-end" style="width: 8rem;" type="number" name="quantity" value="{{quantity}}" min="0.01" step="0.01" required
+                       aria-label="Quantity of {{material}} ({{unit}})">
+                <span class="align-self-center">{{unit}}</span>
+                <button class="btn btn-sm btn-outline-primary" title="Save the quantity" aria-label="Save the quantity of {{material}}"><i aria-hidden="true" class="bi bi-check-lg"></i></button>
+              </form>
+            {{else}}{{quantity}} {{unit}}{{/if}}
+          </td>
+          <td class="small">{{#if offeredBy}}Suppliers: {{offeredBy}} · {{catalogMin}}{{#unless catalogSame}} - {{catalogMax}}{{/unless}} NT$ / {{unit}}{{else}}<span class="text-muted">No listed supplier</span>{{/if}}</td>
+          {{#if ../isDraft}}
+          <td class="text-end">
+            <button type="button" class="btn btn-sm btn-danger" hx-delete="/rfqs/{{../ID}}/items/{{itemId}}" hx-target="#main"
+                    title="Remove {{material}}" aria-label="Remove {{material}} from the RFQ"><i aria-hidden="true" class="bi bi-trash3-fill"></i></button>
+          </td>
+          {{/if}}
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{#unless items.length}}<p class="text-muted text-center my-2">No material yet.</p>{{/unless}}
+  {{#if isDraft}}
+  <form class="row g-2 card-body border-top" hx-post="/rfqs/{{ID}}/items" hx-target="#main" hx-disable="findAll button">
+    <div class="col-12">
+      <label class="form-label" for="material_search">Add a material</label>
+      <div id="material_buttons" class="d-flex flex-wrap gap-1 mb-2" role="group" aria-label="Material category">
+        {{> deliveries/materialButtons}}
+      </div>
+      <input class="form-control mb-1" type="search" id="material_search" name="material_q" placeholder="Type a part of the material name to search" autocomplete="off"
+             hx-get="{{materialUrl}}" hx-trigger="input delay:300ms" hx-include="#material_cat" hx-target="#material_id" hx-swap="innerHTML" hx-sync="this:replace">
+    </div>
+    <div class="col-md-8">
+      <select class="form-select" id="material_id" name="material_id" required aria-label="Material (search results)">
+        {{> deliveries/materialOptions}}
+      </select>
+    </div>
+    <div class="col-6 col-md-2">
+      <input class="form-control" type="number" id="quantity" name="quantity" min="0.01" step="0.01" placeholder="Quantity" aria-label="Quantity" required>
+    </div>
+    <div class="col-6 col-md-2">
+      <button class="btn btn-success w-100"><i aria-hidden="true" class="bi bi-plus-circle-fill"></i> Add</button>
+    </div>
+  </form>
+  {{/if}}
+</div>
+
+<div class="card mb-3">
+  <div class="card-header"><i aria-hidden="true" class="bi bi-truck"></i> Invited suppliers ({{suppliers.length}})</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <caption class="visually-hidden">Invited suppliers</caption>
+      <thead><tr>
+        <th scope="col">Supplier</th><th scope="col">Offers in the catalog</th><th scope="col">Rating</th>
+        {{#unless isDraft}}<th scope="col">Quotation</th>{{/unless}}
+        {{#if isDraft}}<th scope="col"><span class="visually-hidden">Actions</span></th>{{/if}}
+      </tr></thead>
+      <tbody>
+        {{#each suppliers}}
+        <tr>
+          <td>{{name}}</td>
+          <td class="small">{{offers}} of {{../items.length}} materials</td>
+          <td class="small">{{#if ratingText}}<span class="stars">★</span> {{ratingText}}{{else}}<span class="text-muted">No rating yet</span>{{/if}}</td>
+          {{#unless ../isDraft}}<td>{{#if answered}}<span class="badge text-bg-success">Answered</span>{{else}}<span class="badge text-bg-light border">Waiting</span>{{/if}}</td>{{/unless}}
+          {{#if ../isDraft}}
+          <td class="text-end">
+            <button type="button" class="btn btn-sm btn-danger" hx-delete="/rfqs/{{../ID}}/suppliers/{{orgId}}" hx-target="#main"
+                    title="Remove {{name}}" aria-label="Remove {{name}} from the RFQ"><i aria-hidden="true" class="bi bi-trash3-fill"></i></button>
+          </td>
+          {{/if}}
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{#unless suppliers.length}}<p class="text-muted text-center my-2">No supplier invited yet.</p>{{/unless}}
+  {{#if isDraft}}
+  <form class="row g-2 card-body border-top" hx-post="/rfqs/{{ID}}/suppliers" hx-target="#main" hx-disable="findAll button">
+    <div class="col-12">
+      <label class="form-label" for="supplier_search">Invite a supplier</label>
+      <input class="form-control mb-1" type="search" id="supplier_search" name="q" placeholder="Type a part of the supplier name to search" autocomplete="off"
+             hx-get="/rfqs/{{ID}}/suppliers" hx-trigger="input delay:300ms" hx-target="#org_id" hx-swap="innerHTML" hx-sync="this:replace" aria-describedby="invite-help">
+      <div id="invite-help" class="form-text">The suppliers that offer the most materials of this RFQ in their catalog are first.</div>
+    </div>
+    <div class="col-md-10">
+      <select class="form-select" id="org_id" name="org_id" required aria-label="Supplier (search results)">
+        {{#with invite}}{{> rfqs/supplierOptions}}{{/with}}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-success w-100"><i aria-hidden="true" class="bi bi-person-plus-fill"></i> Invite</button>
+    </div>
+  </form>
+  {{/if}}
+</div>
+
+{{#if showQuotations}}
+<div class="card mb-3">
+  <div class="card-header"><i aria-hidden="true" class="bi bi-receipt"></i> Quotations ({{quotations.length}} of {{suppliers.length}} suppliers)</div>
+  {{#if isAwarded}}
+    <div class="card-body border-bottom">
+      <i aria-hidden="true" class="bi bi-trophy text-success"></i> <strong>Awarded.</strong> These deliveries were created from the accepted quotation:
+      {{#each deliveries}}<a class="ms-1" href="/deliveries/{{ID}}" hx-boost="true" hx-target="#main">#{{ID}} {{material}}</a> <span class="badge text-bg-light border">{{status}}</span>{{/each}}
+    </div>
+  {{/if}}
+  {{#if canAward}}{{#unless duePassed}}
+    <div class="card-body border-bottom small text-muted">The suppliers can still answer until {{due}}. You can accept a quotation now or wait for more.</div>
+  {{/unless}}{{/if}}
+  {{#if quotations.length}}
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <caption class="visually-hidden">Quotations side by side (unit prices in NT$; the lowest price of each material is marked)</caption>
+      <thead><tr>
+        <th scope="col">Supplier</th>
+        {{#each items}}<th scope="col" class="text-end">{{material}}<div class="small fw-normal text-muted">{{quantity}} {{unit}}, NT$ / {{unit}}</div></th>{{/each}}
+        <th scope="col" class="text-end">Total (NT$)</th>
+        <th scope="col" class="text-end">Lead time</th>
+        <th scope="col">Decision</th>
+      </tr></thead>
+      <tbody>
+        {{#each quotations}}
+        <tr class="{{#if accepted}}table-success{{/if}}{{#if notChosen}}text-muted{{/if}}">
+          <td>
+            {{supplier}} {{#if cheapest}}<span class="badge text-bg-success">Cheapest</span>{{/if}}
+            <div class="small text-muted">{{#if ratingText}}<span class="stars">★</span> {{ratingText}} · {{/if}}{{submittedAt}}</div>
+            {{#if note}}<div class="small fst-italic">{{note}}</div>{{/if}}
+          </td>
+          {{#each cells}}<td class="text-end{{#if lowest}} fw-bold text-success{{/if}}">{{price}}{{#if lowest}}<span class="visually-hidden"> (lowest)</span>{{/if}}</td>{{/each}}
+          <td class="text-end fw-semibold">{{total}}</td>
+          <td class="text-end text-nowrap">{{#if leadTime}}{{leadTime}} days{{else}}-{{/if}}</td>
+          <td class="text-nowrap">
+            {{#if ../canAward}}
+              <button type="button" class="btn btn-sm btn-success" hx-post="/rfqs/{{../ID}}/award" hx-vals='{"quotation_id": "{{quotationId}}"}' hx-target="#main"
+                      hx-confirm="Accept the quotation of {{supplier}} (total NT$ {{total}})? One delivery per material is created for this supplier, and the other suppliers see that another quotation was chosen. This cannot be undone."
+                      aria-label="Accept the quotation of {{supplier}}">
+                <i aria-hidden="true" class="bi bi-check-circle-fill"></i> Accept
+              </button>
+            {{/if}}
+            {{#if accepted}}<span class="badge text-bg-success">Accepted</span>{{/if}}
+            {{#if notChosen}}<span class="badge text-bg-secondary">Not chosen</span>{{/if}}
+          </td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}
+    <p class="text-muted text-center my-3">No quotation yet. The invited suppliers see this RFQ in their menu "RFQs".</p>
+  {{/if}}
+</div>
+{{/if}}
+
+{{#if message}}{{> toast}}{{/if}}

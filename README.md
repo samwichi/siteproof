@@ -79,7 +79,7 @@ Status: ✅ Done = works in the website; 🔶 Partly = some of it works (see sec
 
 | Feature | Scope | Main data entities (see [ERModel.md](ERModel.md)) |
 |---|---|---|
-| RFQ and quotation comparison | 🟨 Phase 2 | RFQ, QUOTATION |
+| RFQ and quotation comparison | 🟨 Phase 2 (✅ built) | RFQ, RFQ_ITEM, RFQ_SUPPLIER, QUOTATION, QUOTATION_ITEM |
 | LINE notifications and 28-day test reminders | 🟨 Phase 2 | NOTIFICATION |
 | Digital payment requests | 🟨 Phase 2 | PAYMENT_REQUEST |
 | Advanced supplier analytics | 🟨 Phase 2 | Computed from existing MVP data |
@@ -133,9 +133,11 @@ SiteProof has moved from planning to implementation. The database and the first 
 
 Beyond the ten use cases, the supplier keeps a **product catalog** (My products): the materials that its company can provide, with the price range, minimum order and lead time ([website/README.md](website/README.md), section 2.2). The contractor searches all the listed products (Find products), compares the suppliers of a material by price, lead time and rating, and starts a delivery from a product with one click (section 2.3). This is the first step of the RFQ and quotation workflow of phase 2.
 
+**Requests for quotation (RFQ, phase 2):** the contractor writes an RFQ for a project (materials and quantities, wanted delivery slot, last day for the quotations) and invites suppliers; the suppliers that offer the most materials in their catalog are suggested first. A draft can be changed and deleted; after **Send** it cannot be changed or deleted any more, only cancelled ([website/README.md](website/README.md), section 2.4). The invited suppliers answer with a **quotation** (a unit price for each material, lead time, note) and can change or withdraw it until the last day (section 2.5). The contractor **compares the quotations side by side** and **accepts** one: the deliveries are created automatically for that supplier and continue in the closed loop above (section 2.6). The whole story of the assignment works: supplier products → RFQ → quotations → decision → delivery → inspection → rating.
+
 The whole closed loop works from the first step to the last: the contractor creates a delivery, the supplier moves it to DELIVERED, the inspector inspects it, the contractor completes it with a rating, and the supplier sees the rating.
 
-**Next:** requests for quotation and quotations built on the product catalog, automated tests, real file upload for the quality documents (today only the file name is saved), and the rest of the second phase (see section 2).
+**Next:** automated tests, real file upload for the quality documents (today only the file name is saved), and the rest of the second phase (see section 2).
 
 ---
 ## 4. Project Documents
@@ -194,8 +196,10 @@ graph TD
     ADM --> A1["Approve Companies, See All Users<br/>UC1<br/>Owner: Po-Hao"]:::p1
     CON --> C6["Find Products<br/>Product Catalog<br/>Owner: Po-Hao"]:::p1
     SUP --> S4["My Products<br/>Product Catalog<br/>Owner: Po-Hao"]:::p1
+    CON --> C7["Requests for Quotation<br/>Create, Send, Compare, Accept<br/>Owner: Po-Hao"]:::p1
+    SUP --> S5["Quotations<br/>Answer the RFQs<br/>Owner: Po-Hao"]:::p1
 
-    HOME -.-> F2["Phase 2 — Planned Features<br/>RFQ, LINE Notifications, Payment Requests,<br/>Analytics, Pro Tier, Featured Suppliers, Mobile<br/>Owner: To Be Assigned"]:::p2
+    HOME -.-> F2["Phase 2 — Planned Features<br/>LINE Notifications, Payment Requests,<br/>Analytics, Pro Tier, Featured Suppliers, Mobile<br/>Owner: To Be Assigned"]:::p2
 
     HOME -.-> F3["Phase 3 — Advanced Features<br/>OCR, Budget Alerts, ERP and GPS Integration,<br/>Delivery-Risk Analytics<br/>Owner: To Be Assigned"]:::p3
 
@@ -232,6 +236,8 @@ graph TD
 | Administrator (companies and users) | UC1 | 1 | Po-Hao | ✅ Done |
 | Find Products (contractor) | Product catalog | 1 | Po-Hao | ✅ Done |
 | My Products (supplier) | Product catalog | 1 | Po-Hao | ✅ Done |
+| Requests for Quotation (contractor: create, send, compare, accept) | RFQ (phase 2) | 2 | Po-Hao | ✅ Done |
+| Quotations (supplier: send, change, withdraw) | RFQ (phase 2) | 2 | Po-Hao | ✅ Done |
 | Phase 2 and Phase 3 pages | — | 2 / 3 | To be assigned | ⬜ To do |
 
 Status: ✅ Done, 🔶 Partly, ⬜ To do (details in section 3.1). "Supplier Ratings" is partly done because the rating of each delivery is shown on the Complete and Rate page and on the Delivery Detail page, but there is no separate page with the average rating of each supplier.

@@ -1,0 +1,22 @@
+{{!-- The end of the quotation form: lead time, note and the buttons (send, or change and withdraw). --}}
+<div class="row g-2 card-body border-top align-items-end">
+  <div class="col-md-3">
+    <label class="form-label" for="lead_time_days">Lead time (days)</label>
+    <input class="form-control" type="number" id="lead_time_days" name="lead_time_days" value="{{leadTime}}" min="0" max="365" step="1">
+  </div>
+  <div class="col-md-9">
+    <label class="form-label" for="note">Note for the contractor</label>
+    <input class="form-control" id="note" name="note" value="{{quotationNote}}" maxlength="500" placeholder="For example: the price includes the transport">
+  </div>
+  <div class="col-12">
+    {{#if canSubmit}}
+      <button class="btn btn-success"><i aria-hidden="true" class="bi bi-send-fill"></i> Send the quotation</button>
+    {{else}}
+      <button class="btn btn-primary"><i aria-hidden="true" class="bi bi-check-lg"></i> Save the changes</button>
+      <button type="button" class="btn btn-outline-danger" hx-delete="/quotations/{{ID}}" hx-target="#main"
+              hx-confirm="Withdraw your quotation for RFQ #{{ID}}? The contractor will not see it any more.">
+        <i aria-hidden="true" class="bi bi-x-circle"></i> Withdraw
+      </button>
+    {{/if}}
+  </div>
+</div>

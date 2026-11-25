@@ -111,6 +111,75 @@ CREATE TABLE purchase (
     FOREIGN KEY (material_id) REFERENCES material (material_id)
 );
 
+-- 1.9b Requests for quotation (RFQ). A contractor project manager writes an RFQ for a project: the materials and quantities (rfq_item),
+--      the wanted delivery time slot and the last day for the quotations (due_date). He invites suppliers (rfq_supplier) and sends it.
+--      DRAFT     the contractor can still change or delete everything;
+--      SENT      the invited suppliers can send a quotation until the due date; the RFQ cannot be changed or deleted any more;
+--      AWARDED   the contractor accepted one quotation: one delivery per item was created for that supplier;
+--      CANCELLED the contractor stopped a sent RFQ without accepting a quotation (it stays for the history).
+CREATE TABLE rfq (
+    rfq_id     INT AUTO_INCREMENT PRIMARY KEY,
+    project_id INT          NOT NULL,
+    created_by INT          NOT NULL,
+    title      VARCHAR(100) NOT NULL,
+    slot_start DATETIME     NOT NULL,
+    slot_end   DATETIME     NOT NULL,
+    due_date   DATE         NOT NULL,
+    note       VARCHAR(500) NULL,
+    status     VARCHAR(10)  NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'SENT', 'AWARDED', 'CANCELLED')),
+    created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sent_at    DATETIME     NULL,
+    CHECK (slot_end > slot_start),
+    FOREIGN KEY (project_id) REFERENCES project (project_id),
+    FOREIGN KEY (created_by) REFERENCES user_account (user_id)
+);
+
+-- 1.9c The materials and quantities of an RFQ (each material once).
+CREATE TABLE rfq_item (
+    item_id     INT AUTO_INCREMENT PRIMARY KEY,
+    rfq_id      INT           NOT NULL,
+    material_id CHAR(8)       NOT NULL,
+    quantity    DECIMAL(10,2) NOT NULL CHECK (quantity > 0),
+    UNIQUE (rfq_id, material_id),
+    FOREIGN KEY (rfq_id)      REFERENCES rfq (rfq_id),
+    FOREIGN KEY (material_id) REFERENCES material (material_id)
+);
+
+-- 1.9d The suppliers that are invited to an RFQ.
+CREATE TABLE rfq_supplier (
+    rfq_id INT     NOT NULL,
+    org_id CHAR(8) NOT NULL,
+    PRIMARY KEY (rfq_id, org_id),
+    FOREIGN KEY (rfq_id) REFERENCES rfq (rfq_id),
+    FOREIGN KEY (org_id) REFERENCES organization (org_id)
+);
+
+-- 1.9e The quotation of one invited supplier for one RFQ (at most one; the foreign key to rfq_supplier makes sure that only an
+--      invited supplier can answer). SUBMITTED until the contractor decides: ACCEPTED for the chosen one, NOT_CHOSEN for the others.
+CREATE TABLE quotation (
+    quotation_id   INT AUTO_INCREMENT PRIMARY KEY,
+    rfq_id         INT          NOT NULL,
+    org_id         CHAR(8)      NOT NULL,
+    submitted_by   INT          NOT NULL,
+    lead_time_days INT          NULL CHECK (lead_time_days IS NULL OR lead_time_days BETWEEN 0 AND 365),
+    note           VARCHAR(500) NULL,
+    status         VARCHAR(10)  NOT NULL DEFAULT 'SUBMITTED' CHECK (status IN ('SUBMITTED', 'ACCEPTED', 'NOT_CHOSEN')),
+    submitted_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE (rfq_id, org_id),
+    FOREIGN KEY (rfq_id, org_id) REFERENCES rfq_supplier (rfq_id, org_id),
+    FOREIGN KEY (submitted_by)   REFERENCES user_account (user_id)
+);
+
+-- 1.9f The unit price of each item of the RFQ in a quotation (a quotation has a price for every item).
+CREATE TABLE quotation_item (
+    quotation_id INT           NOT NULL,
+    item_id      INT           NOT NULL,
+    unit_price   DECIMAL(10,2) NOT NULL CHECK (unit_price >= 0),
+    PRIMARY KEY (quotation_id, item_id),
+    FOREIGN KEY (quotation_id) REFERENCES quotation (quotation_id),
+    FOREIGN KEY (item_id)      REFERENCES rfq_item (item_id)
+);
+
 -- 1.10 Delivery record (MVP core): project, supplier, material, quantity, value, time slot and status.
 CREATE TABLE delivery (
     delivery_id      INT AUTO_INCREMENT PRIMARY KEY,
@@ -124,6 +193,8 @@ CREATE TABLE delivery (
     slot_end         DATETIME      NOT NULL,
     status           VARCHAR(20)   NOT NULL DEFAULT 'SCHEDULED'
                      CHECK (status IN ('SCHEDULED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED', 'INSPECTED', 'COMPLETED')),
+    quotation_id     INT           NULL,      -- the accepted quotation that created this delivery (NULL: created directly)
+    FOREIGN KEY (quotation_id) REFERENCES quotation (quotation_id),
     FOREIGN KEY (project_id)  REFERENCES project (project_id),
     FOREIGN KEY (org_id)      REFERENCES organization (org_id),
     FOREIGN KEY (material_id) REFERENCES material (material_id),

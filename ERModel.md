@@ -149,7 +149,7 @@ erDiagram
 
 ## 3. Figure 2 - Full product (MVP + Phase 2 + Phase 3)
 
-26 entities: the 13 MVP tables plus 8 for Phase 2 and 5 for Phase 3.
+29 entities: the 13 MVP tables plus 11 for Phase 2 (5 of them, the RFQ and quotation tables, are already built) and 5 for Phase 3.
 
 ```mermaid
 erDiagram
@@ -267,20 +267,41 @@ erDiagram
         char(8) supplier_org_id PK, FK
         varchar connection_status
     }
-    RFQ["RFQ - PHASE 2"] {
+    RFQ["RFQ - PHASE 2, built"] {
         int rfq_id PK
         int project_id FK
-        char(8) material_id FK
         int created_by FK
-        decimal quantity
-        date needed_by
+        varchar title
+        datetime slot_start "wanted delivery"
+        datetime slot_end
+        date due_date "last day for quotations"
+        varchar note
+        varchar status "DRAFT, SENT, AWARDED, CANCELLED"
+        datetime sent_at
     }
-    QUOTATION["QUOTATION - PHASE 2"] {
-        int quotation_id PK
+    RFQ_ITEM["RFQ_ITEM - PHASE 2, built"] {
+        int item_id PK
         int rfq_id FK
+        char(8) material_id FK
+        decimal quantity
+    }
+    RFQ_SUPPLIER["RFQ_SUPPLIER - PHASE 2, built"] {
+        int rfq_id PK, FK
+        char(8) org_id PK, FK "invited supplier"
+    }
+    QUOTATION["QUOTATION - PHASE 2, built"] {
+        int quotation_id PK
+        int rfq_id FK "with org_id: FK to RFQ_SUPPLIER"
         char(8) org_id FK "supplier"
-        decimal unit_price
+        int submitted_by FK
         int lead_time_days
+        varchar note
+        varchar status "SUBMITTED, ACCEPTED, NOT_CHOSEN"
+    }
+    QUOTATION_ITEM["QUOTATION_ITEM - PHASE 2, built"] {
+        int quotation_id PK, FK
+        int item_id PK, FK
+        decimal unit_price
     }
     NOTIFICATION["NOTIFICATION - PHASE 2"] {
         int notification_id PK
@@ -375,11 +396,15 @@ erDiagram
     ORGANIZATION ||--o{ SUPPLIER_CONNECTION : "lists as contractor"
     ORGANIZATION ||--o{ SUPPLIER_CONNECTION : "listed as supplier"
     PROJECT ||--o{ RFQ : requests
-    MATERIAL ||--o{ RFQ : "requested in"
     USER_ACCOUNT ||--o{ RFQ : issues
-    RFQ ||--o{ QUOTATION : receives
-    ORGANIZATION ||--o{ QUOTATION : submits
-    QUOTATION ||--o| DELIVERY : becomes
+    RFQ ||--|{ RFQ_ITEM : contains
+    MATERIAL ||--o{ RFQ_ITEM : "requested in"
+    RFQ ||--o{ RFQ_SUPPLIER : invites
+    ORGANIZATION ||--o{ RFQ_SUPPLIER : "is invited to"
+    RFQ_SUPPLIER ||--o| QUOTATION : "answers with"
+    QUOTATION ||--|{ QUOTATION_ITEM : prices
+    RFQ_ITEM ||--o{ QUOTATION_ITEM : "priced in"
+    QUOTATION ||--o{ DELIVERY : "becomes (when accepted)"
     ORGANIZATION ||--o{ PAYMENT_REQUEST : submits
     PROJECT ||--o{ PAYMENT_REQUEST : "billed for"
     PAYMENT_REQUEST ||--o{ DELIVERY : includes
@@ -402,7 +427,7 @@ erDiagram
     classDef p2 fill:#fbe3a0,stroke:#b8860b,stroke-width:2px,color:#2b2100
     classDef p3 fill:#e6e9ee,stroke:#6e7781,stroke-width:2px,stroke-dasharray:5 3,color:#24292f
     class ORGANIZATION,USER_ACCOUNT,ORG_DOCUMENT,INSPECTION_APPOINTMENT,PROJECT,MATERIAL_CATEGORY,MATERIAL,PURCHASE,SUPPLIER_PRODUCT,DELIVERY,DELIVERY_DOCUMENT,INSPECTION,SUPPLIER_RATING mvp
-    class SUPPLIER_CONNECTION,RFQ,QUOTATION,NOTIFICATION,PAYMENT_REQUEST,SUBSCRIPTION,FEATURED_LISTING,ESG_RECORD p2
+    class SUPPLIER_CONNECTION,RFQ,RFQ_ITEM,RFQ_SUPPLIER,QUOTATION,QUOTATION_ITEM,NOTIFICATION,PAYMENT_REQUEST,SUBSCRIPTION,FEATURED_LISTING,ESG_RECORD p2
     class DOCUMENT_EXTRACTION,PROJECT_BUDGET,DELIVERY_TRACKING_POINT,ERP_SYNC_LOG,DELIVERY_RISK_SCORE p3
 ```
 
@@ -423,6 +448,18 @@ erDiagram
 | DELIVERY_DOCUMENT | Quality documents (PDF/JPG) of a delivery | `document_id` | US6, US8 / UC6 |
 | INSPECTION | Received and accepted quantity; one per delivery | `inspection_id` | US8, US9 / UC8-UC10 |
 | SUPPLIER_RATING | Mandatory 1-5 rating; one per delivery | `delivery_id` | US4, US7 / UC4, UC7 |
+
+### 4.1 Phase 2 tables that are already built
+
+| Table | What it stores | Key |
+|---|---|---|
+| RFQ | Request for quotation of a contractor project manager for one project: wanted delivery slot, last day for the quotations, status DRAFT / SENT / AWARDED / CANCELLED | `rfq_id` |
+| RFQ_ITEM | Materials and quantities of an RFQ (each material once) | `item_id` (`rfq_id` + `material_id` unique) |
+| RFQ_SUPPLIER | Suppliers invited to an RFQ | `rfq_id` + `org_id` |
+| QUOTATION | The answer of one invited supplier (at most one per RFQ; the foreign key to RFQ_SUPPLIER allows only invited suppliers); SUBMITTED, then ACCEPTED or NOT_CHOSEN | `quotation_id` (`rfq_id` + `org_id` unique) |
+| QUOTATION_ITEM | Unit price of each item in a quotation | `quotation_id` + `item_id` |
+
+`DELIVERY.quotation_id` remembers the accepted quotation that created a delivery (NULL when the delivery was created directly).
 
 ## 5. Business rules (relationships and cardinality)
 

@@ -1,0 +1,31 @@
+{{!-- The fields of an RFQ, shared by the new form and the edit form. --}}
+<div class="col-md-6">
+  <label class="form-label" for="title">Title</label>
+  <input class="form-control" id="title" name="title" maxlength="100" value="{{title}}" placeholder="For example: Concrete for floor 12" required autofocus>
+</div>
+<div class="col-md-6">
+  <label class="form-label" for="project_id">Project</label>
+  <select class="form-select" id="project_id" name="project_id" required>
+    <option value="" {{#unless projectId}}selected{{/unless}} disabled>Choose a project</option>
+    {{#each projects}}
+      <option value="{{project_id}}" {{#if selected}}selected{{/if}}>{{project_name}}</option>
+    {{/each}}
+  </select>
+</div>
+<div class="col-md-4">
+  <label class="form-label" for="slot_start">Wanted delivery: start</label>
+  <input class="form-control" type="datetime-local" id="slot_start" name="slot_start" value="{{slotStartInput}}" required>
+</div>
+<div class="col-md-4">
+  <label class="form-label" for="slot_end">Wanted delivery: end</label>
+  <input class="form-control" type="datetime-local" id="slot_end" name="slot_end" value="{{slotEndInput}}" required>
+</div>
+<div class="col-md-4">
+  <label class="form-label" for="due_date">Last day for the quotations</label>
+  <input class="form-control" type="date" id="due_date" name="due_date" value="{{due}}" required aria-describedby="due-help">
+  <div id="due-help" class="form-text">On or before the delivery day.</div>
+</div>
+<div class="col-12">
+  <label class="form-label" for="note">Note for the suppliers</label>
+  <textarea class="form-control" id="note" name="note" maxlength="500" rows="2" placeholder="For example: access to the site, quality requirements, what the price must include">{{note}}</textarea>
+</div>
