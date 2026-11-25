@@ -30,7 +30,7 @@
 <form class="card mb-3" {{#if canSubmit}}hx-post="/quotations/{{ID}}"{{/if}}{{#if canChange}}hx-put="/quotations/{{ID}}"{{/if}} hx-target="#main" hx-disable="findAll button">
   <div class="card-header"><i aria-hidden="true" class="bi bi-receipt"></i> {{#if hasQuotation}}Your quotation{{#if total}} · total NT$ {{total}}{{/if}}{{else}}Your quotation{{/if}}</div>
   <div class="table-responsive">
-    <table class="table table-sm align-middle mb-0">
+    <table class="table align-middle mb-0">
       <caption class="visually-hidden">Unit prices of your quotation</caption>
       <thead><tr>
         <th scope="col">Material</th><th scope="col" class="text-end">Quantity</th><th scope="col">Your catalog</th>

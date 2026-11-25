@@ -99,6 +99,14 @@ Rules:
 * The supplier never sees the prices of the other suppliers. The database allows a quotation only for an invited supplier (foreign key to RFQ_SUPPLIER) and only one per supplier and RFQ.
 * Sending, changing and withdrawing lock the RFQ row in a transaction, so a quotation cannot change while the contractor accepts one.
 
+## 2.6 Compare the quotations and accept one (contractor, page of a sent RFQ)
+
+* The quotations are shown **side by side**: the unit price of every material, the total, the lead time, the note and the rating of the supplier. The cheapest total is first and marked "Cheapest"; the lowest price of each material is shown in bold green.
+* **Accept** (with a confirmation) does everything in one transaction: it creates **one delivery per material** for that supplier (status SCHEDULED, the quantity of the RFQ, the value = quantity × quoted unit price, the wanted time slot of the RFQ), marks the quotation ACCEPTED and the others NOT_CHOSEN, and sets the RFQ to AWARDED. It cannot be undone.
+* The new deliveries follow the normal closed loop (supplier status updates, documents, inspection, retention, rating). Their detail page shows the RFQ they came from, and the RFQ page links to them.
+* A quotation of a supplier that is not approved any more, or without a price for every material, cannot be accepted; an awarded or cancelled RFQ cannot be awarded again.
+* The contractor can accept before the last day (the page says that the suppliers can still answer) or wait until it.
+
 ## 3. Folders
 
 ```
@@ -115,7 +123,7 @@ website/
 │   ├── adminDocuments.js  administrator: opens a proof document (a normal link, mounted before the wildcard route)
 │   ├── deliveries.js      UC2, UC3  contractor: create, list, edit, delete delivery records, and the detail page of one delivery   <-- first CRUD
 │   ├── catalog.js         contractor: "Find products": search the listed products of the approved suppliers; "Order" opens the new delivery form
-│   ├── rfqs.js            contractor: requests for quotation: create, list, edit, delete (only drafts), materials, invited suppliers, send, cancel
+│   ├── rfqs.js            contractor: requests for quotation: create, list, edit, delete (only drafts), materials, invited suppliers, send, cancel; compare the quotations and accept one (creates the deliveries)
 │   ├── inspections.js     UC8-UC10  inspector: see the supplier's quality documents, record received / accepted quantity (accepted value and retention are calculated)
 │   ├── ratings.js         UC4  contractor: complete an inspected delivery and rate the supplier (1-5)
 │   ├── assigned.js        UC5  supplier: list the assigned deliveries and move each one forward (PREPARING, IN_TRANSIT, DELIVERED)

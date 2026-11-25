@@ -93,7 +93,7 @@ async function readItems(rfqId) {
          JOIN material_category c ON c.category_id = m.category_id
          WHERE i.rfq_id = ?
          ORDER BY i.item_id`, [rfqId]);
-    items.forEach(i => { i.offeredBy = Number(i.offeredBy); });
+    items.forEach(i => { i.offeredBy = Number(i.offeredBy); i.catalogSame = (i.catalogMin === i.catalogMax); });
     return items;
 }
 
@@ -156,9 +156,54 @@ async function showDetail(req, res, id, message, kind) {
     res.render('rfqs/detail', rfq);
 }
 
-// The quotations of the RFQ (filled in by the comparison of the quotations; nothing yet).
+// The quotations of a sent RFQ, side by side: the unit price of every item, the total, the lead time and the rating of the supplier.
+// The cheapest total is first; the lowest price of each item is marked. A draft has no quotations.
 async function readQuotations(rfq) {
-    return {};
+    if (rfq.isDraft) return {};
+    const [quotations] = await db().execute(
+        `SELECT q.quotation_id AS quotationId, o.org_name AS supplier, q.lead_time_days AS leadTime, q.note, q.status,
+                DATE_FORMAT(q.submitted_at, '%Y-%m-%d %H:%i') AS submittedAt,
+                CAST(SUM(qi.unit_price * i.quantity) AS DOUBLE) AS totalRaw,
+                ${money('SUM(qi.unit_price * i.quantity)')} AS total,
+                (SELECT CAST(AVG(r.score) AS DOUBLE) FROM supplier_rating r JOIN delivery d ON d.delivery_id = r.delivery_id
+                 WHERE d.org_id = q.org_id) AS rating
+         FROM quotation q
+         JOIN organization o    ON o.org_id = q.org_id
+         JOIN quotation_item qi ON qi.quotation_id = q.quotation_id
+         JOIN rfq_item i        ON i.item_id = qi.item_id
+         WHERE q.rfq_id = ?
+         GROUP BY q.quotation_id, o.org_name, q.lead_time_days, q.note, q.status, q.submitted_at, q.org_id
+         ORDER BY totalRaw, q.submitted_at`, [rfq.ID]);
+    const [prices] = await db().execute(
+        `SELECT qi.quotation_id AS quotationId, qi.item_id AS itemId, CAST(qi.unit_price AS DOUBLE) AS price
+         FROM quotation_item qi JOIN quotation q ON q.quotation_id = qi.quotation_id WHERE q.rfq_id = ?`, [rfq.ID]);
+
+    // The lowest unit price of each item among all the quotations.
+    const lowest = {};
+    for (const p of prices) {
+        if (lowest[p.itemId] === undefined || p.price < lowest[p.itemId]) lowest[p.itemId] = p.price;
+    }
+    const format = n => n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    quotations.forEach((q, index) => {
+        q.cells = rfq.items.map(item => {
+            const p = prices.find(x => x.quotationId === q.quotationId && x.itemId === item.itemId);
+            return p ? { price: format(p.price), lowest: p.price === lowest[item.itemId] && quotations.length > 1 } : { price: '-' };
+        });
+        q.cheapest = (index === 0 && quotations.length > 1);
+        q.ratingText = q.rating === null ? null : q.rating.toFixed(1);
+        q.accepted = (q.status === 'ACCEPTED');
+        q.notChosen = (q.status === 'NOT_CHOSEN');
+    });
+
+    let deliveries = [];
+    if (rfq.status === 'AWARDED') {
+        [deliveries] = await db().execute(
+            `SELECT d.delivery_id AS ID, m.material_name AS material, d.status
+             FROM delivery d JOIN quotation q ON q.quotation_id = d.quotation_id JOIN material m ON m.material_id = d.material_id
+             WHERE q.rfq_id = ? ORDER BY d.delivery_id`, [rfq.ID]);
+    }
+    return { quotations: quotations, showQuotations: true, canAward: rfq.isSent && quotations.length > 0,
+             deliveries: deliveries, isAwarded: rfq.status === 'AWARDED' };
 }
 
 // ---------- the fields of the RFQ (create and edit) ----------
@@ -366,6 +411,69 @@ app.post('/:id/send', draftOnly, async (req, res) => {
     if (result.affectedRows === 0) return fail(res, 'The RFQ was sent meanwhile.', 409);
     await showDetail(req, res, rfq.ID, 'RFQ #' + rfq.ID + ' sent to ' + counts.suppliers + ' supplier' + (Number(counts.suppliers) > 1 ? 's' : '') +
         '. They can answer until ' + rfq.due + '.');
+});
+
+// ---------- accept one quotation (SENT -> AWARDED): one SCHEDULED delivery per item for that supplier ----------
+// Everything happens in one transaction, after locking the RFQ row (the suppliers lock the same row when they send, change or
+// withdraw a quotation, so the chosen quotation cannot change meanwhile).
+app.post('/:id/award', async (req, res) => {
+    const rfq = await findRfq(req.params.id, req.user.orgId);
+    if (!rfq) return fail(res, 'Request for quotation not found.', 404);
+    const quotationId = Number(req.body.quotation_id);
+    const conn = await db().getConnection();
+    let created, supplier;
+    try {
+        await conn.beginTransaction();
+        const [lock] = await conn.execute("SELECT rfq_id FROM rfq WHERE rfq_id = ? AND status = 'SENT' FOR UPDATE", [rfq.ID]);
+        if (lock.length === 0) {
+            await conn.rollback();
+            return fail(res, 'Only a sent RFQ can be awarded (it is awarded or cancelled already).', 409);
+        }
+        // The quotation must belong to this RFQ, have a price for every item, and its supplier must still be approved.
+        const [quote] = await conn.execute(
+            `SELECT q.quotation_id, o.org_name, o.status AS orgStatus,
+                    (SELECT COUNT(*) FROM quotation_item qi WHERE qi.quotation_id = q.quotation_id) AS prices,
+                    (SELECT COUNT(*) FROM rfq_item i WHERE i.rfq_id = q.rfq_id) AS items
+             FROM quotation q JOIN organization o ON o.org_id = q.org_id
+             WHERE q.quotation_id = ? AND q.rfq_id = ? AND q.status = 'SUBMITTED'`, [quotationId, rfq.ID]);
+        if (quote.length === 0) {
+            await conn.rollback();
+            return fail(res, 'Please choose one of the quotations of this RFQ.', 404);
+        }
+        if (quote[0].orgStatus !== 'APPROVED') {
+            await conn.rollback();
+            return fail(res, quote[0].org_name + ' is not an approved supplier any more, so its quotation cannot be accepted.', 409);
+        }
+        if (Number(quote[0].prices) !== Number(quote[0].items)) {
+            await conn.rollback();
+            return fail(res, 'This quotation has no price for every material, so it cannot be accepted.', 409);
+        }
+        supplier = quote[0].org_name;
+
+        // One delivery per item: the quantity of the RFQ, the value = quantity x quoted unit price, the wanted time slot of the RFQ.
+        const [ins] = await conn.execute(
+            `INSERT INTO delivery (project_id, org_id, material_id, created_by, ordered_quantity, delivery_value, slot_start, slot_end, quotation_id)
+             SELECT r.project_id, q.org_id, i.material_id, ?, i.quantity, ROUND(i.quantity * qi.unit_price, 2), r.slot_start, r.slot_end, q.quotation_id
+             FROM quotation q
+             JOIN rfq r             ON r.rfq_id = q.rfq_id
+             JOIN quotation_item qi ON qi.quotation_id = q.quotation_id
+             JOIN rfq_item i        ON i.item_id = qi.item_id
+             WHERE q.quotation_id = ?
+             ORDER BY i.item_id`, [req.user.id, quotationId]);
+        created = ins.affectedRows;
+        await conn.execute("UPDATE quotation SET status = IF(quotation_id = ?, 'ACCEPTED', 'NOT_CHOSEN') WHERE rfq_id = ?", [quotationId, rfq.ID]);
+        await conn.execute("UPDATE rfq SET status = 'AWARDED' WHERE rfq_id = ?", [rfq.ID]);
+        await conn.commit();
+    }
+    catch (err) {
+        await conn.rollback().catch(() => {});
+        return fail(res, sqlMessage(err));
+    }
+    finally {
+        conn.release();
+    }
+    await showDetail(req, res, rfq.ID, 'Quotation of ' + supplier + ' accepted: ' + created + ' deliver' + (created === 1 ? 'y was' : 'ies were') +
+        ' created in your deliveries (SCHEDULED).');
 });
 
 // ---------- cancel a sent RFQ (SENT -> CANCELLED; it is not deleted, the suppliers see that it was cancelled) ----------

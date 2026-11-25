@@ -222,6 +222,12 @@ app.get('/:id', async (req, res) => {
     }
     row.canRate = (row.status === 'INSPECTED');
 
+    // A delivery that was created by accepting a quotation shows its request for quotation.
+    const [source] = await db().execute(
+        `SELECT r.rfq_id AS rfqId, r.title AS rfqTitle FROM delivery d JOIN quotation q ON q.quotation_id = d.quotation_id JOIN rfq r ON r.rfq_id = q.rfq_id
+         WHERE d.delivery_id = ?`, [row.ID]);
+    if (source.length === 1) row.source = source[0];
+
     res.render('deliveries/detail', row);
 });
 
