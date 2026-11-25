@@ -1,7 +1,7 @@
 // UC6: the supplier registers the quality documents (delivery note, test reports...) of its own deliveries.
 // A supplier only sees the documents of the deliveries of its own company (d.org_id = the company of the logged-in user).
-// Rules: documents can be added, changed or deleted only until the delivery is inspected (status INSPECTED or COMPLETED
-// closes them, so a document cannot be replaced after the inspection).
+// Rules: documents can be added at any time, because some reports arrive later (for example the 28-day concrete test report);
+// they can be changed or deleted only until the delivery is inspected (INSPECTED or COMPLETED closes them).
 // Only the document type and the file name are stored (the file itself is not uploaded in this version).
 const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
@@ -86,13 +86,13 @@ app.get('/', async (req, res) => {
 
 // ---------- C: the form to add a document (must be before /:id routes) ----------
 app.get('/new', async (req, res) => {
-    // Only the deliveries of this supplier that are not inspected yet.
+        // All the deliveries of this supplier (a document can be added after the inspection too).
     const [deliveries] = await db().execute(
         `SELECT d.delivery_id, p.project_name, m.material_name, d.status
          FROM delivery d
          JOIN project p  ON p.project_id = d.project_id
          JOIN material m ON m.material_id = d.material_id
-         WHERE d.org_id = ? AND d.status NOT IN ('INSPECTED', 'COMPLETED')
+         WHERE d.org_id = ?
          ORDER BY d.slot_start DESC, d.delivery_id DESC`, [req.user.orgId]);
     res.render('documents/new', {
         deliveries: deliveries,
@@ -113,10 +113,10 @@ app.post('/', async (req, res) => {
             `INSERT INTO delivery_document (delivery_id, uploaded_by, doc_type, file_name)
              SELECT d.delivery_id, ?, ?, ?
              FROM delivery d
-             WHERE d.delivery_id = ? AND d.org_id = ? AND d.status NOT IN ('INSPECTED', 'COMPLETED')`,
+             WHERE d.delivery_id = ? AND d.org_id = ?`,
             [req.user.id, b.doc_type, fileName, b.delivery_id, req.user.orgId]);
         if (result.affectedRows === 0) {
-            return fail(res, 'Please choose one of your deliveries that is not inspected yet.', 409);
+            return fail(res, 'Please choose one of your deliveries.', 409);
         }
         await showList(req, res, 'Document "' + fileName + '" added.');
     }
