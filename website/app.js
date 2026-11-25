@@ -6,6 +6,7 @@ const { engine } = require('express-handlebars');
 const configs = require('./config');
 const { loadUser, requireRole } = require('./lib/auth');
 const { fail } = require('./lib/respond');
+const { cookieSecret } = require('./lib/secret');
 
 const app = express();
 
@@ -22,7 +23,7 @@ app.set('views', './views');
 app.use(express.urlencoded({ extended: true }));
 // Express 5 leaves req.body undefined when a request has no body; an empty object lets the routes read req.body.x without an error.
 app.use((req, res, next) => { req.body = req.body || {}; next(); });
-app.use(cookieParser(configs.cookieSecret));
+app.use(cookieParser(cookieSecret(configs.cookieSecret)));      // never the public example (lib/secret.js)
 app.use(express.static('public'));
 app.use(express.static('node_modules/htmx.org/dist'));
 app.use(express.static('node_modules/bootstrap/dist/css'));
