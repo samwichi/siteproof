@@ -10,7 +10,7 @@
 <div id="list" data-count="{{list.total}}">
   <div class="table-responsive">
     <table class="table table-striped table-hover table-sm">
-      <caption class="visually-hidden">Products of all suppliers</caption>
+      <caption class="visually-hidden">{{#if company}}Products of {{company.name}}{{else}}Products of all suppliers{{/if}}</caption>
       <thead>
         <tr>
           {{> list/th key="material" label="Material"}}
