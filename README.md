@@ -240,6 +240,7 @@ graph TD
 | Register a Company or a User | UC1 | 1 | Po-Hao | ✅ Done |
 | Company Account (users, projects, inspection companies) | UC1 | 1 | Po-Hao | ✅ Done |
 | Administrator (companies and users) | UC1 | 1 | Po-Hao | ✅ Done |
+| Administrator: all products of all suppliers (read only) | Product catalog | 2 | Po-Hao | ✅ Done |
 | Find Products (contractor) | Product catalog | 1 | Po-Hao | ✅ Done |
 | My Products (supplier) | Product catalog | 1 | Po-Hao | ✅ Done |
 | Requests for Quotation (contractor: create, send, compare, accept) | RFQ (phase 2) | 2 | Po-Hao | ✅ Done |
