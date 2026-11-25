@@ -1,6 +1,13 @@
 <nav aria-label="Main menu" class="navbar navbar-expand-lg bg-body-tertiary" hx-boost:inherited="true" hx-target:inherited="#main">
   <div class="container-fluid">
     <a class="navbar-brand" href="/"><i aria-hidden="true" class="bi bi-house-door-fill"></i> Home</a>
+    {{#if user}}
+    {{!-- On a phone the menu is folded, so the messages and the bell are shown next to its button (without the automatic refresh). --}}
+    <div class="d-flex d-lg-none align-items-center ms-auto me-2">
+      {{#if user.canMessage}}<a class="nav-link px-2" href="/messages" title="Messages"><i aria-hidden="true" class="bi bi-chat-dots fs-5"></i><span class="visually-hidden">Messages</span></a>{{/if}}
+      <a class="nav-link px-2 position-relative" href="/notifications" title="Notifications"><i aria-hidden="true" class="bi bi-bell fs-5"></i><span class="visually-hidden">Notifications</span>{{#if unread}}<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill text-bg-danger">{{unread}}<span class="visually-hidden"> new notifications</span></span>{{/if}}</a>
+    </div>
+    {{/if}}
     <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle the menu">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -75,9 +82,9 @@
       <div class="d-flex align-items-center">
         {{#if user}}
           {{#if user.canMessage}}
-          <a class="nav-link me-2" href="/messages" title="Messages"><i aria-hidden="true" class="bi bi-chat-dots fs-5"></i><span class="visually-hidden">Messages</span></a>
+          <a class="nav-link me-2 d-none d-lg-block" href="/messages" title="Messages"><i aria-hidden="true" class="bi bi-chat-dots fs-5"></i><span class="visually-hidden">Messages</span></a>
           {{/if}}
-          <a class="nav-link me-3 position-relative" href="/notifications" title="Notifications">
+          <a class="nav-link me-3 position-relative d-none d-lg-block" href="/notifications" title="Notifications">
             <i aria-hidden="true" class="bi bi-bell fs-5"></i><span class="visually-hidden">Notifications</span>{{> notifications/badge}}
           </a>
           <a class="nav-link me-3" href="/account" title="My account and password"><i aria-hidden="true" class="bi bi-person-circle"></i> {{user.name}} ({{user.roleName}}{{#if user.orgName}}, {{user.orgName}}{{/if}})</a>
