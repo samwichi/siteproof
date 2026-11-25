@@ -9,6 +9,8 @@ const crypto = require('crypto');
 const { fail } = require('../lib/respond');
 const { like } = require('../lib/listing');
 const { readFiles, saveFiles, removeFiles, MAX_FILES } = require('../lib/upload');
+const notify = require('../lib/notify');
+const { ROLE_NAMES } = require('../lib/auth');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -167,6 +169,7 @@ app.post('/user', async (req, res) => {
         const hash = await bcrypt.hash(String(b.password), 10);
         await db().execute(
             "INSERT INTO user_account (org_id, full_name, email, password, role, status) VALUES (?, ?, ?, ?, ?, 'PENDING')", [orgId, name, email, hash, role]);
+        await notify.toCompany(db(), orgId, 'COMPANY', name + ' (' + email + ') registered as ' + ROLE_NAMES[role] + ' and waits for your approval.', '/company');
 
         // The user cannot sign in yet: the company account of the company has to approve the registration first.
         res.render('register/userDone', { name: name, company: orgs[0].org_name });

@@ -80,7 +80,7 @@ Status: ✅ Done = works in the website; 🔶 Partly = some of it works (see sec
 | Feature | Scope | Main data entities (see [ERModel.md](ERModel.md)) |
 |---|---|---|
 | RFQ and quotation comparison | 🟨 Phase 2 (✅ built) | RFQ, RFQ_ITEM, RFQ_SUPPLIER, QUOTATION, QUOTATION_ITEM |
-| LINE notifications and 28-day test reminders | 🟨 Phase 2 | NOTIFICATION |
+| Notifications in the website (✅ built); LINE messages and 28-day test reminders | 🟨 Phase 2 | NOTIFICATION |
 | Digital payment requests | 🟨 Phase 2 | PAYMENT_REQUEST |
 | Advanced supplier analytics | 🟨 Phase 2 | Computed from existing MVP data |
 | Pro-tier features (multi-project / multi-office, unlimited supplier connections) | 🟨 Phase 2 | SUBSCRIPTION, SUPPLIER_CONNECTION |
@@ -134,6 +134,8 @@ SiteProof has moved from planning to implementation. The database and the first 
 Beyond the ten use cases, the supplier keeps a **product catalog** (My products): the materials that its company can provide, with the price range, minimum order and lead time ([website/README.md](website/README.md), section 2.2). The contractor searches all the listed products (Find products), compares the suppliers of a material by price, lead time and rating, and starts a delivery from a product with one click (section 2.3). This is the first step of the RFQ and quotation workflow of phase 2.
 
 **Requests for quotation (RFQ, phase 2):** the contractor writes an RFQ for a project (materials and quantities, wanted delivery slot, last day for the quotations) and invites suppliers; the suppliers that offer the most materials in their catalog are suggested first. A draft can be changed and deleted; after **Send** it cannot be changed or deleted any more, only cancelled ([website/README.md](website/README.md), section 2.4). The invited suppliers answer with a **quotation** (a unit price for each material, lead time, note) and can change or withdraw it until the last day (section 2.5). The contractor **compares the quotations side by side** and **accepts** one: the deliveries are created automatically for that supplier and continue in the closed loop above (section 2.6). The whole story of the assignment works: supplier products → RFQ → quotations → decision → delivery → inspection → rating.
+
+**Notifications:** every user has a bell in the menu with the number of new notifications: a new delivery, a status change, a delivery that arrived and must be inspected, an inspection result, a rating, an RFQ, a quotation, a decision or a new registration ([website/README.md](website/README.md), section 2.7).
 
 The whole closed loop works from the first step to the last: the contractor creates a delivery, the supplier moves it to DELIVERED, the inspector inspects it, the contractor completes it with a rating, and the supplier sees the rating.
 

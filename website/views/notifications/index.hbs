@@ -1,0 +1,34 @@
+<h1 class="h2">Notifications</h1>
+<p class="text-muted">What happened to your deliveries and requests for quotation. Click a notification to open its page; it is then marked as read.</p>
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <button type="button" class="btn btn-outline-primary btn-sm" hx-put="/notifications/read" hx-target="#main" {{#unless unread}}disabled{{/unless}}>
+    <i aria-hidden="true" class="bi bi-check2-all"></i> Mark all as read
+  </button>
+  <button type="button" class="btn btn-outline-secondary btn-sm" hx-delete="/notifications/read" hx-target="#main" hx-confirm="Delete all the notifications that you have read?">
+    <i aria-hidden="true" class="bi bi-trash3"></i> Delete the read ones
+  </button>
+</div>
+{{> list/controls placeholder="Search in the notifications"}}
+<div id="list" data-count="{{list.total}}">
+  <ul class="list-group mb-3">
+    {{#each rows}}
+      <li class="list-group-item d-flex align-items-center gap-2{{#if isNew}} list-group-item-primary{{/if}}">
+        <i aria-hidden="true" class="bi {{#if isNew}}bi-bell-fill text-primary{{else}}bi-bell text-muted{{/if}}"></i>
+        <a class="flex-grow-1 text-decoration-none {{#if isNew}}fw-semibold text-body{{else}}text-body{{/if}}" href="/notifications/{{ID}}/open" hx-boost="true" hx-target="#main">
+          {{text}}{{#if isNew}}<span class="visually-hidden"> (new)</span>{{/if}}
+          <div class="small text-muted fw-normal">{{created}}</div>
+        </a>
+        <button type="button" class="btn btn-sm btn-outline-danger" hx-delete="/notifications/{{ID}}" hx-target="closest li" hx-swap="delete"
+                title="Delete this notification" aria-label="Delete the notification: {{text}}">
+          <i aria-hidden="true" class="bi bi-x-lg"></i>
+        </button>
+      </li>
+    {{/each}}
+  </ul>
+  {{#unless rows.length}}
+    <p class="text-muted text-center">{{#if list.filtered}}No notification matches your search.{{else}}No notification yet.{{/if}}</p>
+  {{/unless}}
+  {{> list/pager}}
+</div>
+<hx-partial hx-target="#notificationBadge" hx-swap="outerHTML">{{> notifications/badge}}</hx-partial>
+{{#if message}}{{> toast}}{{/if}}

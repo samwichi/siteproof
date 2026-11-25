@@ -11,7 +11,7 @@ The MVP part is implemented in MySQL 8.4 (scripts `01_schema.sql` to `06_sample_
 | **PHASE 2** | 🟨 yellow | Planned next: RFQ, LINE notifications, payment requests, Pro tier, featured suppliers, ESG. |
 | **PHASE 3** | ⬜ grey, dashed | Future: OCR, budget alerts, GPS, ERP integration, risk analytics. |
 
-Attributes of a later phase inside an MVP table are marked in the comment (for example `quotation_id FK "Phase 2"`). They are not in the MySQL tables yet.
+Attributes of a later phase inside an MVP table are marked in the comment (for example `payment_request_id FK "Phase 2"`). They are not in the MySQL tables yet, except the ones marked "built".
 
 ## 2. Figure 1 - MVP data model (implemented in MySQL)
 
@@ -91,6 +91,7 @@ erDiagram
         datetime slot_start
         datetime slot_end
         varchar status "SCHEDULED to COMPLETED"
+        int quotation_id FK "nullable: the accepted quotation (RFQ)"
     }
     DELIVERY_DOCUMENT {
         int document_id PK
@@ -149,7 +150,7 @@ erDiagram
 
 ## 3. Figure 2 - Full product (MVP + Phase 2 + Phase 3)
 
-29 entities: the 13 MVP tables plus 11 for Phase 2 (5 of them, the RFQ and quotation tables, are already built) and 5 for Phase 3.
+29 entities: the 13 MVP tables plus 11 for Phase 2 (6 of them, the RFQ and quotation tables and the notifications, are already built) and 5 for Phase 3.
 
 ```mermaid
 erDiagram
@@ -227,7 +228,7 @@ erDiagram
         datetime slot_start
         datetime slot_end
         varchar status "SCHEDULED to COMPLETED"
-        int quotation_id FK "Phase 2, nullable"
+        int quotation_id FK "Phase 2, built, nullable"
         int payment_request_id FK "Phase 2, nullable"
     }
     DELIVERY_DOCUMENT["DELIVERY_DOCUMENT - MVP"] {
@@ -303,13 +304,13 @@ erDiagram
         int item_id PK, FK
         decimal unit_price
     }
-    NOTIFICATION["NOTIFICATION - PHASE 2"] {
+    NOTIFICATION["NOTIFICATION - PHASE 2, built (in the website; LINE later)"] {
         int notification_id PK
         int user_id FK
-        int delivery_id FK "nullable"
-        int budget_id FK "Phase 3, nullable"
-        varchar notification_type "LINE message"
-        datetime sent_at
+        varchar text
+        varchar link "page of the delivery, RFQ..."
+        timestamp created_at
+        datetime read_at "NULL = new"
     }
     PAYMENT_REQUEST["PAYMENT_REQUEST - PHASE 2"] {
         int payment_request_id PK
@@ -409,7 +410,6 @@ erDiagram
     PROJECT ||--o{ PAYMENT_REQUEST : "billed for"
     PAYMENT_REQUEST ||--o{ DELIVERY : includes
     USER_ACCOUNT ||--o{ NOTIFICATION : receives
-    DELIVERY |o--o{ NOTIFICATION : triggers
     ORGANIZATION ||--o{ SUBSCRIPTION : holds
     ORGANIZATION ||--o{ FEATURED_LISTING : buys
     MATERIAL_CATEGORY ||--o{ FEATURED_LISTING : "promoted in"
@@ -458,6 +458,8 @@ erDiagram
 | RFQ_SUPPLIER | Suppliers invited to an RFQ | `rfq_id` + `org_id` |
 | QUOTATION | The answer of one invited supplier (at most one per RFQ; the foreign key to RFQ_SUPPLIER allows only invited suppliers); SUBMITTED, then ACCEPTED or NOT_CHOSEN | `quotation_id` (`rfq_id` + `org_id` unique) |
 | QUOTATION_ITEM | Unit price of each item in a quotation | `quotation_id` + `item_id` |
+
+| NOTIFICATION | Notifications of a user in the website (the bell in the menu): text, the page it is about, read or not. Written by the website when something happens (new delivery, status change, inspection, rating, RFQ, quotation, registration). LINE messages are still for later | `notification_id` |
 
 `DELIVERY.quotation_id` remembers the accepted quotation that created a delivery (NULL when the delivery was created directly).
 

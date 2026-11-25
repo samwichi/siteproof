@@ -107,6 +107,26 @@ Rules:
 * A quotation of a supplier that is not approved any more, or without a price for every material, cannot be accepted; an awarded or cancelled RFQ cannot be awarded again.
 * The contractor can accept before the last day (the page says that the suppliers can still answer) or wait until it.
 
+## 2.7 Notifications (the bell in the menu, every user)
+
+* When something happens, the website writes a short notification for the people who must know it, with the page that shows it:
+
+| Event | Who gets a notification |
+|---|---|
+| A delivery is created (directly or by accepting a quotation), changed or deleted | the users of the supplier |
+| The supplier moves a delivery (PREPARING, IN_TRANSIT, DELIVERED) | the project managers of the contractor |
+| A delivery arrives (DELIVERED) | the inspectors of the contractor and of its appointed inspection companies |
+| A delivery is inspected | the project managers of the contractor and the users of the supplier |
+| A delivery is rated | the users of the supplier |
+| An RFQ is sent or cancelled | the users of every invited supplier |
+| A quotation is sent, changed or withdrawn | the project managers of the contractor |
+| An RFQ is awarded | every supplier that answered (accepted, or another quotation was chosen) |
+| A user registers | the company account of the company |
+
+* The bell shows the number of new notifications and asks for it again every 30 seconds. On the page Notifications the user opens one (it is marked as read and its page opens), marks all as read, or deletes one or all the read ones. Every user sees only his own notifications.
+* The user who caused the event does not get a notification, and switched-off or waiting users get none. Writing a notification never stops the action itself (if it fails, only the log shows it).
+* An existing database gets the new table with `database/10_upgrade_notifications.sql`.
+
 ## 3. Folders
 
 ```
@@ -130,12 +150,14 @@ website/
 │   ├── history.js         UC7  supplier: own average rating, score distribution and delivery history (read only)
 │   ├── documents.js       UC6  supplier: add quality documents at any time; edit or delete them until the delivery is inspected (type and file name)
 │   ├── products.js        supplier: the product catalog of the company ("My products"): add, list, edit, unlist / list again, delete
-│   └── quotations.js      supplier: the RFQs sent to the company; send, change, withdraw a quotation until the last day
+│   ├── quotations.js      supplier: the RFQs sent to the company; send, change, withdraw a quotation until the last day
+│   └── notifications.js   every user: own notifications (list, open, mark all as read, delete), and the number for the bell
 ├── lib/
 │   ├── auth.js            loadUser (who is logged in; asks the database at every request whether the account and its company are still allowed), requireRole('...'), role names, start page of each role
 │   ├── upload.js          proof documents: receive (multer), check the first bytes, save under a random name, read
 │   ├── respond.js         fail(res, message): error message in the toast, without changing the page
 │   ├── listing.js         readList(): search, status filter, sorting and paging of a list (used by all the list pages)
+│   ├── notify.js          writes the notifications for the routes (to the users of a company with one role, or to the inspectors of a contractor)
 │   └── materials.js       findMaterials(): the material picker (category buttons + search box) of the new delivery form and of "My products"
 ├── views/
 │   ├── index.hbs          the only full page: header, navbar, div#toast, main#main, footer

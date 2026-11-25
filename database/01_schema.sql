@@ -255,6 +255,19 @@ CREATE TABLE supplier_product (
     FOREIGN KEY (material_id) REFERENCES material (material_id)
 );
 
+-- 1.13c Notifications: a short message for one user about something that happened (a new delivery, a status change, a quotation...),
+--       with the page that shows it. read_at is NULL while the user has not opened it (the bell in the menu counts them).
+CREATE TABLE notification (
+    notification_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id         INT          NOT NULL,
+    text            VARCHAR(255) NOT NULL,
+    link            VARCHAR(100) NOT NULL,
+    created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    read_at         DATETIME     NULL,
+    INDEX (user_id, read_at),
+    FOREIGN KEY (user_id) REFERENCES user_account (user_id)
+);
+
 -- 1.14 View that calculates the total price of each purchase: quantity x unit price x (1 - discount).
 CREATE VIEW purchase_total AS
 SELECT purchase_id,

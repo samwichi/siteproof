@@ -9,6 +9,7 @@ const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList, like } = require('../lib/listing');
 const { findMaterials } = require('../lib/materials');
+const notify = require('../lib/notify');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -409,6 +410,8 @@ app.post('/:id/send', draftOnly, async (req, res) => {
     if (!Number(counts.datesOk)) return fail(res, 'The last day for the quotations or the delivery time slot has passed. Please edit the dates first.');
     const [result] = await db().execute("UPDATE rfq SET status = 'SENT', sent_at = NOW() WHERE rfq_id = ? AND status = 'DRAFT'", [rfq.ID]);
     if (result.affectedRows === 0) return fail(res, 'The RFQ was sent meanwhile.', 409);
+    await toInvited(rfq.ID, req.user.id, about => 'New request for quotation #' + about.ID + ' from ' + about.contractor + ': ' + about.title +
+        '. Please answer until ' + about.due + '.');
     await showDetail(req, res, rfq.ID, 'RFQ #' + rfq.ID + ' sent to ' + counts.suppliers + ' supplier' + (Number(counts.suppliers) > 1 ? 's' : '') +
         '. They can answer until ' + rfq.due + '.');
 });
@@ -472,9 +475,24 @@ app.post('/:id/award', async (req, res) => {
     finally {
         conn.release();
     }
+    // Tell every supplier that answered whether its quotation was chosen.
+    const about = await notify.aboutRfq(db(), rfq.ID);
+    const [answers] = await db().execute('SELECT org_id, status FROM quotation WHERE rfq_id = ?', [rfq.ID]);
+    for (const a of answers) {
+        await notify.toCompany(db(), a.org_id, 'SUPPLIER', a.status === 'ACCEPTED'
+            ? about.contractor + ' accepted your quotation for RFQ #' + rfq.ID + ' (' + about.title + '): ' + created + ' new deliver' + (created === 1 ? 'y' : 'ies') + '.'
+            : about.contractor + ' chose another quotation for RFQ #' + rfq.ID + ' (' + about.title + ').', '/quotations/' + rfq.ID, req.user.id);
+    }
     await showDetail(req, res, rfq.ID, 'Quotation of ' + supplier + ' accepted: ' + created + ' deliver' + (created === 1 ? 'y was' : 'ies were') +
         ' created in your deliveries (SCHEDULED).');
 });
+
+// Send a notification to the users of every supplier that is invited to the RFQ (text = a function of the RFQ data).
+async function toInvited(rfqId, exceptUserId, text) {
+    const about = await notify.aboutRfq(db(), rfqId);
+    const [invited] = await db().execute('SELECT org_id FROM rfq_supplier WHERE rfq_id = ?', [rfqId]);
+    for (const s of invited) await notify.toCompany(db(), s.org_id, 'SUPPLIER', text(about), '/quotations/' + rfqId, exceptUserId);
+}
 
 // ---------- cancel a sent RFQ (SENT -> CANCELLED; it is not deleted, the suppliers see that it was cancelled) ----------
 app.post('/:id/cancel', async (req, res) => {
@@ -482,6 +500,7 @@ app.post('/:id/cancel', async (req, res) => {
     if (!rfq) return fail(res, 'Request for quotation not found.', 404);
     const [result] = await db().execute("UPDATE rfq SET status = 'CANCELLED' WHERE rfq_id = ? AND status = 'SENT'", [rfq.ID]);
     if (result.affectedRows === 0) return fail(res, 'Only a sent RFQ that is not awarded can be cancelled.', 409);
+    await toInvited(rfq.ID, req.user.id, about => about.contractor + ' cancelled the request for quotation #' + about.ID + ' (' + about.title + ').');
     await showDetail(req, res, rfq.ID, 'RFQ #' + rfq.ID + ' cancelled.');
 });
 

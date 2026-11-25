@@ -5,6 +5,7 @@ const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList, like } = require('../lib/listing');
 const { findMaterials } = require('../lib/materials');
+const notify = require('../lib/notify');
 const app = express.Router();
 
 // The promise version of the connection pool injected by app.js (same mysql2 package as in the laboratory, but with async/await).
@@ -172,6 +173,9 @@ app.post('/', async (req, res) => {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [b.project_id, b.org_id, b.material_id, req.user.id, quantity, value,
              toDatetime(b.slot_start), toDatetime(b.slot_end)]);
+        const about = await notify.aboutDelivery(db(), result.insertId);
+        await notify.toCompany(db(), about.supplierId, 'SUPPLIER',
+            'New delivery #' + about.ID + ' from ' + about.contractor + ': ' + about.material + ' for ' + about.project + '.', notify.pages.supplier(about.ID), req.user.id);
         await showList(req, res, 'Delivery #' + result.insertId + ' created.');
     }
     catch (err) {
@@ -268,6 +272,12 @@ app.put('/:id', async (req, res) => {
         if (result.affectedRows === 0 && !fresh.canEdit) {
             return fail(res, 'The status changed meanwhile: only SCHEDULED deliveries can be edited.', 409);
         }
+        if (result.affectedRows > 0) {
+            const about = await notify.aboutDelivery(db(), id);
+            await notify.toCompany(db(), about.supplierId, 'SUPPLIER',
+                'Delivery #' + id + ' (' + about.material + ') was changed by ' + about.contractor + ': please check the quantity and the time slot.',
+                notify.pages.supplier(id), req.user.id);
+        }
         res.render('deliveries/rowToast', Object.assign(fresh, { message: 'Delivery #' + id + ' updated.', kind: 'success' }));
     }
     catch (err) {
@@ -278,6 +288,7 @@ app.put('/:id', async (req, res) => {
 // ---------- D: delete ----------
 app.delete('/:id', async (req, res) => {
     try {
+        const about = await notify.aboutDelivery(db(), req.params.id);        // read before it is deleted (for the notification)
         const [result] = await db().execute(
             `DELETE d FROM delivery d JOIN project p ON p.project_id = d.project_id
              WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'SCHEDULED'`,
@@ -285,6 +296,8 @@ app.delete('/:id', async (req, res) => {
         if (result.affectedRows === 0) {
             return fail(res, 'Only SCHEDULED deliveries of your projects can be deleted.', 409);
         }
+        await notify.toCompany(db(), about.supplierId, 'SUPPLIER',
+            'Delivery #' + about.ID + ' (' + about.material + ' for ' + about.project + ') was cancelled by ' + about.contractor + '.', '/assigned', req.user.id);
         // Nothing except the message: hx-swap="delete" of the button removes the row (HTMX 4 does not swap an empty response next to a partial) and the message goes to #toast.
         res.render('toast', { message: 'Delivery #' + req.params.id + ' deleted.', kind: 'success' });
     }

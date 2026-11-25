@@ -7,6 +7,7 @@
 const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList } = require('../lib/listing');
+const notify = require('../lib/notify');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -96,6 +97,14 @@ app.put('/:id', async (req, res) => {
                 message: 'Delivery #' + id + ' is now ' + fresh.status + ' (it changed meanwhile). Nothing was changed.',
                 kind: 'warning'
             }));
+        }
+        const about = await notify.aboutDelivery(db(), id);
+        const words = { PREPARING: 'is being prepared', IN_TRANSIT: 'is on the way', DELIVERED: 'has arrived at the site' };
+        await notify.toCompany(db(), about.contractorId, 'CONTRACTOR_PM',
+            'Delivery #' + id + ' (' + about.material + ', ' + about.supplier + ') ' + words[to] + '.', notify.pages.contractor(id), req.user.id);
+        if (to === 'DELIVERED') {
+            await notify.toInspectors(db(), about.contractorId,
+                'Delivery #' + id + ' (' + about.material + ') arrived at ' + about.project + ': ready to inspect.', notify.pages.inspector(id), req.user.id);
         }
         res.render('assigned/rowToast', Object.assign(fresh, {
             message: 'Delivery #' + id + ' is now ' + to + '.',
