@@ -111,7 +111,7 @@ SiteProof has moved from planning to implementation. The database and the first 
 | Business Plan | Revised (v3) |
 | System Requirements | Defined |
 | Website Architecture | Defined |
-| Frontend Development | In progress: pages for the three roles (contractor, supplier, inspector) with Handlebars, HTMX and Bootstrap; every list has search, status filter, sorting and paging, a loading bar and error messages that stay in the corner of the window; the new-delivery form has a search box for the supplier and a material picker with category buttons and a search box; accessible and usable with the keyboard only (skip link, real buttons, labelled form fields, focus moves to the right place after each update); checked with axe-core: 0 violations |
+| Frontend Development | In progress: pages for the five roles (contractor, supplier, inspector, company account, administrator) with Handlebars, HTMX and Bootstrap; every list has search, status filter, sorting and paging, a loading bar and error messages that stay in the corner of the window; the new-delivery form has a search box for the supplier and a material picker with category buttons and a search box; accessible and usable with the keyboard only (skip link, real buttons, labelled form fields, focus moves to the right place after each update); checked with axe-core: 0 violations |
 | Backend Development | In progress: Express routes with sign-in, registration, role check (checked in the database at every request) and company-level data isolation |
 | Database Design | MVP tables implemented in MySQL, loaded with the given data and with sample data ([ERModel.md](ERModel.md)) |
 | System Testing | Started: each function is tested by hand with the sample data; no automated tests yet |
@@ -148,6 +148,7 @@ Revised for consistency; supersedes the versions originally submitted.
 | Business Plan | PDF | [View PDF](Assignment%20%231/Business_Plan_v3.pdf) |
 | Business Plan | Word | [View DOCX](Assignment%20%231/Business_Plan_v3.docx) |
 | Business Plan Presentation | PowerPoint | [View PPTX](Assignment%20%231/SiteProof_Business_Plan_Presentation_v3.pptx) |
+| Database and ETL report | PDF | [View PDF](database/SiteProof_Database_ETL.pdf) |
 
 ---
 ## 5. Team Members and Responsibilities
