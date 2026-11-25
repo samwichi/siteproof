@@ -1,6 +1,6 @@
 <h1 class="h2">New document</h1>
 {{#unless deliveries.length}}
-  <div class="alert alert-warning">You have no delivery that can receive documents (the inspected deliveries are closed).</div>
+  <div class="alert alert-warning">You have no deliveries yet.</div>
 {{/unless}}
 <form class="row g-3" hx-post="/documents" hx-target="#main" hx-push-url="/documents" hx-disable="findAll button">
   <div class="col-12">
