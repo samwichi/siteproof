@@ -263,3 +263,37 @@ Each member works in his own branch (for example `feature/delivery-crud`). After
 - `public/a11y.js` moves the focus after HTMX changes the page (HTMX does not do it like a normal page load): to the page title after a menu click, back to the same row after a form is saved or cancelled, to the same column header after sorting, to the list after a page number click. A hidden `role="status"` message tells screen readers how many results a list has after a search.
 - `public/site.css`: darker star colour (contrast), clear focus frame.
 - Check: axe-core (WCAG 2.x A/AA rules) on all pages of the three roles, including the open inline forms: 0 violations.
+
+## Automated tests
+
+The tests use `node:test` and `node:assert` (built into Node.js, as in the testing laboratory), so nothing more has to be installed. Run them in the container:
+
+```
+cd /app
+npm test
+```
+
+| File | What it tests | Needs MySQL |
+|---|---|---|
+| `tests/loginLimit.test.js` | Limit for wrong passwords: 5 per e-mail, 100 per IP address, lock of 15 minutes (state transitions with a mocked clock) | no |
+| `tests/upload.test.js` | Real type of an uploaded file (PDF, JPG, PNG), clean file names, stored names (equivalence partitioning, boundary values) | no |
+| `tests/auth.test.js` | Role check and login cookie: every reason why an account may not be used any more (fake database) | no |
+| `tests/listing.test.js` | Search, filter, sorting and paging: the text of the user never reaches the SQL text (SQL injection), plus a fuzz test | no |
+| `tests/closedLoop.test.js` | The whole closed loop through the real routes: create, status steps, document upload, inspection with retention, rating, history, notifications; and what must be refused at each step | yes |
+
+`tests/closedLoop.test.js` uses its own database **`siteproof_test`**, made again from `database/01_schema.sql` at every run, so the data of the website are never changed. The database user of `config.js` needs the right to create it (once, as root in the MySQL container):
+
+```sql
+GRANT ALL ON siteproof_test.* TO 'siteproof'@'172.17.%';
+```
+
+The container of section 1 only has the website folder (`/app`), so the system test cannot see `database/01_schema.sql`. Copy it once into the container (it stays there until the container is deleted); run these in the repository folder:
+
+```
+docker exec SiteProof mkdir -p /database
+docker cp database\01_schema.sql SiteProof:/database/
+```
+
+Or set `SCHEMA_FILE` to the path of the file. Copy it again after `01_schema.sql` changes.
+
+Without `config.js`, without MySQL or without `01_schema.sql` these tests are skipped (with the reason) and the others still run.
