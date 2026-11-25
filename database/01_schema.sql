@@ -194,6 +194,8 @@ CREATE TABLE delivery (
     status           VARCHAR(20)   NOT NULL DEFAULT 'SCHEDULED'
                      CHECK (status IN ('SCHEDULED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED', 'INSPECTED', 'COMPLETED')),
     quotation_id     INT           NULL,      -- the accepted quotation that created this delivery (NULL: created directly)
+    declined_at      DATETIME      NULL,      -- the supplier cannot deliver it as asked (only while SCHEDULED); the contractor changes or deletes it
+    decline_reason   VARCHAR(200)  NULL,
     FOREIGN KEY (quotation_id) REFERENCES quotation (quotation_id),
     FOREIGN KEY (project_id)  REFERENCES project (project_id),
     FOREIGN KEY (org_id)      REFERENCES organization (org_id),

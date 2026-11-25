@@ -19,5 +19,5 @@
   <td class="text-end">{{quantity}} {{unit}}</td>
   <td class="text-end">{{value}}</td>
   <td class="text-nowrap">{{slotStart}} - {{slotEnd}}</td>
-  <td><span class="badge text-bg-{{badge}}">{{status}}</span></td>
+  <td><span class="badge text-bg-{{badge}}">{{status}}</span>{{#if isDeclined}} <span class="badge text-bg-danger">DECLINED</span><div class="small text-danger-emphasis text-truncate" style="max-width: 200px;" title="{{declineReason}}">{{declineReason}}</div>{{/if}}</td>
 </tr>

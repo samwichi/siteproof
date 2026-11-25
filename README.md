@@ -124,7 +124,7 @@ SiteProof has moved from planning to implementation. The database and the first 
 | UC2 Create a delivery record | Done | Contractor creates, edits and deletes delivery records (edit and delete only while SCHEDULED) |
 | UC3 View delivery status, history, retention and ratings | Done | List with status for the contractor, and a detail page for each delivery: progress, order, documents, inspection, retention and rating in one place |
 | UC4 Complete a delivery and rate the supplier | Done | Rating 1 to 5, can be changed or deleted |
-| UC5 Update the delivery status | Done | Supplier sees the assigned deliveries and moves each one step by step: PREPARING, IN_TRANSIT, DELIVERED |
+| UC5 Update the delivery status | Done | Supplier sees the assigned deliveries and moves each one step by step: PREPARING, IN_TRANSIT, DELIVERED; a SCHEDULED delivery can be declined with a reason, and the contractor changes or deletes it |
 | UC6 Quality documents | Done | Supplier uploads the file (PDF, JPG or PNG, at most 5 MB; the real type is checked) at any time, and changes (also the file) or deletes it until the inspection; the contractor and the inspectors open the files from their pages |
 | UC7 Supplier rating and history | Done | Supplier sees the average rating, how the scores are distributed and the history of its deliveries with the inspection result |
 | UC8 Record received quantity and review documents | Done | The inspector sees the quality documents of each delivery (or a warning when there are none) in the list and in the inspection form, then records the received quantity |

@@ -11,6 +11,10 @@
   </a>
 </h1>
 
+{{#if isDeclined}}
+  <div class="alert alert-danger"><i aria-hidden="true" class="bi bi-x-circle"></i> <strong>{{supplier}} declined this delivery:</strong> {{declineReason}}
+    <br>Change the quantity, the price or the time slot in "My deliveries" (the supplier is asked again), or delete the delivery.</div>
+{{/if}}
 <div class="d-flex flex-wrap gap-1 align-items-center my-3 small">
   {{#each steps}}
     <span class="badge {{#if current}}text-bg-primary{{else}}{{#if done}}text-bg-success{{else}}text-bg-light border text-muted{{/if}}{{/if}}">{{name}}</span>

@@ -77,7 +77,7 @@
           <a class="nav-link me-3 position-relative" href="/notifications" title="Notifications">
             <i aria-hidden="true" class="bi bi-bell fs-5"></i><span class="visually-hidden">Notifications</span>{{> notifications/badge}}
           </a>
-          <span class="navbar-text me-3"><i aria-hidden="true" class="bi bi-person-circle"></i> {{user.name}} ({{user.roleName}}{{#if user.orgName}}, {{user.orgName}}{{/if}})</span>
+          <a class="nav-link me-3" href="/account" title="My account and password"><i aria-hidden="true" class="bi bi-person-circle"></i> {{user.name}} ({{user.roleName}}{{#if user.orgName}}, {{user.orgName}}{{/if}})</a>
           {{!-- The logout form must reload the whole page, so it is not boosted. --}}
           <form action="/logout" method="post" hx-boost="false">
             <button class="btn btn-outline-dark btn-sm"><i aria-hidden="true" class="bi bi-box-arrow-right"></i> Sign out</button>

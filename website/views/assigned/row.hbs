@@ -9,9 +9,17 @@
       <i aria-hidden="true" class="bi bi-file-earmark-text"></i> {{documents}}
     </a>
   </td>
-  <td><span class="badge text-bg-{{badge}}">{{status}}</span></td>
+  <td><span class="badge text-bg-{{badge}}">{{status}}</span>{{#if isDeclined}} <span class="badge text-bg-danger">DECLINED</span><div class="small text-muted text-truncate" style="max-width: 180px;" title="{{declineReason}}">{{declineReason}}</div>{{/if}}</td>
   <td class="text-nowrap d-flex gap-1">
     <a class="btn btn-sm btn-outline-primary" href="/messages/delivery/{{ID}}" hx-boost="true" hx-target="#main" title="Messages about delivery #{{ID}}" aria-label="Messages about delivery #{{ID}}"><i aria-hidden="true" class="bi bi-chat-dots"></i></a>
+    {{#if canDecline}}
+      <button type="button" class="btn btn-sm btn-outline-danger" hx-get="/assigned/{{ID}}/decline" hx-target="closest tr" hx-swap="outerHTML"
+              title="Decline delivery #{{ID}}" aria-label="Decline delivery #{{ID}}"><i aria-hidden="true" class="bi bi-x-circle"></i></button>
+    {{/if}}
+    {{#if isDeclined}}
+      <button type="button" class="btn btn-sm btn-outline-success" hx-delete="/assigned/{{ID}}/decline" hx-target="closest tr" hx-swap="outerHTML"
+              hx-confirm="Accept delivery #{{ID}} after all?" title="Accept delivery #{{ID}} after all" aria-label="Accept delivery #{{ID}} after all"><i aria-hidden="true" class="bi bi-arrow-counterclockwise"></i></button>
+    {{/if}}
     {{#if nextStatus}}
       {{!-- The hidden field "from" is the status that the user sees: the server moves the delivery only if it is still in that status. --}}
       <form hx-put="/assigned/{{ID}}" hx-target="closest tr" hx-swap="outerHTML" hx-disable="findAll button"

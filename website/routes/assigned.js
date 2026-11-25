@@ -33,6 +33,8 @@ const SELECT_ASSIGNED = `
               DATE_FORMAT(d.slot_end, '%H:%i'),
               DATE_FORMAT(d.slot_end, '%Y-%m-%d %H:%i')) AS slotEnd,
            d.status                                    AS status,
+           d.declined_at                               AS declinedAt,
+           d.decline_reason                            AS declineReason,
            (SELECT COUNT(*) FROM delivery_document x WHERE x.delivery_id = d.delivery_id) AS documents
     FROM delivery d
     JOIN project p      ON p.project_id = d.project_id
@@ -43,8 +45,10 @@ const SELECT_ASSIGNED = `
 // Add the values that the template needs (Handlebars cannot compare values, so we do it here).
 function prepare(row) {
     row.badge = BADGES[row.status];
-    row.nextStatus = NEXT[row.status];            // undefined when the supplier has nothing more to do
+    row.isDeclined = Boolean(row.declinedAt);
+    row.nextStatus = row.isDeclined ? undefined : NEXT[row.status];      // undefined when the supplier has nothing (more) to do
     row.nextLabel = LABELS[row.status];
+    row.canDecline = (row.status === 'SCHEDULED' && !row.isDeclined);
     return row;
 }
 
@@ -83,11 +87,12 @@ app.put('/:id', async (req, res) => {
 
     const row = await findAssigned(id, orgId);
     if (!row) return fail(res, 'Delivery not found.', 404);
+    if (row.isDeclined) return fail(res, 'You declined delivery #' + id + '. Accept it again first (the arrow button).', 409);
 
     try {
         // The condition status = from makes sure that the delivery is still in the status that the user saw.
         const [result] = await db().execute(
-            'UPDATE delivery SET status = ? WHERE delivery_id = ? AND org_id = ? AND status = ?',
+            'UPDATE delivery SET status = ? WHERE delivery_id = ? AND org_id = ? AND status = ? AND declined_at IS NULL',
             [to, id, orgId, from]);
 
         const fresh = await findAssigned(id, orgId);
@@ -114,6 +119,46 @@ app.put('/:id', async (req, res) => {
     catch (err) {
         fail(res, sqlMessage(err));
     }
+});
+
+// ---------- decline a SCHEDULED delivery (the supplier cannot deliver it as asked), or take the decline back ----------
+// The delivery stays SCHEDULED; the contractor sees the reason, then changes the delivery (which asks the supplier again) or deletes it.
+app.get('/:id/decline', async (req, res) => {
+    const row = await findAssigned(req.params.id, req.user.orgId);
+    if (!row) return fail(res, 'Delivery not found.', 404);
+    if (!row.canDecline) return fail(res, 'Only a SCHEDULED delivery that is not declined yet can be declined.', 409);
+    res.render('assigned/decline', row);
+});
+
+app.put('/:id/decline', async (req, res) => {
+    const row = await findAssigned(req.params.id, req.user.orgId);
+    if (!row) return fail(res, 'Delivery not found.', 404);
+    if (req.body.action !== 'decline') return res.render('assigned/row', row);       // cancel
+    const reason = String(req.body.reason || '').trim();
+    if (!reason) return fail(res, 'Please write the reason, so that the contractor knows what to change.');
+    if (reason.length > 200) return fail(res, 'The reason can have at most 200 characters.');
+    const [result] = await db().execute(
+        "UPDATE delivery SET declined_at = NOW(), decline_reason = ? WHERE delivery_id = ? AND org_id = ? AND status = 'SCHEDULED' AND declined_at IS NULL",
+        [reason, req.params.id, req.user.orgId]);
+    if (result.affectedRows === 0) return fail(res, 'Only a SCHEDULED delivery that is not declined yet can be declined.', 409);
+    const about = await notify.aboutDelivery(db(), req.params.id);
+    await notify.toCompany(db(), about.contractorId, 'CONTRACTOR_PM',
+        about.supplier + ' declined delivery #' + about.ID + ' (' + about.material + '): "' + reason + '". Please change or delete it.',
+        notify.pages.contractor(about.ID), req.user.id);
+    const fresh = await findAssigned(req.params.id, req.user.orgId);
+    res.render('assigned/rowToast', Object.assign(fresh, { message: 'Delivery #' + fresh.ID + ' declined. The contractor is informed.', kind: 'success' }));
+});
+
+app.delete('/:id/decline', async (req, res) => {
+    const [result] = await db().execute(
+        "UPDATE delivery SET declined_at = NULL, decline_reason = NULL WHERE delivery_id = ? AND org_id = ? AND status = 'SCHEDULED' AND declined_at IS NOT NULL",
+        [req.params.id, req.user.orgId]);
+    if (result.affectedRows === 0) return fail(res, 'This delivery is not declined.', 409);
+    const about = await notify.aboutDelivery(db(), req.params.id);
+    await notify.toCompany(db(), about.contractorId, 'CONTRACTOR_PM',
+        about.supplier + ' accepted delivery #' + about.ID + ' (' + about.material + ') after all.', notify.pages.contractor(about.ID), req.user.id);
+    const fresh = await findAssigned(req.params.id, req.user.orgId);
+    res.render('assigned/rowToast', Object.assign(fresh, { message: 'Delivery #' + fresh.ID + ' is accepted again.', kind: 'success' }));
 });
 
 module.exports = app;

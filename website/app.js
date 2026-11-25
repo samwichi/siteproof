@@ -109,6 +109,10 @@ const messages = require('./routes/messages');
 messages.connection = connection;
 app.use('/messages', requireRole('CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR'), messages);
 
+const account = require('./routes/account');
+account.connection = connection;
+app.use('/account', requireRole('ADMIN', 'COMPANY', 'CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR'), account);
+
 const notifications = require('./routes/notifications');
 notifications.connection = connection;
 app.use('/notifications', requireRole('ADMIN', 'COMPANY', 'CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR'), notifications);

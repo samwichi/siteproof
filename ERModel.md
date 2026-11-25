@@ -92,6 +92,8 @@ erDiagram
         datetime slot_end
         varchar status "SCHEDULED to COMPLETED"
         int quotation_id FK "nullable: the accepted quotation (RFQ)"
+        datetime declined_at "the supplier declined it (SCHEDULED only)"
+        varchar decline_reason
     }
     DELIVERY_DOCUMENT {
         int document_id PK
@@ -232,6 +234,8 @@ erDiagram
         datetime slot_end
         varchar status "SCHEDULED to COMPLETED"
         int quotation_id FK "Phase 2, built, nullable"
+        datetime declined_at "the supplier declined it"
+        varchar decline_reason
         int payment_request_id FK "Phase 2, nullable"
     }
     DELIVERY_DOCUMENT["DELIVERY_DOCUMENT - MVP"] {

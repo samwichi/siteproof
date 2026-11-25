@@ -144,6 +144,14 @@ Rules:
 * When a document is added, the contractor gets a notification, and the inspectors too when the delivery waits for the inspection.
 * Documents of the sample data and of older databases have only a name ("no file"). An existing database gets the new columns with `database/12_upgrade_document_files.sql`.
 
+## 2.10 Smaller improvements
+
+* **Time slots:** a new delivery, or a delivery whose time slot is changed, cannot start in the past ("now" comes from the database).
+* **Unit price:** the edit form of a delivery asks for the unit price, like the new delivery form; the value is quantity × unit price in both.
+* **Error messages:** the technical text of a database error stays in the log; the user sees a short message (for example "A number is too large").
+* **Decline:** a supplier can **decline** a SCHEDULED delivery with a reason (for example "we can deliver on Thursday, not on Tuesday"). The delivery stays SCHEDULED but cannot be moved on; the contractor gets a notification and sees the reason in the list and on the detail page. When the contractor changes the delivery, the supplier is asked again; the supplier can also accept it after all. An existing database gets the two columns with `database/13_upgrade_decline.sql`.
+* **My account:** a click on the own name in the menu opens the account page: name, e-mail, role, and **change the password** (the current password is needed; the new one has at least 8 characters).
+
 ## 3. Folders
 
 ```
@@ -163,12 +171,13 @@ website/
 │   ├── rfqs.js            contractor: requests for quotation: create, list, edit, delete (only drafts), materials, invited suppliers, send, cancel; compare the quotations and accept one (creates the deliveries)
 │   ├── inspections.js     UC8-UC10  inspector: see the supplier's quality documents, record received / accepted quantity (accepted value and retention are calculated)
 │   ├── ratings.js         UC4  contractor: complete an inspected delivery and rate the supplier (1-5)
-│   ├── assigned.js        UC5  supplier: list the assigned deliveries and move each one forward (PREPARING, IN_TRANSIT, DELIVERED)
+│   ├── assigned.js        UC5  supplier: list the assigned deliveries and move each one forward (PREPARING, IN_TRANSIT, DELIVERED), or decline a SCHEDULED one
 │   ├── history.js         UC7  supplier: own average rating, score distribution and delivery history (read only)
 │   ├── documents.js       UC6  supplier: upload quality documents (the file) at any time; edit (also replace the file) or delete them until the delivery is inspected
 │   ├── files.js           opens the file of a quality document for the supplier, the contractor and the inspectors of that delivery (a normal link)
 │   ├── products.js        supplier: the product catalog of the company ("My products"): add, list, edit, unlist / list again, delete
 │   ├── quotations.js      supplier: the RFQs sent to the company; send, change, withdraw a quotation until the last day
+│   ├── account.js         every user: own account and change the password
 │   ├── messages.js        contractor, supplier, inspector: conversations of the deliveries and private RFQ conversations (write, read, delete own)
 │   └── notifications.js   every user: own notifications (list, open, mark all as read, delete), and the number for the bell
 ├── lib/
