@@ -76,6 +76,10 @@ const deliveries = require('./routes/deliveries');
 deliveries.connection = connection;
 app.use('/deliveries', requireRole('CONTRACTOR_PM'), deliveries);
 
+const rfqs = require('./routes/rfqs');
+rfqs.connection = connection;
+app.use('/rfqs', requireRole('CONTRACTOR_PM'), rfqs);
+
 const catalog = require('./routes/catalog');
 catalog.connection = connection;
 app.use('/catalog', requireRole('CONTRACTOR_PM'), catalog);

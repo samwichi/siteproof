@@ -82,6 +82,15 @@ Rules:
 * If the supplier unlisted or deleted the product meanwhile, the form says so and shows the normal supplier and material pickers.
 * Later (phase 2) the button "Order" can become "Add to a request for quotation".
 
+## 2.4 Requests for quotation (menu of a contractor: RFQs)
+
+* **New RFQ**: title, project, wanted delivery time slot, last day for the quotations (on or before the delivery day, not in the past) and a note for the suppliers. It is saved as a **DRAFT**.
+* On the page of the draft the contractor adds the **materials** with their quantities (the material picker hides the materials that are in the RFQ already; the quantity can be changed in the row) and **invites suppliers**. For each material the page shows how many listed suppliers offer it and their price range; the supplier list shows first the suppliers that offer the most materials of the RFQ in their catalog.
+* **Send** needs at least one material and one supplier, and dates that have not passed. After sending, the RFQ **cannot be changed or deleted** (the server refuses it, also if somebody sends the request by hand); the contractor can only **cancel** it, and it stays in the list.
+* A draft can be edited or deleted (with its materials and suppliers, in one transaction).
+* The project managers of the same company see and work on the same RFQs; nobody sees the RFQs of another company.
+* An existing database gets the new tables with `database/09_upgrade_rfq.sql`. The sample data has one sent RFQ (Concrete and cement for floor 12) for the demo.
+
 ## 3. Folders
 
 ```
@@ -98,6 +107,7 @@ website/
 │   ├── adminDocuments.js  administrator: opens a proof document (a normal link, mounted before the wildcard route)
 │   ├── deliveries.js      UC2, UC3  contractor: create, list, edit, delete delivery records, and the detail page of one delivery   <-- first CRUD
 │   ├── catalog.js         contractor: "Find products": search the listed products of the approved suppliers; "Order" opens the new delivery form
+│   ├── rfqs.js            contractor: requests for quotation: create, list, edit, delete (only drafts), materials, invited suppliers, send, cancel
 │   ├── inspections.js     UC8-UC10  inspector: see the supplier's quality documents, record received / accepted quantity (accepted value and retention are calculated)
 │   ├── ratings.js         UC4  contractor: complete an inspected delivery and rate the supplier (1-5)
 │   ├── assigned.js        UC5  supplier: list the assigned deliveries and move each one forward (PREPARING, IN_TRANSIT, DELIVERED)

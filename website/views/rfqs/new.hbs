@@ -1,0 +1,12 @@
+<h1 class="h2">New request for quotation</h1>
+{{#unless projects.length}}
+  <div class="alert alert-warning">Your company has no project yet. Please ask the company account of {{user.orgName}} to create the project (menu Projects).</div>
+{{/unless}}
+<p class="text-muted">First the general data. On the next page you add the materials and invite the suppliers; nothing is sent before you click "Send".</p>
+<form class="row g-3" hx-post="/rfqs" hx-target="#main" hx-disable="findAll button">
+  {{> rfqs/fields}}
+  <div class="col-12">
+    <button class="btn btn-success"><i aria-hidden="true" class="bi bi-check-circle-fill"></i> Create draft</button>
+    <a class="btn btn-secondary" href="/rfqs" hx-boost="true" hx-target="#main">Cancel</a>
+  </div>
+</form>

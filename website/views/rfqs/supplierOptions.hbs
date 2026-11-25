@@ -1,0 +1,5 @@
+{{!-- The options of the supplier <select> of an RFQ: the suppliers that offer the most materials of the RFQ first. --}}
+<option value="" selected disabled>{{#if total}}Choose a supplier ({{#if more}}the first {{shown}} of {{total}}, type to narrow down{{else}}{{total}} found{{/if}}){{else}}No supplier found{{/if}}</option>
+{{#each suppliers}}
+  <option value="{{org_id}}">{{org_name}}{{#if ../itemCount}} - offers {{offers}} of {{../itemCount}} materials{{/if}}</option>
+{{/each}}

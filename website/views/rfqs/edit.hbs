@@ -1,0 +1,9 @@
+<h1 class="h2">Edit RFQ #{{ID}}</h1>
+<form class="row g-3" hx-put="/rfqs/{{ID}}" hx-target="#main" hx-disable="findAll button">
+  {{> rfqs/fields}}
+  <div class="col-12">
+    {{!-- Both buttons have the name "action": the route reads req.body.action to know which one was clicked. --}}
+    <button type="submit" class="btn btn-success" name="action" value="update"><i aria-hidden="true" class="bi bi-check-lg"></i> Save</button>
+    <button type="submit" class="btn btn-secondary" name="action" value="cancel" formnovalidate>Cancel</button>
+  </div>
+</form>

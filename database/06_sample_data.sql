@@ -157,6 +157,25 @@ SELECT d.org_id, d.material_id,
 FROM delivery d
 GROUP BY d.org_id, d.material_id;
 
+-- 6.7c One request for quotation of Formosa Build for the demo: 50 m3 of ready-mix concrete and 300 bags of cement for the Neihu
+--      Office Tower. It is SENT to two suppliers; Central Concrete has answered already, Superior Steel not yet (sign in as
+--      supplier.superior to answer, then as pm.lin to compare and accept). The dates are counted from today, so the demo always works.
+INSERT INTO rfq (project_id, created_by, title, slot_start, slot_end, due_date, note, status, sent_at)
+VALUES ((SELECT project_id FROM project WHERE project_name = 'Neihu Office Tower'),
+        (SELECT user_id FROM user_account WHERE email = 'pm.lin@siteproof.example.com'),
+        'Concrete and cement for floor 12',
+        TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL 21 DAY), '08:00:00'), TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL 21 DAY), '12:00:00'),
+        DATE_ADD(CURDATE(), INTERVAL 14 DAY), 'Pump truck access from Neihu Rd. Please include the delivery cost in the unit price.',
+        'SENT', NOW());
+SET @r1 = LAST_INSERT_ID();
+INSERT INTO rfq_item (rfq_id, material_id, quantity) VALUES (@r1, '04265799', 50), (@r1, '14942603', 300);
+INSERT INTO rfq_supplier (rfq_id, org_id) VALUES (@r1, '03028108'), (@r1, '28001683');
+INSERT INTO quotation (rfq_id, org_id, submitted_by, lead_time_days, note)
+VALUES (@r1, '03028108', (SELECT user_id FROM user_account WHERE email = 'supplier.central@siteproof.example.com'), 5, 'Price includes the pump truck.');
+SET @q1 = LAST_INSERT_ID();
+INSERT INTO quotation_item (quotation_id, item_id, unit_price)
+SELECT @q1, item_id, IF(material_id = '04265799', 2550, 175) FROM rfq_item WHERE rfq_id = @r1;
+
 -- 6.8 Check: rows in each table (expected: organization 503, user_account 14, inspection_appointment 1, project 3, delivery 8, delivery_document 8, inspection 4, supplier_rating 3).
 SELECT (SELECT COUNT(*) FROM organization)      AS organizations,
        (SELECT COUNT(*) FROM user_account)      AS users,

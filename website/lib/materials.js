@@ -3,16 +3,18 @@
 // The materials that match the text and the category (457 materials are too many for a normal <select>, so only the first 100 are sent).
 // The category buttons show how many materials of each category match the text, so the user sees where to look.
 // db = the promise version of the connection pool. excludeOrgId (optional): leave out the materials that this supplier offers already.
+// excludeRfqId (optional): leave out the materials that this request for quotation has already.
 const { like } = require('./listing');
 
 const MATERIAL_LIMIT = 100;
 
-async function findMaterials(db, text, categoryId, excludeOrgId) {
+async function findMaterials(db, text, categoryId, excludeOrgId, excludeRfqId) {
     const q = String(text || '').trim().slice(0, 100);
     const category = Number.isInteger(Number(categoryId)) ? Number(categoryId) : 0;      // 0 = all categories
     const textSql = (q ? ' AND m.material_name LIKE ?' : '')
-                  + (excludeOrgId ? ' AND m.material_id NOT IN (SELECT sp.material_id FROM supplier_product sp WHERE sp.org_id = ?)' : '');
-    const textArgs = (q ? [like(q)] : []).concat(excludeOrgId ? [excludeOrgId] : []);
+                  + (excludeOrgId ? ' AND m.material_id NOT IN (SELECT sp.material_id FROM supplier_product sp WHERE sp.org_id = ?)' : '')
+                  + (excludeRfqId ? ' AND m.material_id NOT IN (SELECT ri.material_id FROM rfq_item ri WHERE ri.rfq_id = ?)' : '');
+    const textArgs = (q ? [like(q)] : []).concat(excludeOrgId ? [excludeOrgId] : []).concat(excludeRfqId ? [excludeRfqId] : []);
 
     const [counts] = await db.execute(
         `SELECT c.category_id AS id, c.category_name AS name, COUNT(m.material_id) AS n
