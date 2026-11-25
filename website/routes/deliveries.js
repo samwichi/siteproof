@@ -194,7 +194,7 @@ app.get('/:id', async (req, res) => {
     row.steps = STEPS.map((name, i) => ({ name: name, done: i <= current, current: i === current }));
 
     const [documents] = await db().execute(
-        'SELECT doc_type, file_name FROM delivery_document WHERE delivery_id = ? ORDER BY document_id', [row.ID]);
+        'SELECT document_id AS ID, doc_type, file_name, stored_name IS NOT NULL AS hasFile FROM delivery_document WHERE delivery_id = ? ORDER BY document_id', [row.ID]);
     row.documents = documents;
 
     // The inspection (LEFT JOIN: not every delivery has one). Accepted value = delivery value x accepted / ordered; retention = accepted value x rate.

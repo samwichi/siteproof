@@ -125,7 +125,7 @@ SiteProof has moved from planning to implementation. The database and the first 
 | UC3 View delivery status, history, retention and ratings | Done | List with status for the contractor, and a detail page for each delivery: progress, order, documents, inspection, retention and rating in one place |
 | UC4 Complete a delivery and rate the supplier | Done | Rating 1 to 5, can be changed or deleted |
 | UC5 Update the delivery status | Done | Supplier sees the assigned deliveries and moves each one step by step: PREPARING, IN_TRANSIT, DELIVERED |
-| UC6 Quality documents | Done (simple) | Supplier adds documents at any time and edits or deletes them until the inspection (type and file name); the file itself is not uploaded yet |
+| UC6 Quality documents | Done | Supplier uploads the file (PDF, JPG or PNG, at most 5 MB; the real type is checked) at any time, and changes (also the file) or deletes it until the inspection; the contractor and the inspectors open the files from their pages |
 | UC7 Supplier rating and history | Done | Supplier sees the average rating, how the scores are distributed and the history of its deliveries with the inspection result |
 | UC8 Record received quantity and review documents | Done | The inspector sees the quality documents of each delivery (or a warning when there are none) in the list and in the inspection form, then records the received quantity |
 | UC9 Accept, partially accept or reject | Done | Decision from the received and accepted quantity |
@@ -139,7 +139,7 @@ Beyond the ten use cases, the supplier keeps a **product catalog** (My products)
 
 The whole closed loop works from the first step to the last: the contractor creates a delivery, the supplier moves it to DELIVERED, the inspector inspects it, the contractor completes it with a rating, and the supplier sees the rating.
 
-**Next:** automated tests, real file upload for the quality documents (today only the file name is saved), and the rest of the second phase (see section 2).
+**Next:** automated tests and the rest of the second phase (see section 2).
 
 ---
 ## 4. Project Documents

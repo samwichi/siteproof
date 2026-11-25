@@ -2,7 +2,7 @@
 {{#unless deliveries.length}}
   <div class="alert alert-warning">You have no deliveries yet.</div>
 {{/unless}}
-<form class="row g-3" hx-post="/documents" hx-target="#main" hx-push-url="/documents" hx-disable="findAll button">
+<form class="row g-3" hx-post="/documents" hx-encoding="multipart/form-data" hx-target="#main" hx-push-url="/documents" hx-disable="findAll button">
   <div class="col-12">
     <label class="form-label" for="delivery_id">Delivery</label>
     <select class="form-select" id="delivery_id" name="delivery_id" required>
@@ -22,9 +22,9 @@
     </select>
   </div>
   <div class="col-md-8">
-    <label class="form-label" for="file_name">File name (.pdf, .jpg)</label>
-    <input class="form-control" type="text" id="file_name" name="file_name" maxlength="200"
-           placeholder="delivery_note_d9.pdf" required>
+    <label class="form-label" for="file">File</label>
+    <input class="form-control" type="file" id="file" name="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required aria-describedby="file-help">
+    <div id="file-help" class="form-text">PDF, JPG or PNG, at most 5 MB. The contractor and the inspector can open it.</div>
   </div>
   <div class="col-12">
     <button class="btn btn-success"><i aria-hidden="true" class="bi bi-check-circle-fill"></i> Add document</button>

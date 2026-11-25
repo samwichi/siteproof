@@ -99,6 +99,9 @@ erDiagram
         int uploaded_by FK
         varchar doc_type
         varchar file_name
+        varchar stored_name "uploaded file, NULL for old data"
+        varchar file_type "PDF, JPG, PNG"
+        int file_size
     }
     INSPECTION {
         int inspection_id PK
@@ -237,6 +240,9 @@ erDiagram
         int uploaded_by FK
         varchar doc_type
         varchar file_name
+        varchar stored_name "uploaded file, NULL for old data"
+        varchar file_type "PDF, JPG, PNG"
+        int file_size
     }
     INSPECTION["INSPECTION - MVP"] {
         int inspection_id PK

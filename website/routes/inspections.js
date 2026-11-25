@@ -27,7 +27,7 @@ const SELECT_ROWS = `
            m.unit                                AS unit,
            CAST(d.ordered_quantity AS DOUBLE)    AS ordered,
            d.status                              AS status,
-           (SELECT GROUP_CONCAT(CONCAT(dd.doc_type, ': ', dd.file_name) ORDER BY dd.document_id SEPARATOR '|')
+           (SELECT GROUP_CONCAT(CONCAT(dd.document_id, '\u001f', dd.stored_name IS NOT NULL, '\u001f', dd.doc_type, ': ', dd.file_name) ORDER BY dd.document_id SEPARATOR '\u001e')
             FROM delivery_document dd WHERE dd.delivery_id = d.delivery_id) AS documentList,
            CAST(i.received_quantity AS DOUBLE)   AS received,
            CAST(i.accepted_quantity AS DOUBLE)   AS accepted,
@@ -43,8 +43,13 @@ const SELECT_ROWS = `
 // Add the values that the template needs (Handlebars cannot compare values, so we do it here).
 function prepare(row) {
     row.badge = BADGES[row.status];
-    // UC8: the quality documents that the supplier added to this delivery (file names cannot contain "|").
-    row.documents = row.documentList ? row.documentList.split('|') : [];
+    // UC8: the quality documents that the supplier added to this delivery. The fields are separated by the control characters
+    // U+001F and U+001E, which a file name cannot contain (lib/upload.js removes them).
+    // Each one is "id, hasFile, type: name"; the inspector opens the file by its link.
+    row.documents = row.documentList ? row.documentList.split('\u001e').map(text => {
+        const [id, hasFile, label] = text.split('\u001f');
+        return { ID: id, hasFile: hasFile === '1', label: label };
+    }) : [];
     row.canInspect = (row.status === 'DELIVERED');
     row.canChange = (row.status === 'INSPECTED');
     if (row.received !== null) {

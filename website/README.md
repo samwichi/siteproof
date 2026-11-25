@@ -136,6 +136,14 @@ Rules:
 * Who may read and write is checked in the database at every request; another company gets "Conversation not found". Deleting a SCHEDULED delivery deletes its messages too.
 * An existing database gets the new table with `database/11_upgrade_messages.sql`.
 
+## 2.9 Quality documents with the real file
+
+* The supplier uploads the **file** of each quality document (PDF, JPG or PNG, at most 5 MB). The type is checked from the first bytes of the file (a renamed file is refused), the file is kept in `website/uploads` under a random name, and the name that the user sees is the original one (also with Chinese characters).
+* A document can be added at any time (for example the 28-day test report after the inspection); until the delivery is inspected the supplier can change its type, **replace the file** or delete it (the old file is removed from the disk).
+* The supplier (Quality documents), the contractor (delivery detail page) and the inspectors (inspection list and form) open the file by its link. `routes/files.js` checks in the database that the user may see that delivery; other companies get "Document not found". The file is sent with headers that stop the browser from running anything in it.
+* When a document is added, the contractor gets a notification, and the inspectors too when the delivery waits for the inspection.
+* Documents of the sample data and of older databases have only a name ("no file"). An existing database gets the new columns with `database/12_upgrade_document_files.sql`.
+
 ## 3. Folders
 
 ```
@@ -157,7 +165,8 @@ website/
 │   ├── ratings.js         UC4  contractor: complete an inspected delivery and rate the supplier (1-5)
 │   ├── assigned.js        UC5  supplier: list the assigned deliveries and move each one forward (PREPARING, IN_TRANSIT, DELIVERED)
 │   ├── history.js         UC7  supplier: own average rating, score distribution and delivery history (read only)
-│   ├── documents.js       UC6  supplier: add quality documents at any time; edit or delete them until the delivery is inspected (type and file name)
+│   ├── documents.js       UC6  supplier: upload quality documents (the file) at any time; edit (also replace the file) or delete them until the delivery is inspected
+│   ├── files.js           opens the file of a quality document for the supplier, the contractor and the inspectors of that delivery (a normal link)
 │   ├── products.js        supplier: the product catalog of the company ("My products"): add, list, edit, unlist / list again, delete
 │   ├── quotations.js      supplier: the RFQs sent to the company; send, change, withdraw a quotation until the last day
 │   ├── messages.js        contractor, supplier, inspector: conversations of the deliveries and private RFQ conversations (write, read, delete own)

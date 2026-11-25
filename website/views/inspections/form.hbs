@@ -10,7 +10,7 @@
       <div class="col-12 small">
         Quality documents:
         {{#each documents}}
-          <span class="badge text-bg-light border"><i aria-hidden="true" class="bi bi-file-earmark-text"></i> {{this}}</span>
+          <span class="badge text-bg-light border"><i aria-hidden="true" class="bi bi-file-earmark-text"></i> {{#if hasFile}}<a href="/files/document/{{ID}}" target="_blank" rel="noopener" hx-boost="false">{{label}}</a>{{else}}{{label}}{{/if}}</span>
         {{else}}
           <span class="text-danger">the supplier has not added any document yet.</span>
         {{/each}}

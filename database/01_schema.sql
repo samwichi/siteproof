@@ -208,6 +208,9 @@ CREATE TABLE delivery_document (
     uploaded_by INT          NOT NULL,
     doc_type    VARCHAR(50)  NOT NULL,
     file_name   VARCHAR(200) NOT NULL,
+    stored_name VARCHAR(40)  NULL,          -- the uploaded file in website/uploads (random name); NULL: only the name is known (old data)
+    file_type   VARCHAR(10)  NULL CHECK (file_type IS NULL OR file_type IN ('PDF', 'JPG', 'PNG')),
+    file_size   INT          NULL,
     FOREIGN KEY (delivery_id) REFERENCES delivery (delivery_id),
     FOREIGN KEY (uploaded_by) REFERENCES user_account (user_id)
 );

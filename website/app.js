@@ -47,6 +47,11 @@ const adminDocuments = require('./routes/adminDocuments');
 adminDocuments.connection = connection;
 app.use('/admin/documents', requireRole('ADMIN'), adminDocuments);
 
+// ---- The same for the file of a quality document (supplier, contractor, inspector) ----
+const files = require('./routes/files');
+files.connection = connection;
+app.use('/files/document', requireRole('CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR'), files);
+
 // ---- Homepage and the wildcard route (partial page updates, see laboratory section 5) ----
 app.get('/', (req, res) => {
     if (req.get('HX-Request')) {
