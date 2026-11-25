@@ -84,3 +84,41 @@ test('the page is read only: there is no route to change a product', async t => 
     }
     assert.deepEqual((await db.execute('SELECT price_min, active FROM supplier_product ORDER BY product_id'))[0], before);
 });
+
+// ---------- the products on the page of one company ----------
+
+test('the company page of a supplier shows its products, listed and unlisted', async t => {
+    if (guard(t)) return;
+    const res = await users.admin.get('/admin/companies/90000202');
+    assert.equal(res.status, 200);
+    for (const text of ['Products (2)', '1 listed, 1 unlisted', 'Rebar SD420', 'Cement Type I', '/admin/products/company/90000202']) {
+        assert.ok(res.body.includes(text), 'the page shows ' + text);
+    }
+    assert.ok(!res.body.includes('Plywood 18 mm'), 'not the product of another supplier');
+});
+
+test('the company page of a contractor has no product section', async t => {
+    if (guard(t)) return;
+    const res = await users.admin.get('/admin/companies/90000101');
+    assert.equal(res.status, 200);
+    assert.ok(!res.body.includes('Products ('));
+});
+
+test('the product list of one supplier has only its products, with search and filters', async t => {
+    if (guard(t)) return;
+    const all = await users.admin.get('/admin/products/company/90000202');
+    assert.equal(all.status, 200);
+    assert.ok(all.body.includes('Products of Test Supplier'));
+    assert.ok(all.body.includes('1-2 of 2'));
+    assert.ok(!all.body.includes('Plywood 18 mm'));
+    const listed = await users.admin.get('/admin/products/company/90000202?listed=yes');
+    assert.ok(listed.body.includes('Rebar SD420') && !listed.body.includes('Cement Type I'));
+    assert.ok(listed.body.includes('/admin/products/company/90000202?'), 'the links of the list stay on this supplier');
+});
+
+test('the product list of a company that is not a supplier, or does not exist, is 404', async t => {
+    if (guard(t)) return;
+    assert.equal((await users.admin.get('/admin/products/company/90000101')).status, 404);
+    assert.equal((await users.admin.get('/admin/products/company/99999999')).status, 404);
+    assert.equal((await users.pm.get('/admin/products/company/90000202')).status, 403);
+});

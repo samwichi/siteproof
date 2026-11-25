@@ -2,8 +2,10 @@
 // Unlike "Find products" of the contractors (routes/catalog.js), the list also has the unlisted products and the products of
 // suppliers that are not approved (waiting or rejected), so the administrator can check what each supplier offers.
 // The catalog belongs to the suppliers: the administrator cannot change it here.
+// /admin/products/company/:id shows the products of one supplier (the link "All products" of the company page, routes/admin.js).
 const express = require('express');
 const { readList } = require('../lib/listing');
+const { fail } = require('../lib/respond');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -64,6 +66,16 @@ async function listSettings() {
 // ---------- R: all products of all suppliers ----------
 app.get('/', async (req, res) => {
     res.render('admin/products', await readList(db(), req, await listSettings(), SELECT_PRODUCTS, [], prepare));
+});
+
+// ---------- R: the products of one supplier (same list, with the company fixed) ----------
+app.get('/company/:id', async (req, res) => {
+    const [orgs] = await db().execute("SELECT org_id, org_name FROM organization WHERE org_id = ? AND org_type = 'SUPPLIER'", [req.params.id]);
+    if (orgs.length === 0) return fail(res, 'Supplier not found.', 404);
+    const settings = Object.assign(await listSettings(), { path: '/admin/products/company/' + orgs[0].org_id });
+    const result = await readList(db(), req, settings, SELECT_PRODUCTS + ' AND sp.org_id = ?', [orgs[0].org_id], prepare);
+    result.company = { ID: orgs[0].org_id, name: orgs[0].org_name };
+    res.render('admin/products', result);
 });
 
 module.exports = app;

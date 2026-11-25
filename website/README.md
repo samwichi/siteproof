@@ -193,9 +193,9 @@ website/
 │   ├── companyOrders.js   company account: overview of all the orders of the company with totals (read only)
 │   ├── company.js         company account: users of the company (approve / reject a registration, switch off / on) and the appointment of inspection companies
 │   ├── projects.js        company account of a contractor: create, list, edit, delete the projects (name, retention rate)
-│   ├── admin.js           administrator: all companies, approve / reject, proof documents and users of a company
+│   ├── admin.js           administrator: all companies, approve / reject, proof documents, users and products of a company
 │   ├── adminUsers.js      administrator: all users with their company
-│   ├── adminProducts.js   administrator: the products of all suppliers, also unlisted ones and those of suppliers that are not approved (read only)
+│   ├── adminProducts.js   administrator: the products of all suppliers, or of one supplier (link on its company page), also unlisted ones (read only)
 │   ├── adminDocuments.js  administrator: opens a proof document (a normal link, mounted before the wildcard route)
 │   ├── deliveries.js      UC2, UC3  contractor: create, list, edit, delete delivery records, and the detail page of one delivery   <-- first CRUD
 │   ├── catalog.js         contractor: "Find products": search the listed products of the approved suppliers; "Order" opens the new delivery form
@@ -280,7 +280,7 @@ npm test
 | `tests/upload.test.js` | Real type of an uploaded file (PDF, JPG, PNG), clean file names, stored names (equivalence partitioning, boundary values) | no |
 | `tests/auth.test.js` | Role check and login cookie: every reason why an account may not be used any more (fake database) | no |
 | `tests/listing.test.js` | Search, filter, sorting and paging: the text of the user never reaches the SQL text (SQL injection), plus a fuzz test | no |
-| `tests/adminProducts.test.js` | The administrator sees the products of all suppliers (also unlisted, also of suppliers that wait for the approval), the filters work, the page is read only, other roles get 403 | yes |
+| `tests/adminProducts.test.js` | The administrator sees the products of all suppliers and, on the page of a supplier, the products of that supplier (also unlisted, also of suppliers that wait for the approval), the filters work, the page is read only, other roles get 403 | yes |
 | `tests/closedLoop.test.js` | The whole closed loop through the real routes: create, status steps, document upload, inspection with retention, rating, history, notifications; and what must be refused at each step | yes |
 
 `tests/closedLoop.test.js` uses its own database **`siteproof_test`**, made again from `database/01_schema.sql` at every run, so the data of the website are never changed. The database user of `config.js` needs the right to create it (once, as root in the MySQL container):

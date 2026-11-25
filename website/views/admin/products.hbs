@@ -1,5 +1,11 @@
+{{#if company}}
+<h1 class="h2">Products of {{company.name}}</h1>
+<p><a href="/admin/companies/{{company.ID}}" hx-boost="true" hx-target="#main"><i aria-hidden="true" class="bi bi-arrow-left"></i> Company page</a></p>
+<p class="text-muted">Every product of this supplier, also the unlisted ones. Read only: the supplier manages its own products.</p>
+{{else}}
 <h1 class="h2">All products</h1>
 <p class="text-muted">The products of every supplier, also the unlisted ones and those of suppliers that are not approved. Read only: each supplier manages its own products.</p>
+{{/if}}
 {{> list/controls placeholder="Search by material, supplier, company ID or note"}}
 <div id="list" data-count="{{list.total}}">
   <div class="table-responsive">
