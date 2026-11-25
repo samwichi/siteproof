@@ -31,7 +31,7 @@ app.post('/login', async (req, res) => {
     const email = String(req.body.email || '').trim();
     const minutes = limit.lockedMinutes(email, req.ip);
     if (minutes) return res.redirect('/login?error=locked&minutes=' + minutes);
-    const SQL = `SELECT u.user_id, u.org_id, u.full_name, u.password, u.role, u.active, u.status AS user_status, o.status, o.review_note
+    const SQL = `SELECT u.user_id, u.org_id, u.full_name, u.password, u.role, u.active, u.status AS user_status, u.must_change_password, o.status, o.review_note
                  FROM user_account u LEFT JOIN organization o ON o.org_id = u.org_id
                  WHERE u.email = ?`;
     const [rows] = await app.connection.promise().execute(SQL, [email]);
@@ -55,6 +55,7 @@ app.post('/login', async (req, res) => {
     }
 
     setLoginCookie(res, u);
+    if (u.must_change_password === 1) return res.redirect('/account');   // signed in with a temporary password: change it first
     res.redirect(HOME_PAGES[u.role] || '/');         // each role starts on its own page
 });
 

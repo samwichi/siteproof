@@ -93,3 +93,7 @@
     </div>
   </div>
 </nav>
+{{#if mustChange}}
+  <div class="alert alert-warning py-2 mt-2"><i aria-hidden="true" class="bi bi-key"></i> You signed in with a temporary password.
+    <a href="/account" hx-boost="true" hx-target="#main">Change it now</a>.</div>
+{{/if}}

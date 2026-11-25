@@ -30,7 +30,8 @@ app.put('/password', async (req, res) => {
     const [[u]] = await db().execute('SELECT password FROM user_account WHERE user_id = ?', [req.user.id]);
     if (!await bcrypt.compare(current, u.password)) return fail(res, 'The current password is not correct.');
     const hash = await bcrypt.hash(password, 10);
-    await db().execute('UPDATE user_account SET password = ? WHERE user_id = ?', [hash, req.user.id]);
+    await db().execute('UPDATE user_account SET password = ?, must_change_password = 0 WHERE user_id = ?', [hash, req.user.id]);
+    res.locals.mustChange = false;
     // This browser stays signed in with a new cookie; every other browser where the old password was used is signed out.
     setLoginCookie(res, { user_id: req.user.id, org_id: req.user.orgId, full_name: req.user.name, role: req.user.role, password: hash });
     await showAccount(req, res, 'Your password is changed. Other computers where you were signed in are signed out.');

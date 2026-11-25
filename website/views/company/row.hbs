@@ -22,6 +22,12 @@
       </button>
     {{/if}}
     {{#if isActive}}
+      <button type="button" class="btn btn-sm btn-outline-secondary"
+            hx-put="/company/users/{{ID}}/password" hx-target="closest tr" hx-swap="outerHTML"
+            hx-confirm="Make a temporary password for {{name}}? The current password stops working."
+            title="Reset the password of {{name}}" aria-label="Reset the password of {{name}}">
+        <i aria-hidden="true" class="bi bi-key"></i>
+      </button>
       <button type="button" class="btn btn-sm btn-danger"
             hx-put="/company/users/{{ID}}" hx-vals='{"active": "0"}' hx-target="closest tr" hx-swap="outerHTML"
             hx-confirm="Switch off the account of {{name}}? The person cannot sign in any more."

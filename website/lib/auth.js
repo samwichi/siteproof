@@ -46,7 +46,8 @@ function loadUser(db) {
         if (!c || !c.id) return next();
 
         const [rows] = await db.execute(
-            `SELECT u.user_id, u.org_id, u.full_name, u.password, u.role, u.active, u.status AS user_status, o.org_name, o.org_type, o.status,
+            `SELECT u.user_id, u.org_id, u.full_name, u.password, u.role, u.active, u.status AS user_status, u.must_change_password,
+                    o.org_name, o.org_type, o.status,
                     (SELECT COUNT(*) FROM user_account w WHERE u.role = 'COMPANY' AND w.org_id = u.org_id AND w.status = 'PENDING') AS waiting,
                     (SELECT COUNT(*) FROM rfq_supplier rs JOIN rfq r ON r.rfq_id = rs.rfq_id
                      WHERE u.role = 'SUPPLIER' AND rs.org_id = u.org_id AND r.status = 'SENT' AND r.due_date >= CURDATE()
@@ -79,6 +80,7 @@ function loadUser(db) {
         res.locals.waitingUsers = Number(u.waiting);     // registrations that the company account has to approve (badge in the menu)
         res.locals.openRfqs = Number(u.openRfqs);        // requests for quotation that wait for an answer of a supplier (badge in the menu)
         res.locals.unread = Number(u.unread);            // notifications that the user has not opened yet (the bell in the menu)
+        res.locals.mustChange = (u.must_change_password === 1);   // signed in with a temporary password (reminder in the menu)
         next();
     };
 }

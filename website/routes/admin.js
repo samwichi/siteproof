@@ -5,6 +5,7 @@ const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList } = require('../lib/listing');
 const { ROLE_NAMES } = require('../lib/auth');
+const { resetPassword } = require('../lib/password');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -72,7 +73,7 @@ app.get('/', async (req, res) => {
 
 // ---------- the page of one company ----------
 const USERS_SHOWN = 200;
-async function showCompany(req, res, message, kind) {
+async function showCompany(req, res, message, kind, seconds) {
     const [orgs] = await db().execute('SELECT * FROM organization WHERE org_id = ?', [req.params.id]);
     if (orgs.length === 0) return fail(res, 'Company not found.', 404);
     const org = prepare({ ID: orgs[0].org_id, name: orgs[0].org_name, type: orgs[0].org_type, status: orgs[0].status });
@@ -90,7 +91,7 @@ async function showCompany(req, res, message, kind) {
     sameName.forEach(prepare);
 
     const [accounts] = await db().execute(
-        "SELECT full_name AS name, email, active FROM user_account WHERE org_id = ? AND role = 'COMPANY' ORDER BY user_id", [req.params.id]);
+        "SELECT user_id AS ID, full_name AS name, email, active FROM user_account WHERE org_id = ? AND role = 'COMPANY' ORDER BY user_id", [req.params.id]);
     const [documents] = await db().execute(
         'SELECT document_id AS id, file_name AS name, file_type AS type, file_size AS size, DATE_FORMAT(uploaded_at, \'%Y-%m-%d\') AS uploaded FROM org_document WHERE org_id = ? ORDER BY document_id', [req.params.id]);
     documents.forEach(d => { d.kb = Math.max(1, Math.round(d.size / 1024)); });
@@ -103,8 +104,16 @@ async function showCompany(req, res, message, kind) {
     const [[counted]] = await db().execute("SELECT COUNT(*) AS n FROM user_account WHERE org_id = ? AND role <> 'COMPANY'", [req.params.id]);
 
     res.render('admin/company', { org: org, sameName: sameName, sameNameMany: sameName.length > 1, accounts: accounts, documents: documents, users: users,
-                                  userTotal: Number(counted.n), moreUsers: Number(counted.n) > users.length, message: message, kind: kind });
+                                  userTotal: Number(counted.n), moreUsers: Number(counted.n) > users.length, message: message, kind: kind, seconds: seconds });
 }
+
+// A temporary password for a company account that forgot its password (shown once, for the administrator to pass on).
+app.put('/companies/:id/accounts/:userId/password', async (req, res) => {
+    const temporary = await resetPassword(db(), req.params.userId, "org_id = ? AND role = 'COMPANY'", [req.params.id]);
+    if (!temporary) return fail(res, 'Company account not found.', 404);
+    await showCompany(req, res, 'Temporary password of the company account: ' + temporary + ' . Give it to the company now (it is shown only once); '
+        + 'it must be changed after the sign in.', 'warning', 120);
+});
 
 app.get('/companies/:id', async (req, res) => {
     await showCompany(req, res);

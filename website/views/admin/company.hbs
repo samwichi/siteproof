@@ -19,7 +19,11 @@
     <div class="card h-100"><div class="card-body">
       <h2 class="h5">Company account</h2>
       {{#each accounts}}
-        <p class="mb-1">{{name}} - {{email}} {{#unless active}}<span class="badge text-bg-secondary">Switched off</span>{{/unless}}</p>
+        <p class="mb-1">{{name}} - {{email}} {{#unless active}}<span class="badge text-bg-secondary">Switched off</span>{{/unless}}
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-2" hx-put="/admin/companies/{{../org.ID}}/accounts/{{ID}}/password" hx-target="#main"
+                  hx-confirm="Make a temporary password for the company account {{email}}? The current password stops working.">
+            <i aria-hidden="true" class="bi bi-key"></i> Reset password
+          </button></p>
       {{else}}
         <p class="text-muted mb-1">This company has no company account (it comes from the given data).</p>
       {{/each}}

@@ -7,6 +7,7 @@
     <li class="list-group-item text-muted small">Registered on {{created}}</li>
   </ul>
 </div>
+{{#if mustChange}}<div class="alert alert-warning"><i aria-hidden="true" class="bi bi-key"></i> You signed in with a <strong>temporary password</strong>. Please choose your own password now.</div>{{/if}}
 <h2 class="h4">Change the password</h2>
 <form class="row g-3" hx-put="/account/password" hx-target="#main" hx-disable="findAll button" style="max-width: 32rem;">
   <div class="col-12">

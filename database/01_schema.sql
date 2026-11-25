@@ -44,6 +44,7 @@ CREATE TABLE user_account (
     role       VARCHAR(20)  NOT NULL CHECK (role IN ('CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR', 'COMPANY', 'ADMIN')),
     active     TINYINT(1)   NOT NULL DEFAULT 1,
     status     VARCHAR(10)  NOT NULL DEFAULT 'APPROVED' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
+    must_change_password TINYINT(1) NOT NULL DEFAULT 0,     -- 1 after a reset: the user signed in with a temporary password and must change it
     created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (org_id) REFERENCES organization (org_id),
     CHECK ((role = 'ADMIN' AND org_id IS NULL) OR (role <> 'ADMIN' AND org_id IS NOT NULL))
