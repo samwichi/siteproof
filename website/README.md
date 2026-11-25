@@ -127,6 +127,15 @@ Rules:
 * The user who caused the event does not get a notification, and switched-off or waiting users get none. Writing a notification never stops the action itself (if it fails, only the log shows it).
 * An existing database gets the new table with `database/10_upgrade_notifications.sql`.
 
+## 2.8 Messages (the speech bubble in the menu: contractor, supplier, inspector)
+
+* **Conversation of a delivery:** the project managers of the contractor, the users of the supplier and the inspectors that may inspect it (the contractor's own and those of its appointed inspection companies) read and write in it. It opens from the delivery detail page (contractor), the assigned deliveries (supplier) and the inspection list (inspector).
+* **Conversation of an RFQ:** private between the contractor and **one** invited supplier, so the suppliers never see each other's questions. The contractor opens it from the list of invited suppliers of the RFQ, the supplier from the RFQ page ("Ask ..."). A draft RFQ has no conversation.
+* The page of a conversation asks for new messages every 10 seconds, so an answer appears without reloading. A user can delete his own messages. The other side gets a notification (the inspectors only when they have written in the conversation).
+* "Messages" in the menu lists all the conversations of the user that have messages, the newest first, with the last message.
+* Who may read and write is checked in the database at every request; another company gets "Conversation not found". Deleting a SCHEDULED delivery deletes its messages too.
+* An existing database gets the new table with `database/11_upgrade_messages.sql`.
+
 ## 3. Folders
 
 ```
@@ -151,6 +160,7 @@ website/
 │   ├── documents.js       UC6  supplier: add quality documents at any time; edit or delete them until the delivery is inspected (type and file name)
 │   ├── products.js        supplier: the product catalog of the company ("My products"): add, list, edit, unlist / list again, delete
 │   ├── quotations.js      supplier: the RFQs sent to the company; send, change, withdraw a quotation until the last day
+│   ├── messages.js        contractor, supplier, inspector: conversations of the deliveries and private RFQ conversations (write, read, delete own)
 │   └── notifications.js   every user: own notifications (list, open, mark all as read, delete), and the number for the bell
 ├── lib/
 │   ├── auth.js            loadUser (who is logged in; asks the database at every request whether the account and its company are still allowed), requireRole('...'), role names, start page of each role

@@ -51,7 +51,8 @@ function loadUser(db) {
         }
 
         const user = { id: u.user_id, orgId: u.org_id, orgName: u.org_name, orgType: u.org_type, name: u.full_name,
-                       role: u.role, roleName: ROLE_NAMES[u.role] };
+                       role: u.role, roleName: ROLE_NAMES[u.role],
+                       canMessage: ['CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR'].includes(u.role) };
         req.user = user;
         res.locals.user = user;
         res.locals.isContractor = (u.role === 'CONTRACTOR_PM');   // the templates cannot compare strings, so we prepare the answer here

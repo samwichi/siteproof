@@ -5,7 +5,11 @@
   </a>
 </p>
 
-<h1 class="h2">Delivery #{{ID}} <span class="badge text-bg-{{badge}} fs-6 align-middle">{{status}}</span></h1>
+<h1 class="h2">Delivery #{{ID}} <span class="badge text-bg-{{badge}} fs-6 align-middle">{{status}}</span>
+  <a class="btn btn-outline-primary btn-sm align-middle ms-2" href="/messages/delivery/{{ID}}" hx-boost="true" hx-target="#main">
+    <i aria-hidden="true" class="bi bi-chat-dots"></i> Messages with the supplier
+  </a>
+</h1>
 
 <div class="d-flex flex-wrap gap-1 align-items-center my-3 small">
   {{#each steps}}

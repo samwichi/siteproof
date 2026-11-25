@@ -100,6 +100,10 @@ const quotations = require('./routes/quotations');
 quotations.connection = connection;
 app.use('/quotations', requireRole('SUPPLIER'), quotations);
 
+const messages = require('./routes/messages');
+messages.connection = connection;
+app.use('/messages', requireRole('CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR'), messages);
+
 const notifications = require('./routes/notifications');
 notifications.connection = connection;
 app.use('/notifications', requireRole('ADMIN', 'COMPANY', 'CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR'), notifications);

@@ -1,5 +1,6 @@
 <tr class="align-middle">
   <td class="text-nowrap">
+    <a class="btn btn-sm btn-outline-primary" href="/messages/delivery/{{ID}}" hx-boost="true" hx-target="#main" title="Messages about delivery #{{ID}}" aria-label="Messages about delivery #{{ID}}"><i aria-hidden="true" class="bi bi-chat-dots"></i></a>
     {{#if canInspect}}
       <button type="button" class="btn btn-sm btn-success"
             hx-get="/inspections/{{ID}}/new" hx-target="closest tr" hx-swap="outerHTML" title="Inspect delivery #{{ID}}" aria-label="Inspect delivery #{{ID}}">

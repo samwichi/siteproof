@@ -10,7 +10,8 @@
     </a>
   </td>
   <td><span class="badge text-bg-{{badge}}">{{status}}</span></td>
-  <td class="text-nowrap">
+  <td class="text-nowrap d-flex gap-1">
+    <a class="btn btn-sm btn-outline-primary" href="/messages/delivery/{{ID}}" hx-boost="true" hx-target="#main" title="Messages about delivery #{{ID}}" aria-label="Messages about delivery #{{ID}}"><i aria-hidden="true" class="bi bi-chat-dots"></i></a>
     {{#if nextStatus}}
       {{!-- The hidden field "from" is the status that the user sees: the server moves the delivery only if it is still in that status. --}}
       <form hx-put="/assigned/{{ID}}" hx-target="closest tr" hx-swap="outerHTML" hx-disable="findAll button"
@@ -20,8 +21,6 @@
           <i aria-hidden="true" class="bi bi-arrow-right-circle-fill"></i> {{nextLabel}}
         </button>
       </form>
-    {{else}}
-      <span class="text-muted">-</span>
     {{/if}}
   </td>
 </tr>

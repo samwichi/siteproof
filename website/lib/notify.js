@@ -64,4 +64,14 @@ async function safe(db, sql, args) {
     }
 }
 
-module.exports = { toCompany, toInspectors, aboutDelivery, aboutRfq, pages };
+// Send `text` with the page `link` to a list of users (by user_id), except user `exceptUserId`.
+async function toUsers(db, userIds, text, link, exceptUserId) {
+    const ids = userIds.filter(id => id !== exceptUserId);
+    if (ids.length === 0) return;
+    await safe(db,
+        `INSERT INTO notification (user_id, text, link)
+         SELECT user_id, ?, ? FROM user_account WHERE user_id IN (${ids.map(() => '?').join(', ')}) AND active = 1 AND status = 'APPROVED'`,
+        [cut(text), link].concat(ids));
+}
+
+module.exports = { toCompany, toInspectors, toUsers, aboutDelivery, aboutRfq, pages };

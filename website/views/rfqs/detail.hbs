@@ -126,7 +126,8 @@
           <td>{{name}}</td>
           <td class="small">{{offers}} of {{../items.length}} materials</td>
           <td class="small">{{#if ratingText}}<span class="stars">★</span> {{ratingText}}{{else}}<span class="text-muted">No rating yet</span>{{/if}}</td>
-          {{#unless ../isDraft}}<td>{{#if answered}}<span class="badge text-bg-success">Answered</span>{{else}}<span class="badge text-bg-light border">Waiting</span>{{/if}}</td>{{/unless}}
+          {{#unless ../isDraft}}<td class="text-nowrap">{{#if answered}}<span class="badge text-bg-success">Answered</span>{{else}}<span class="badge text-bg-light border">Waiting</span>{{/if}}
+            <a class="btn btn-sm btn-outline-primary ms-1" href="/messages/rfq/{{../ID}}/{{orgId}}" hx-boost="true" hx-target="#main" aria-label="Messages with {{name}}"><i aria-hidden="true" class="bi bi-chat-dots"></i> Messages</a></td>{{/unless}}
           {{#if ../isDraft}}
           <td class="text-end">
             <button type="button" class="btn btn-sm btn-danger" hx-delete="/rfqs/{{../ID}}/suppliers/{{orgId}}" hx-target="#main"

@@ -289,6 +289,10 @@ app.put('/:id', async (req, res) => {
 app.delete('/:id', async (req, res) => {
     try {
         const about = await notify.aboutDelivery(db(), req.params.id);        // read before it is deleted (for the notification)
+        // The messages of the delivery go with it (only while it is SCHEDULED, like the delivery itself).
+        await db().execute(
+            `DELETE msg FROM message msg JOIN delivery d ON d.delivery_id = msg.delivery_id JOIN project p ON p.project_id = d.project_id
+             WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'SCHEDULED'`, [req.params.id, req.user.orgId]);
         const [result] = await db().execute(
             `DELETE d FROM delivery d JOIN project p ON p.project_id = d.project_id
              WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'SCHEDULED'`,

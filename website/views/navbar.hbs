@@ -71,6 +71,9 @@
       </ul>
       <div class="d-flex align-items-center">
         {{#if user}}
+          {{#if user.canMessage}}
+          <a class="nav-link me-2" href="/messages" title="Messages"><i aria-hidden="true" class="bi bi-chat-dots fs-5"></i><span class="visually-hidden">Messages</span></a>
+          {{/if}}
           <a class="nav-link me-3 position-relative" href="/notifications" title="Notifications">
             <i aria-hidden="true" class="bi bi-bell fs-5"></i><span class="visually-hidden">Notifications</span>{{> notifications/badge}}
           </a>
