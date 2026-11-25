@@ -17,7 +17,10 @@
 {{/if}}
 <div class="d-flex flex-wrap gap-1 align-items-center my-3 small">
   {{#each steps}}
-    <span class="badge {{#if current}}text-bg-primary{{else}}{{#if done}}text-bg-success{{else}}text-bg-light border text-muted{{/if}}{{/if}}">{{name}}</span>
+    <span class="d-inline-flex flex-column align-items-center">
+      <span class="badge {{#if current}}text-bg-primary{{else}}{{#if done}}text-bg-success{{else}}text-bg-light border text-muted{{/if}}{{/if}}">{{name}}</span>
+      <span class="text-muted" style="font-size: 0.75em;">{{#if time}}{{time}}{{else}}&nbsp;{{/if}}</span>
+    </span>
     <i aria-hidden="true" class="bi bi-chevron-right text-muted"></i>
   {{/each}}
 </div>
@@ -32,7 +35,7 @@
         <li class="list-group-item"><strong>Material:</strong> {{material}}</li>
         <li class="list-group-item"><strong>Quantity:</strong> {{quantity}} {{unit}}</li>
         <li class="list-group-item"><strong>Value:</strong> NT$ {{value}}</li>
-        <li class="list-group-item"><strong>Time slot:</strong> {{slotStart}} - {{slotEnd}}</li>
+        <li class="list-group-item"><strong>Time slot:</strong> {{slotStart}} - {{slotEnd}}{{#if arrival}} <span class="badge text-bg-{{arrival.kind}}">{{arrival.text}}</span>{{/if}}</li>
         {{#if source}}<li class="list-group-item"><strong>From:</strong> <a href="/rfqs/{{source.rfqId}}" hx-boost="true" hx-target="#main">RFQ #{{source.rfqId}} {{source.rfqTitle}}</a> (accepted quotation)</li>{{/if}}
       </ul>
     </div>
@@ -89,4 +92,22 @@
       </div>
     </div>
   </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header"><i aria-hidden="true" class="bi bi-clock-history"></i> History</div>
+  {{#if history.length}}
+    <ul class="list-group list-group-flush">
+      {{#each history}}
+        <li class="list-group-item d-flex flex-wrap gap-2">
+          <span class="text-muted text-nowrap">{{time}}</span>
+          <strong>{{label}}</strong>
+          <span>by {{person}}{{#if company}} ({{company}}){{/if}}</span>
+          {{#if note}}<span class="text-muted">· {{note}}</span>{{/if}}
+        </li>
+      {{/each}}
+    </ul>
+  {{else}}
+    <div class="card-body text-muted">No times were recorded for this delivery (it is older than the history).</div>
+  {{/if}}
 </div>

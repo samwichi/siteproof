@@ -8,6 +8,7 @@ const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList } = require('../lib/listing');
 const { inTransaction } = require('../lib/transaction');
+const events = require('../lib/events');
 const notify = require('../lib/notify');
 const app = express.Router();
 
@@ -125,7 +126,10 @@ app.post('/:id', async (req, res) => {
                  FROM delivery d JOIN project p ON p.project_id = d.project_id
                  WHERE d.delivery_id = ? AND ${SCOPE} AND d.status = 'DELIVERED'`,
                 [req.user.id, received, accepted, req.params.id, ...scope(req.user.orgId)]);
-            if (r.affectedRows === 1) await conn.execute("UPDATE delivery SET status = 'INSPECTED' WHERE delivery_id = ? AND status = 'DELIVERED'", [req.params.id]);
+            if (r.affectedRows === 1) {
+                await conn.execute("UPDATE delivery SET status = 'INSPECTED' WHERE delivery_id = ? AND status = 'DELIVERED'", [req.params.id]);
+                await events.record(conn, req.params.id, 'INSPECTED', req.user.id, 'received ' + received + ', accepted ' + accepted);
+            }
             return r;
         });
         if (result.affectedRows === 0) return fail(res, 'Only DELIVERED deliveries can be inspected.', 409);
@@ -166,13 +170,16 @@ app.put('/:id', async (req, res) => {
     if (message) return fail(res, message);
 
     try {
-        await db().execute(
-            `UPDATE inspection i
-             JOIN delivery d ON d.delivery_id = i.delivery_id
-             JOIN project p  ON p.project_id = d.project_id
-             SET i.received_quantity = ?, i.accepted_quantity = ?, i.inspector_id = ?
-             WHERE d.delivery_id = ? AND ${SCOPE} AND d.status = 'INSPECTED'`,
-            [received, accepted, req.user.id, req.params.id, ...scope(req.user.orgId)]);
+        await inTransaction(db(), async conn => {
+            const [u] = await conn.execute(
+                `UPDATE inspection i
+                 JOIN delivery d ON d.delivery_id = i.delivery_id
+                 JOIN project p  ON p.project_id = d.project_id
+                 SET i.received_quantity = ?, i.accepted_quantity = ?, i.inspector_id = ?
+                 WHERE d.delivery_id = ? AND ${SCOPE} AND d.status = 'INSPECTED'`,
+                [received, accepted, req.user.id, req.params.id, ...scope(req.user.orgId)]);
+            if (u.affectedRows === 1) await events.record(conn, req.params.id, 'INSPECTION_CHANGED', req.user.id, 'received ' + received + ', accepted ' + accepted);
+        });
 
         const fresh = await findRow(req.params.id, req.user.orgId);
         fresh.message = 'Inspection of delivery #' + req.params.id + ' updated: ' + fresh.decision + '.';
@@ -195,7 +202,10 @@ app.delete('/:id', async (req, res) => {
                  JOIN project p  ON p.project_id = d.project_id
                  WHERE d.delivery_id = ? AND ${SCOPE} AND d.status = 'INSPECTED'`,
                 [req.params.id, ...scope(req.user.orgId)]);
-            if (r.affectedRows === 1) await conn.execute("UPDATE delivery SET status = 'DELIVERED' WHERE delivery_id = ? AND status = 'INSPECTED'", [req.params.id]);
+            if (r.affectedRows === 1) {
+                await conn.execute("UPDATE delivery SET status = 'DELIVERED' WHERE delivery_id = ? AND status = 'INSPECTED'", [req.params.id]);
+                await events.record(conn, req.params.id, 'INSPECTION_DELETED', req.user.id);
+            }
             return r;
         });
         if (result.affectedRows === 0) return fail(res, 'Only inspections of INSPECTED deliveries can be deleted.', 409);

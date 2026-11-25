@@ -6,6 +6,8 @@ const { fail, sqlMessage } = require('../lib/respond');
 const { readList, like } = require('../lib/listing');
 const { findMaterials } = require('../lib/materials');
 const notify = require('../lib/notify');
+const { inTransaction } = require('../lib/transaction');
+const events = require('../lib/events');
 const app = express.Router();
 
 // The promise version of the connection pool injected by app.js (same mysql2 package as in the laboratory, but with async/await).
@@ -179,11 +181,15 @@ app.post('/', async (req, res) => {
         const [sup] = await db().execute("SELECT org_id FROM organization WHERE org_id = ? AND org_type = 'SUPPLIER' AND status = 'APPROVED'", [b.org_id]);
         if (sup.length === 0) return fail(res, 'Please choose a supplier from the list.', 404);
 
-        const [result] = await db().execute(
-            `INSERT INTO delivery (project_id, org_id, material_id, created_by, ordered_quantity, delivery_value, slot_start, slot_end)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [b.project_id, b.org_id, b.material_id, req.user.id, quantity, value,
-             toDatetime(b.slot_start), toDatetime(b.slot_end)]);
+        const result = await inTransaction(db(), async conn => {
+            const [r] = await conn.execute(
+                `INSERT INTO delivery (project_id, org_id, material_id, created_by, ordered_quantity, delivery_value, slot_start, slot_end)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [b.project_id, b.org_id, b.material_id, req.user.id, quantity, value,
+                 toDatetime(b.slot_start), toDatetime(b.slot_end)]);
+            await events.record(conn, r.insertId, 'CREATED', req.user.id);
+            return r;
+        });
         const about = await notify.aboutDelivery(db(), result.insertId);
         await notify.toCompany(db(), about.supplierId, 'SUPPLIER',
             'New delivery #' + about.ID + ' from ' + about.contractor + ': ' + about.material + ' for ' + about.project + '.', notify.pages.supplier(about.ID), req.user.id);
@@ -200,9 +206,33 @@ app.get('/:id', async (req, res) => {
     const row = await findDelivery(req.params.id, req.user.orgId);
     if (!row) return fail(res, 'Delivery not found.', 404);
 
-    // The progress line: every status up to the current one is done.
+    // The history: every step and change with its time and user (table delivery_event, written by lib/events.js).
+    const [history] = await db().execute(
+        `SELECT ev.event, ev.note, DATE_FORMAT(ev.created_at, '%Y-%m-%d %H:%i') AS time, u.full_name AS person, o.org_name AS company
+         FROM delivery_event ev JOIN user_account u ON u.user_id = ev.user_id LEFT JOIN organization o ON o.org_id = u.org_id
+         WHERE ev.delivery_id = ? ORDER BY ev.created_at, ev.event_id`, [row.ID]);
+    row.history = history.map(h => Object.assign(h, { label: events.EVENTS[h.event] }));
+
+    // The progress line: every status up to the current one is done, with the time when it was reached (the last time, if a step was undone).
+    const STEP_EVENTS = { SCHEDULED: 'CREATED', PREPARING: 'PREPARING', IN_TRANSIT: 'IN_TRANSIT', DELIVERED: 'DELIVERED', INSPECTED: 'INSPECTED', COMPLETED: 'COMPLETED' };
     const current = STEPS.indexOf(row.status);
-    row.steps = STEPS.map((name, i) => ({ name: name, done: i <= current, current: i === current }));
+    row.steps = STEPS.map((name, i) => {
+        const reached = history.filter(h => h.event === STEP_EVENTS[name]).pop();
+        return { name: name, done: i <= current, current: i === current, time: i <= current && reached ? reached.time : null };
+    });
+
+    // On time? The last arrival (DELIVERED) compared with the agreed time slot.
+    const [arrivals] = await db().execute(
+        `SELECT TIMESTAMPDIFF(MINUTE, d.slot_end, ev.created_at) AS lateMinutes, TIMESTAMPDIFF(MINUTE, ev.created_at, d.slot_start) AS earlyMinutes
+         FROM delivery_event ev JOIN delivery d ON d.delivery_id = ev.delivery_id
+         WHERE ev.delivery_id = ? AND ev.event = 'DELIVERED' ORDER BY ev.created_at DESC, ev.event_id DESC LIMIT 1`, [row.ID]);
+    const arrival = arrivals[0];
+    if (arrival && current >= STEPS.indexOf('DELIVERED')) {
+        const duration = m => (m >= 60 ? Math.floor(m / 60) + ' h ' : '') + (m % 60) + ' min';
+        row.arrival = arrival.lateMinutes > 0 ? { text: 'Late by ' + duration(arrival.lateMinutes), kind: 'danger' }
+            : arrival.earlyMinutes > 0 ? { text: 'Early by ' + duration(arrival.earlyMinutes), kind: 'info' }
+            : { text: 'On time (inside the time slot)', kind: 'success' };
+    }
 
     const [documents] = await db().execute(
         'SELECT document_id AS ID, doc_type, file_name, stored_name IS NOT NULL AS hasFile FROM delivery_document WHERE delivery_id = ? ORDER BY document_id', [row.ID]);
@@ -276,11 +306,16 @@ app.put('/:id', async (req, res) => {
     if (b.slot_start !== row.slotStartInput && await slotInPast(b.slot_start)) return fail(res, 'The time slot must be in the future.');
 
     try {
-        const [result] = await db().execute(
-            `UPDATE delivery d JOIN project p ON p.project_id = d.project_id
-             SET d.ordered_quantity = ?, d.delivery_value = ?, d.slot_start = ?, d.slot_end = ?, d.declined_at = NULL, d.decline_reason = NULL
-             WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'SCHEDULED'`,
-            [quantity, value, toDatetime(b.slot_start), toDatetime(b.slot_end), id, orgId]);
+        const result = await inTransaction(db(), async conn => {
+            const [r] = await conn.execute(
+                `UPDATE delivery d JOIN project p ON p.project_id = d.project_id
+                 SET d.ordered_quantity = ?, d.delivery_value = ?, d.slot_start = ?, d.slot_end = ?, d.declined_at = NULL, d.decline_reason = NULL
+                 WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'SCHEDULED'`,
+                [quantity, value, toDatetime(b.slot_start), toDatetime(b.slot_end), id, orgId]);
+            if (r.affectedRows === 1) await events.record(conn, id, 'CHANGED', req.user.id,
+                quantity + ' ' + row.unit + ' x NT$ ' + price + ', ' + String(b.slot_start).replace('T', ' ') + ' - ' + String(b.slot_end).replace('T', ' '));
+            return r;
+        });
 
         const fresh = await findDelivery(id, orgId);
         if (result.affectedRows === 0 && !fresh.canEdit) {
@@ -303,7 +338,10 @@ app.put('/:id', async (req, res) => {
 app.delete('/:id', async (req, res) => {
     try {
         const about = await notify.aboutDelivery(db(), req.params.id);        // read before it is deleted (for the notification)
-        // The messages of the delivery go with it (only while it is SCHEDULED, like the delivery itself).
+        // The messages and the history of the delivery go with it (only while it is SCHEDULED, like the delivery itself).
+        await db().execute(
+            `DELETE ev FROM delivery_event ev JOIN delivery d ON d.delivery_id = ev.delivery_id JOIN project p ON p.project_id = d.project_id
+             WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'SCHEDULED'`, [req.params.id, req.user.orgId]);
         await db().execute(
             `DELETE msg FROM message msg JOIN delivery d ON d.delivery_id = msg.delivery_id JOIN project p ON p.project_id = d.project_id
              WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'SCHEDULED'`, [req.params.id, req.user.orgId]);
