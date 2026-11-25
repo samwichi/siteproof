@@ -135,7 +135,7 @@ Beyond the ten use cases, the supplier keeps a **product catalog** (My products)
 
 The whole closed loop works from the first step to the last: the contractor creates a delivery, the supplier moves it to DELIVERED, the inspector inspects it, the contractor completes it with a rating, and the supplier sees the rating.
 
-**Next:** requests for quotation and quotations built on the product catalog, automated tests, real file upload, and the rest of the second phase (see section 2).
+**Next:** requests for quotation and quotations built on the product catalog, automated tests, real file upload for the quality documents (today only the file name is saved), and the rest of the second phase (see section 2).
 
 ---
 ## 4. Project Documents
@@ -174,9 +174,9 @@ graph TD
     HOME --> SUP["Supplier Area"]:::p1
     HOME --> INS["Inspector Area"]:::p1
 
-    CON --> C1["My Deliveries<br/>List and Status / UC3<br/>Owner: Samuel"]:::p1
-    CON --> C2["Create Delivery Record<br/>UC2<br/>Owner: Samuel"]:::p1
-    CON --> C3["Delivery Detail<br/>Status, Documents, Acceptance, Retention / UC3<br/>Owner: Samuel"]:::p1
+    CON --> C1["My Deliveries<br/>List and Status / UC3<br/>Owner: Po-Hao"]:::p1
+    CON --> C2["Create Delivery Record<br/>UC2<br/>Owner: Po-Hao"]:::p1
+    CON --> C3["Delivery Detail<br/>Status, Documents, Acceptance, Retention / UC3<br/>Owner: Po-Hao"]:::p1
     CON --> C4["Complete and Rate Supplier<br/>UC4<br/>Owner: Samuel"]:::p1
     CON --> C5["Supplier Ratings<br/>UC3<br/>Owner: Samuel"]:::p1
 
@@ -184,8 +184,15 @@ graph TD
     SUP --> S2["Upload Quality Documents<br/>UC6<br/>Owner: Po-Hao"]:::p1
     SUP --> S3["My Rating and History<br/>UC7<br/>Owner: Po-Hao"]:::p1
 
-    INS --> I1["Inspection Queue<br/>Deliveries to Inspect<br/>Owner: Samuel"]:::p1
+    INS --> I1["Inspection Queue<br/>Deliveries to Inspect / UC8<br/>Owner: Samuel"]:::p1
     INS --> I2["Inspect and Decide<br/>Quantity, Documents, Acceptance, Retention<br/>UC8, UC9, UC10<br/>Owner: Samuel"]:::p1
+    HOME --> REG["Register a Company or a User<br/>UC1<br/>Owner: Po-Hao"]:::p1
+    HOME --> COM["Company Account Area"]:::p1
+    HOME --> ADM["Administrator Area"]:::p1
+    COM --> M1["Approve Users, Projects, Inspection Companies<br/>UC1<br/>Owner: Po-Hao"]:::p1
+    ADM --> A1["Approve Companies, See All Users<br/>UC1<br/>Owner: Po-Hao"]:::p1
+    CON --> C6["Find Products<br/>Product Catalog<br/>Owner: Po-Hao"]:::p1
+    SUP --> S4["My Products<br/>Product Catalog<br/>Owner: Po-Hao"]:::p1
 
     HOME -.-> F2["Phase 2 — Planned Features<br/>RFQ, LINE Notifications, Payment Requests,<br/>Analytics, Pro Tier, Featured Suppliers, Mobile<br/>Owner: To Be Assigned"]:::p2
 
@@ -219,6 +226,11 @@ graph TD
 | My Rating and History | UC7 | 1 | Po-Hao | ✅ Done |
 | Inspection Queue | UC8 | 1 | Samuel | ✅ Done |
 | Inspect and Decide | UC8, UC9, UC10 | 1 | Samuel | ✅ Done |
+| Register a Company or a User | UC1 | 1 | Po-Hao | ✅ Done |
+| Company Account (users, projects, inspection companies) | UC1 | 1 | Po-Hao | ✅ Done |
+| Administrator (companies and users) | UC1 | 1 | Po-Hao | ✅ Done |
+| Find Products (contractor) | Product catalog | 1 | Po-Hao | ✅ Done |
+| My Products (supplier) | Product catalog | 1 | Po-Hao | ✅ Done |
 | Phase 2 and Phase 3 pages | — | 2 / 3 | To be assigned | ⬜ To do |
 
 Status: ✅ Done, 🔶 Partly, ⬜ To do (details in section 3.1). "Supplier Ratings" is partly done because the rating of each delivery is shown on the Complete and Rate page and on the Delivery Detail page, but there is no separate page with the average rating of each supplier.
@@ -232,7 +244,7 @@ Frontend and backend follow the course requirements (3-tier web application) and
 | Component | Technology |
 |---|---|
 | Frontend | HTML, Bootstrap 5, Handlebars templates, HTMX 4 |
-| Backend | Node.js 22 + Express 5 (mysql2, cookie-parser, bcryptjs) |
+| Backend | Node.js 22 + Express 5 (mysql2, cookie-parser, bcryptjs, multer) |
 | Database | MySQL 8.4 (Docker) |
 | Deployment | Docker on a local computer (cloud deployment to be decided) |
 | Testing Framework | Manual tests with sample data (automated tests to be decided) |
