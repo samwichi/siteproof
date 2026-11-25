@@ -125,7 +125,7 @@ SiteProof has moved from planning to implementation. The database and the first 
 | UC3 View delivery status, history, retention and ratings | Done | List with status for the contractor, and a detail page for each delivery: progress, order, documents, inspection, retention and rating in one place |
 | UC4 Complete a delivery and rate the supplier | Done | Rating 1 to 5, can be changed or deleted |
 | UC5 Update the delivery status | Done | Supplier sees the assigned deliveries and moves each one step by step: PREPARING, IN_TRANSIT, DELIVERED |
-| UC6 Quality documents | Done (simple) | Supplier adds, edits and deletes the document type and file name until the inspection; the file itself is not uploaded yet |
+| UC6 Quality documents | Done (simple) | Supplier adds documents at any time and edits or deletes them until the inspection (type and file name); the file itself is not uploaded yet |
 | UC7 Supplier rating and history | Done | Supplier sees the average rating, how the scores are distributed and the history of its deliveries with the inspection result |
 | UC8 Record received quantity and review documents | Done | The inspector sees the quality documents of each delivery (or a warning when there are none) in the list and in the inspection form, then records the received quantity |
 | UC9 Accept, partially accept or reject | Done | Decision from the received and accepted quantity |
@@ -185,7 +185,7 @@ graph TD
     SUP --> S3["My Rating and History<br/>UC7<br/>Owner: Po-Hao"]:::p1
 
     INS --> I1["Inspection Queue<br/>Deliveries to Inspect<br/>Owner: Samuel"]:::p1
-    INS --> I2["Inspect and Decide<br/>Quantity, Documents, Acceptance, Retention<br/>UC8, UC9, UC10<br/>Owner: Po-Hao"]:::p1
+    INS --> I2["Inspect and Decide<br/>Quantity, Documents, Acceptance, Retention<br/>UC8, UC9, UC10<br/>Owner: Samuel"]:::p1
 
     HOME -.-> F2["Phase 2 — Planned Features<br/>RFQ, LINE Notifications, Payment Requests,<br/>Analytics, Pro Tier, Featured Suppliers, Mobile<br/>Owner: To Be Assigned"]:::p2
 
@@ -209,16 +209,16 @@ graph TD
 | Page | Use case | Priority | Owner | Status |
 |---|---|---|---|---|
 | Home / Sign in | UC1 | 1 | Po-Hao | ✅ Done |
-| My Deliveries | UC3 | 1 | Samuel | ✅ Done |
-| Create Delivery Record | UC2 | 1 | Samuel | ✅ Done |
-| Delivery Detail | UC3 | 1 | Samuel | ✅ Done |
+| My Deliveries | UC3 | 1 | Po-Hao | ✅ Done |
+| Create Delivery Record | UC2 | 1 | Po-Hao | ✅ Done |
+| Delivery Detail | UC3 | 1 | Po-Hao | ✅ Done |
 | Complete and Rate Supplier | UC4 | 1 | Samuel | ✅ Done |
 | Supplier Ratings | UC3 | 1 | Samuel | 🔶 Partly |
 | Assigned Deliveries and Status Update | UC5 | 1 | Po-Hao | ✅ Done |
 | Upload Quality Documents | UC6 | 1 | Po-Hao | ✅ Done |
 | My Rating and History | UC7 | 1 | Po-Hao | ✅ Done |
 | Inspection Queue | UC8 | 1 | Samuel | ✅ Done |
-| Inspect and Decide | UC8, UC9, UC10 | 1 | Po-Hao | ✅ Done |
+| Inspect and Decide | UC8, UC9, UC10 | 1 | Samuel | ✅ Done |
 | Phase 2 and Phase 3 pages | — | 2 / 3 | To be assigned | ⬜ To do |
 
 Status: ✅ Done, 🔶 Partly, ⬜ To do (details in section 3.1). "Supplier Ratings" is partly done because the rating of each delivery is shown on the Complete and Rate page and on the Delivery Detail page, but there is no separate page with the average rating of each supplier.
