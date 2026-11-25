@@ -7,6 +7,7 @@
 const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList } = require('../lib/listing');
+const { inTransaction } = require('../lib/transaction');
 const notify = require('../lib/notify');
 const app = express.Router();
 
@@ -116,15 +117,18 @@ app.post('/:id', async (req, res) => {
 
     try {
         // The retention rate is copied from the project, so a later change of the project rate does not change this delivery.
-        const [result] = await db().execute(
-            `INSERT INTO inspection (delivery_id, inspector_id, received_quantity, accepted_quantity, retention_rate)
-             SELECT d.delivery_id, ?, ?, ?, p.retention_rate
-             FROM delivery d JOIN project p ON p.project_id = d.project_id
-             WHERE d.delivery_id = ? AND ${SCOPE} AND d.status = 'DELIVERED'`,
-            [req.user.id, received, accepted, req.params.id, ...scope(req.user.orgId)]);
+        // One transaction: the record and the new status of the delivery are saved together, or not at all.
+        const result = await inTransaction(db(), async conn => {
+            const [r] = await conn.execute(
+                `INSERT INTO inspection (delivery_id, inspector_id, received_quantity, accepted_quantity, retention_rate)
+                 SELECT d.delivery_id, ?, ?, ?, p.retention_rate
+                 FROM delivery d JOIN project p ON p.project_id = d.project_id
+                 WHERE d.delivery_id = ? AND ${SCOPE} AND d.status = 'DELIVERED'`,
+                [req.user.id, received, accepted, req.params.id, ...scope(req.user.orgId)]);
+            if (r.affectedRows === 1) await conn.execute("UPDATE delivery SET status = 'INSPECTED' WHERE delivery_id = ? AND status = 'DELIVERED'", [req.params.id]);
+            return r;
+        });
         if (result.affectedRows === 0) return fail(res, 'Only DELIVERED deliveries can be inspected.', 409);
-
-        await db().execute("UPDATE delivery SET status = 'INSPECTED' WHERE delivery_id = ?", [req.params.id]);
 
         const fresh = await findRow(req.params.id, req.user.orgId);
         const about = await notify.aboutDelivery(db(), req.params.id);
@@ -183,15 +187,18 @@ app.put('/:id', async (req, res) => {
 // ---------- D: delete the inspection (the delivery goes back to DELIVERED) ----------
 app.delete('/:id', async (req, res) => {
     try {
-        const [result] = await db().execute(
-            `DELETE i FROM inspection i
-             JOIN delivery d ON d.delivery_id = i.delivery_id
-             JOIN project p  ON p.project_id = d.project_id
-             WHERE d.delivery_id = ? AND ${SCOPE} AND d.status = 'INSPECTED'`,
-            [req.params.id, ...scope(req.user.orgId)]);
+        // One transaction: the record and the new status of the delivery are saved together, or not at all.
+        const result = await inTransaction(db(), async conn => {
+            const [r] = await conn.execute(
+                `DELETE i FROM inspection i
+                 JOIN delivery d ON d.delivery_id = i.delivery_id
+                 JOIN project p  ON p.project_id = d.project_id
+                 WHERE d.delivery_id = ? AND ${SCOPE} AND d.status = 'INSPECTED'`,
+                [req.params.id, ...scope(req.user.orgId)]);
+            if (r.affectedRows === 1) await conn.execute("UPDATE delivery SET status = 'DELIVERED' WHERE delivery_id = ? AND status = 'INSPECTED'", [req.params.id]);
+            return r;
+        });
         if (result.affectedRows === 0) return fail(res, 'Only inspections of INSPECTED deliveries can be deleted.', 409);
-
-        await db().execute("UPDATE delivery SET status = 'DELIVERED' WHERE delivery_id = ?", [req.params.id]);
 
         const fresh = await findRow(req.params.id, req.user.orgId);
         fresh.message = 'Inspection of delivery #' + req.params.id + ' deleted. The delivery is waiting for inspection again.';
