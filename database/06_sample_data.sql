@@ -58,13 +58,15 @@ INSERT INTO project (org_id, project_name, retention_rate) VALUES
 --     3 completed (full, partial and rejected), 1 inspected, 1 delivered, 1 in transit, 1 preparing, 1 scheduled.
 --     The delivery value is the ordered quantity x the average price of the material in the given file.
 --     After each insert, @dN keeps the new delivery_id to use it in the next tables.
+--     The time slots are counted from today (CURDATE()), so the statuses still make sense on the day of the demo:
+--     the completed ones are weeks ago, the delivered one 2 days ago, the one in transit today, the preparing one tomorrow, the scheduled one in a week.
 
 -- Delivery 1 (COMPLETED, fully accepted): 80 m3 of ready-mix concrete.
 INSERT INTO delivery (project_id, org_id, material_id, created_by, ordered_quantity, delivery_value, slot_start, slot_end, status)
 VALUES ((SELECT project_id FROM project WHERE project_name = 'Neihu Office Tower'),
         '03028108', '04265799',
         (SELECT user_id FROM user_account WHERE email = 'pm.lin@siteproof.example.com'),
-        80, 202080.00, '2026-10-05 08:00:00', '2026-10-05 10:00:00', 'COMPLETED');
+        80, 202080.00, TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL -50 DAY), '08:00:00'), TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL -50 DAY), '10:00:00'), 'COMPLETED');
 SET @d1 = LAST_INSERT_ID();
 
 -- Delivery 2 (COMPLETED, partially accepted): 12 tons of rebar SD280, 9 accepted.
@@ -72,7 +74,7 @@ INSERT INTO delivery (project_id, org_id, material_id, created_by, ordered_quant
 VALUES ((SELECT project_id FROM project WHERE project_name = 'Xinyi Parking Structure'),
         '28001683', '51220073',
         (SELECT user_id FROM user_account WHERE email = 'pm.lin@siteproof.example.com'),
-        12, 255000.00, '2026-10-12 09:00:00', '2026-10-12 12:00:00', 'COMPLETED');
+        12, 255000.00, TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL -43 DAY), '09:00:00'), TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL -43 DAY), '12:00:00'), 'COMPLETED');
 SET @d2 = LAST_INSERT_ID();
 
 -- Delivery 3 (COMPLETED, rejected): 200 m2 of plywood, 0 accepted (the rating is mandatory even when the delivery is rejected).
@@ -80,7 +82,7 @@ INSERT INTO delivery (project_id, org_id, material_id, created_by, ordered_quant
 VALUES ((SELECT project_id FROM project WHERE project_name = 'Taoyuan Logistics Center'),
         '32120654', '29345092',
         (SELECT user_id FROM user_account WHERE email = 'pm.chen@siteproof.example.com'),
-        200, 54400.00, '2026-10-19 13:00:00', '2026-10-19 15:00:00', 'COMPLETED');
+        200, 54400.00, TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL -36 DAY), '13:00:00'), TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL -36 DAY), '15:00:00'), 'COMPLETED');
 SET @d3 = LAST_INSERT_ID();
 
 -- Delivery 4 (INSPECTED, waiting for the contractor to complete and rate): 300 bags of cement, all accepted.
@@ -88,7 +90,7 @@ INSERT INTO delivery (project_id, org_id, material_id, created_by, ordered_quant
 VALUES ((SELECT project_id FROM project WHERE project_name = 'Neihu Office Tower'),
         '28001683', '14942603',
         (SELECT user_id FROM user_account WHERE email = 'pm.lin@siteproof.example.com'),
-        300, 49800.00, '2026-11-09 08:30:00', '2026-11-09 10:30:00', 'INSPECTED');
+        300, 49800.00, TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL -14 DAY), '08:30:00'), TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL -14 DAY), '10:30:00'), 'INSPECTED');
 SET @d4 = LAST_INSERT_ID();
 
 -- Delivery 5 (DELIVERED, in the inspection queue): 40 m3 of graded aggregates.
@@ -96,7 +98,7 @@ INSERT INTO delivery (project_id, org_id, material_id, created_by, ordered_quant
 VALUES ((SELECT project_id FROM project WHERE project_name = 'Xinyi Parking Structure'),
         '15984815', '79254563',
         (SELECT user_id FROM user_account WHERE email = 'pm.lin@siteproof.example.com'),
-        40, 27560.00, '2026-11-17 14:00:00', '2026-11-17 16:00:00', 'DELIVERED');
+        40, 27560.00, TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL -2 DAY), '14:00:00'), TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL -2 DAY), '16:00:00'), 'DELIVERED');
 SET @d5 = LAST_INSERT_ID();
 
 -- Delivery 6 (IN_TRANSIT): 100 helmets.
@@ -104,7 +106,7 @@ INSERT INTO delivery (project_id, org_id, material_id, created_by, ordered_quant
 VALUES ((SELECT project_id FROM project WHERE project_name = 'Taoyuan Logistics Center'),
         '28001683', '90825067',
         (SELECT user_id FROM user_account WHERE email = 'pm.chen@siteproof.example.com'),
-        100, 19900.00, '2026-11-18 15:00:00', '2026-11-18 17:00:00', 'IN_TRANSIT');
+        100, 19900.00, TIMESTAMP(CURDATE(), '15:00:00'), TIMESTAMP(CURDATE(), '17:00:00'), 'IN_TRANSIT');
 SET @d6 = LAST_INSERT_ID();
 
 -- Delivery 7 (PREPARING): 60 m3 of ready-mix concrete 140 kgf/cm2.
@@ -112,7 +114,7 @@ INSERT INTO delivery (project_id, org_id, material_id, created_by, ordered_quant
 VALUES ((SELECT project_id FROM project WHERE project_name = 'Neihu Office Tower'),
         '03028108', '80801586',
         (SELECT user_id FROM user_account WHERE email = 'pm.lin@siteproof.example.com'),
-        60, 138600.00, '2026-11-24 08:00:00', '2026-11-24 10:00:00', 'PREPARING');
+        60, 138600.00, TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL 1 DAY), '08:00:00'), TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL 1 DAY), '10:00:00'), 'PREPARING');
 SET @d7 = LAST_INSERT_ID();
 
 -- Delivery 8 (SCHEDULED, just created by the contractor): 50 pairs of safety shoes.
@@ -120,7 +122,7 @@ INSERT INTO delivery (project_id, org_id, material_id, created_by, ordered_quant
 VALUES ((SELECT project_id FROM project WHERE project_name = 'Xinyi Parking Structure'),
         '28001683', '29958838',
         (SELECT user_id FROM user_account WHERE email = 'pm.lin@siteproof.example.com'),
-        50, 30150.00, '2026-12-02 09:00:00', '2026-12-02 11:00:00', 'SCHEDULED');
+        50, 30150.00, TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL 7 DAY), '09:00:00'), TIMESTAMP(DATE_ADD(CURDATE(), INTERVAL 7 DAY), '11:00:00'), 'SCHEDULED');
 SET @d8 = LAST_INSERT_ID();
 
 -- 6.5 Quality documents uploaded by the suppliers (deliveries 1 to 5 have documents).
@@ -168,6 +170,8 @@ FROM inspection i JOIN delivery d ON d.delivery_id = i.delivery_id;
 INSERT INTO delivery_event (delivery_id, event, user_id, note, created_at)
 SELECT r.delivery_id, 'COMPLETED', r.rated_by, CONCAT('rating ', r.score, '/5'), d.slot_end + INTERVAL 1 DAY
 FROM supplier_rating r JOIN delivery d ON d.delivery_id = r.delivery_id;
+-- A step cannot happen in the future: the steps of the deliveries of today and tomorrow get the time of the script at the latest.
+UPDATE delivery_event SET created_at = NOW() WHERE created_at > NOW();
 
 -- 6.7b The demo suppliers offer the materials of their sample deliveries in the product catalog (if step 4.11 did not add them already):
 --      the price range is 10% around the unit price of the delivery; the lead time and the minimum order are examples.
