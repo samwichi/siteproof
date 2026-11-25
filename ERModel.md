@@ -11,7 +11,7 @@ The MVP part is implemented in MySQL 8.4 (scripts `01_schema.sql` to `06_sample_
 | **PHASE 2** | 🟨 yellow | Planned next: RFQ, LINE notifications, payment requests, Pro tier, featured suppliers, ESG. |
 | **PHASE 3** | ⬜ grey, dashed | Future: OCR, budget alerts, GPS, ERP integration, risk analytics. |
 
-Attributes of a later phase inside an MVP table are marked in the comment (for example `quotation_id FK "Phase 2"`). They are not in the MySQL tables yet.
+Attributes of a later phase inside an MVP table are marked in the comment (for example `payment_request_id FK "Phase 2"`). They are not in the MySQL tables yet, except the ones marked "built".
 
 ## 2. Figure 1 - MVP data model (implemented in MySQL)
 
@@ -91,6 +91,9 @@ erDiagram
         datetime slot_start
         datetime slot_end
         varchar status "SCHEDULED to COMPLETED"
+        int quotation_id FK "nullable: the accepted quotation (RFQ)"
+        datetime declined_at "the supplier declined it (SCHEDULED only)"
+        varchar decline_reason
     }
     DELIVERY_DOCUMENT {
         int document_id PK
@@ -98,6 +101,9 @@ erDiagram
         int uploaded_by FK
         varchar doc_type
         varchar file_name
+        varchar stored_name "uploaded file, NULL for old data"
+        varchar file_type "PDF, JPG, PNG"
+        int file_size
     }
     INSPECTION {
         int inspection_id PK
@@ -149,7 +155,7 @@ erDiagram
 
 ## 3. Figure 2 - Full product (MVP + Phase 2 + Phase 3)
 
-29 entities: the 13 MVP tables plus 11 for Phase 2 (5 of them, the RFQ and quotation tables, are already built) and 5 for Phase 3.
+30 entities: the 13 MVP tables plus 12 for Phase 2 (7 of them, the RFQ and quotation tables, the messages and the notifications, are already built) and 5 for Phase 3.
 
 ```mermaid
 erDiagram
@@ -227,7 +233,9 @@ erDiagram
         datetime slot_start
         datetime slot_end
         varchar status "SCHEDULED to COMPLETED"
-        int quotation_id FK "Phase 2, nullable"
+        int quotation_id FK "Phase 2, built, nullable"
+        datetime declined_at "the supplier declined it"
+        varchar decline_reason
         int payment_request_id FK "Phase 2, nullable"
     }
     DELIVERY_DOCUMENT["DELIVERY_DOCUMENT - MVP"] {
@@ -236,6 +244,9 @@ erDiagram
         int uploaded_by FK
         varchar doc_type
         varchar file_name
+        varchar stored_name "uploaded file, NULL for old data"
+        varchar file_type "PDF, JPG, PNG"
+        int file_size
     }
     INSPECTION["INSPECTION - MVP"] {
         int inspection_id PK
@@ -303,13 +314,22 @@ erDiagram
         int item_id PK, FK
         decimal unit_price
     }
-    NOTIFICATION["NOTIFICATION - PHASE 2"] {
+    MESSAGE["MESSAGE - PHASE 2, built"] {
+        int message_id PK
+        int delivery_id FK "conversation of a delivery, or"
+        int rfq_id FK "private RFQ conversation"
+        char(8) supplier_id FK "with rfq_id: FK to RFQ_SUPPLIER"
+        int sender_id FK
+        varchar body
+        timestamp created_at
+    }
+    NOTIFICATION["NOTIFICATION - PHASE 2, built (in the website; LINE later)"] {
         int notification_id PK
         int user_id FK
-        int delivery_id FK "nullable"
-        int budget_id FK "Phase 3, nullable"
-        varchar notification_type "LINE message"
-        datetime sent_at
+        varchar text
+        varchar link "page of the delivery, RFQ..."
+        timestamp created_at
+        datetime read_at "NULL = new"
     }
     PAYMENT_REQUEST["PAYMENT_REQUEST - PHASE 2"] {
         int payment_request_id PK
@@ -409,7 +429,9 @@ erDiagram
     PROJECT ||--o{ PAYMENT_REQUEST : "billed for"
     PAYMENT_REQUEST ||--o{ DELIVERY : includes
     USER_ACCOUNT ||--o{ NOTIFICATION : receives
-    DELIVERY |o--o{ NOTIFICATION : triggers
+    DELIVERY ||--o{ MESSAGE : "is discussed in"
+    RFQ_SUPPLIER ||--o{ MESSAGE : "is discussed in"
+    USER_ACCOUNT ||--o{ MESSAGE : writes
     ORGANIZATION ||--o{ SUBSCRIPTION : holds
     ORGANIZATION ||--o{ FEATURED_LISTING : buys
     MATERIAL_CATEGORY ||--o{ FEATURED_LISTING : "promoted in"
@@ -427,7 +449,7 @@ erDiagram
     classDef p2 fill:#fbe3a0,stroke:#b8860b,stroke-width:2px,color:#2b2100
     classDef p3 fill:#e6e9ee,stroke:#6e7781,stroke-width:2px,stroke-dasharray:5 3,color:#24292f
     class ORGANIZATION,USER_ACCOUNT,ORG_DOCUMENT,INSPECTION_APPOINTMENT,PROJECT,MATERIAL_CATEGORY,MATERIAL,PURCHASE,SUPPLIER_PRODUCT,DELIVERY,DELIVERY_DOCUMENT,INSPECTION,SUPPLIER_RATING mvp
-    class SUPPLIER_CONNECTION,RFQ,RFQ_ITEM,RFQ_SUPPLIER,QUOTATION,QUOTATION_ITEM,NOTIFICATION,PAYMENT_REQUEST,SUBSCRIPTION,FEATURED_LISTING,ESG_RECORD p2
+    class SUPPLIER_CONNECTION,RFQ,RFQ_ITEM,RFQ_SUPPLIER,QUOTATION,QUOTATION_ITEM,MESSAGE,NOTIFICATION,PAYMENT_REQUEST,SUBSCRIPTION,FEATURED_LISTING,ESG_RECORD p2
     class DOCUMENT_EXTRACTION,PROJECT_BUDGET,DELIVERY_TRACKING_POINT,ERP_SYNC_LOG,DELIVERY_RISK_SCORE p3
 ```
 
@@ -458,6 +480,9 @@ erDiagram
 | RFQ_SUPPLIER | Suppliers invited to an RFQ | `rfq_id` + `org_id` |
 | QUOTATION | The answer of one invited supplier (at most one per RFQ; the foreign key to RFQ_SUPPLIER allows only invited suppliers); SUBMITTED, then ACCEPTED or NOT_CHOSEN | `quotation_id` (`rfq_id` + `org_id` unique) |
 | QUOTATION_ITEM | Unit price of each item in a quotation | `quotation_id` + `item_id` |
+
+| MESSAGE | Messages: the conversation of a delivery (contractor, supplier, inspectors) or the private conversation of an RFQ between the contractor and one invited supplier (exactly one of the two, CHECK) | `message_id` |
+| NOTIFICATION | Notifications of a user in the website (the bell in the menu): text, the page it is about, read or not. Written by the website when something happens (new delivery, status change, inspection, rating, RFQ, quotation, registration). LINE messages are still for later | `notification_id` |
 
 `DELIVERY.quotation_id` remembers the accepted quotation that created a delivery (NULL when the delivery was created directly).
 

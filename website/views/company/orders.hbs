@@ -1,0 +1,58 @@
+<h1 class="h2">{{title}}</h1>
+<p class="text-muted">{{intro}} Read only: your users do the work on their own pages.</p>
+<div class="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-2 mb-4">
+  {{#each cards}}
+    <div class="col">
+      <div class="card h-100 {{#if warn}}border-danger{{/if}}">
+        <div class="card-body py-2">
+          <div class="small text-muted"><i aria-hidden="true" class="bi bi-{{icon}}"></i> {{label}}</div>
+          <div class="fs-4 fw-semibold {{#if warn}}text-danger-emphasis{{/if}}">{{value}}</div>
+        </div>
+      </div>
+    </div>
+  {{/each}}
+</div>
+{{> list/controls placeholder="Search by ID, project, company, material or person"}}
+<div id="list" data-count="{{list.total}}">
+  <div class="table-responsive">
+    <table class="table table-striped table-hover table-sm align-middle">
+      <caption class="visually-hidden">{{title}}</caption>
+      <thead>
+        <tr>
+          {{> list/th key="ID" label="ID"}}
+          {{> list/th key="project" label="Project"}}
+          {{> list/th key="partner" label=partner}}
+          {{> list/th key="material" label="Material"}}
+          <th scope="col" class="text-end">Quantity</th>
+          {{> list/th key="value" label="Value (NT$)" cls="text-end"}}
+          {{> list/th key="day" label="Delivery day"}}
+          {{> list/th key="status" label="Status"}}
+          <th scope="col">Inspection and retention</th>
+          <th scope="col">Rating</th>
+          {{#if person}}<th scope="col">{{person}}</th>{{/if}}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+        <tr>
+          <td>{{ID}}</td>
+          <td>{{project}}</td>
+          <td>{{partner}}</td>
+          <td class="text-truncate" style="max-width: 180px;" title="{{material}}">{{material}}</td>
+          <td class="text-end text-nowrap">{{quantity}} {{unit}}</td>
+          <td class="text-end">{{value}}</td>
+          <td class="text-nowrap">{{day}}</td>
+          <td><span class="badge text-bg-{{badge}}">{{status}}</span>{{#if declined}} <span class="badge text-bg-danger">DECLINED</span>{{/if}}</td>
+          <td class="small">{{#if decision}}{{decision}}: {{accepted}} of {{received}} {{unit}}<div class="text-muted">NT$ {{acceptedValue}} accepted, NT$ {{retention}} kept</div>{{else}}<span class="text-muted">-</span>{{/if}}</td>
+          <td class="text-nowrap">{{#if score}}<span class="stars">★</span> {{score}}/5{{else}}<span class="text-muted">-</span>{{/if}}</td>
+          {{#if ../person}}<td>{{person}}</td>{{/if}}
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{#unless rows.length}}
+    <p class="text-muted text-center">{{#if list.filtered}}Nothing matches your search.{{else}}Nothing yet.{{/if}}</p>
+  {{/unless}}
+  {{> list/pager}}
+</div>

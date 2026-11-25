@@ -6,6 +6,7 @@
 const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList } = require('../lib/listing');
+const notify = require('../lib/notify');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -104,6 +105,9 @@ app.post('/:id', async (req, res) => {
         await db().execute("UPDATE delivery SET status = 'COMPLETED' WHERE delivery_id = ?", [req.params.id]);
 
         const fresh = await findRow(req.params.id, req.user.orgId);
+        const about = await notify.aboutDelivery(db(), req.params.id);
+        await notify.toCompany(db(), about.supplierId, 'SUPPLIER',
+            about.contractor + ' completed delivery #' + req.params.id + ' (' + about.material + ') and rated it ' + score + '/5.', '/history', req.user.id);
         fresh.message = 'Delivery #' + req.params.id + ' completed and rated ' + score + '/5.';
         fresh.kind = 'success';
         res.render('ratings/rowToast', fresh);

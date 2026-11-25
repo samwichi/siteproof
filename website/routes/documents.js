@@ -2,10 +2,13 @@
 // A supplier only sees the documents of the deliveries of its own company (d.org_id = the company of the logged-in user).
 // Rules: documents can be added at any time, because some reports arrive later (for example the 28-day concrete test report);
 // they can be changed or deleted only until the delivery is inspected (INSPECTED or COMPLETED closes them).
-// Only the document type and the file name are stored (the file itself is not uploaded in this version).
+// The file itself is uploaded (PDF, JPG or PNG, at most 5 MB; lib/upload.js checks its real type) and kept in website/uploads;
+// routes/files.js lets the supplier, the contractor and the inspectors open it. Old documents may have only a file name.
 const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList } = require('../lib/listing');
+const { readFiles, saveFiles, removeFiles } = require('../lib/upload');
+const notify = require('../lib/notify');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -22,6 +25,9 @@ const SELECT_DOCUMENTS = `
     SELECT doc.document_id     AS ID,
            doc.doc_type        AS docType,
            doc.file_name       AS fileName,
+           doc.stored_name     AS storedName,
+           doc.file_type       AS fileType,
+           doc.file_size       AS fileSize,
            d.delivery_id       AS deliveryId,
            p.project_name      AS project,
            m.material_name     AS material,
@@ -38,6 +44,8 @@ const SELECT_DOCUMENTS = `
 // Add the values that the templates need (Handlebars cannot compare values, so we do it here).
 function prepare(row) {
     row.badge = BADGES[row.status];
+    row.hasFile = Boolean(row.storedName);
+    row.kb = row.fileSize ? Math.max(1, Math.round(row.fileSize / 1024)) : null;
     // The options of the <select> of the document type, with the current type selected.
     row.typeOptions = DOC_TYPES.map(t => ({ value: t, selected: t === row.docType }));
     return row;
@@ -68,15 +76,9 @@ async function showList(req, res, message) {
     res.render('documents/index', Object.assign(data, { message: message, kind: 'success' }));
 }
 
-// Check the document type and the file name (PDF or JPG, as in the data model). Returns an error message, or null when they are fine.
-function checkFields(docType, fileName) {
-    if (!DOC_TYPES.includes(docType)) return 'Please choose a document type.';
-    if (!fileName) return 'Please enter the file name.';
-    if (fileName.length > 200) return 'The file name is too long (200 characters at most).';
-    if (!/^[^\\/:*?"<>|]+\.(pdf|jpe?g)$/i.test(fileName)) {
-        return 'The file name must end with .pdf, .jpg or .jpeg and cannot contain / \\ : * ? " < > |';
-    }
-    return null;
+// Check the document type. Returns an error message, or null when it is fine. (The file is checked by lib/upload.js.)
+function checkType(docType) {
+    return DOC_TYPES.includes(docType) ? null : 'Please choose a document type.';
 }
 
 // ---------- R: list ----------
@@ -100,27 +102,40 @@ app.get('/new', async (req, res) => {
     });
 });
 
-// ---------- C: add ----------
+// ---------- C: add (a multipart form with the file) ----------
 app.post('/', async (req, res) => {
+    const upload = await readFiles(req, res, { field: 'file', max: 1 });      // the other fields are in req.body after this
+    if (upload.error) return fail(res, upload.error);
     const b = req.body;
-    const fileName = String(b.file_name || '').trim();
-    const message = checkFields(b.doc_type, fileName);
+    const message = checkType(b.doc_type);
     if (message) return fail(res, message);
+    if (upload.files.length === 0) return fail(res, 'Please choose the file of the document (PDF, JPG or PNG, at most 5 MB).');
 
+    let saved = [];
     try {
-        // The delivery must belong to the company of the logged-in user and must not be inspected yet (checked in the same SQL).
+        saved = await saveFiles(upload.files);
+        const f = saved[0];
+        // The delivery must belong to the company of the logged-in user (checked in the same SQL).
         const [result] = await db().execute(
-            `INSERT INTO delivery_document (delivery_id, uploaded_by, doc_type, file_name)
-             SELECT d.delivery_id, ?, ?, ?
+            `INSERT INTO delivery_document (delivery_id, uploaded_by, doc_type, file_name, stored_name, file_type, file_size)
+             SELECT d.delivery_id, ?, ?, ?, ?, ?, ?
              FROM delivery d
              WHERE d.delivery_id = ? AND d.org_id = ?`,
-            [req.user.id, b.doc_type, fileName, b.delivery_id, req.user.orgId]);
+            [req.user.id, b.doc_type, f.name, f.stored, f.type, f.size, b.delivery_id, req.user.orgId]);
         if (result.affectedRows === 0) {
+            await removeFiles([f.stored]);
             return fail(res, 'Please choose one of your deliveries.', 409);
         }
-        await showList(req, res, 'Document "' + fileName + '" added.');
+        // The contractor (and the inspectors, when the delivery waits for the inspection) learn that a document is there.
+        const about = await notify.aboutDelivery(db(), b.delivery_id);
+        const text = about.supplier + ' added a ' + b.doc_type + ' to delivery #' + about.ID + ' (' + about.material + ').';
+        await notify.toCompany(db(), about.contractorId, 'CONTRACTOR_PM', text, notify.pages.contractor(about.ID), req.user.id);
+        const [[st]] = await db().execute('SELECT status FROM delivery WHERE delivery_id = ?', [about.ID]);
+        if (st.status === 'DELIVERED') await notify.toInspectors(db(), about.contractorId, text, notify.pages.inspector(about.ID), req.user.id);
+        await showList(req, res, 'Document "' + f.name + '" added.');
     }
     catch (err) {
+        await removeFiles(saved.map(f => f.stored));
         fail(res, sqlMessage(err));
     }
 });
@@ -140,29 +155,39 @@ app.put('/:id', async (req, res) => {
     const row = await findDocument(id, orgId);
     if (!row) return fail(res, 'Document not found.', 404);
 
+    // The edit form is a multipart form (it can carry a new file), so multer reads it before req.body is used.
+    const upload = await readFiles(req, res, { field: 'file', max: 1 });
+    if (upload.error) return fail(res, upload.error);
     if (req.body.action !== 'update') {
         return res.render('documents/row', row);                  // cancel: show the row without changes
     }
 
-    const fileName = String(req.body.file_name || '').trim();
-    const message = checkFields(req.body.doc_type, fileName);
+    const message = checkType(req.body.doc_type);
     if (message) return fail(res, message);
     if (!row.canEdit) return fail(res, 'The delivery is already inspected, so its documents cannot be changed.', 409);
 
+    let saved = [];
     try {
-        await db().execute(
+        saved = await saveFiles(upload.files);            // optional: a new file replaces the old one
+        const f = saved[0];
+        const [result] = await db().execute(
             `UPDATE delivery_document doc JOIN delivery d ON d.delivery_id = doc.delivery_id
-             SET doc.doc_type = ?, doc.file_name = ?
+             SET doc.doc_type = ?,
+                 doc.file_name = COALESCE(?, doc.file_name), doc.stored_name = COALESCE(?, doc.stored_name),
+                 doc.file_type = COALESCE(?, doc.file_type), doc.file_size = COALESCE(?, doc.file_size)
              WHERE doc.document_id = ? AND d.org_id = ? AND d.status NOT IN ('INSPECTED', 'COMPLETED')`,
-            [req.body.doc_type, fileName, id, orgId]);
-
-        const fresh = await findDocument(id, orgId);
-        if (!fresh.canEdit && (fresh.docType !== req.body.doc_type || fresh.fileName !== fileName)) {
+            [req.body.doc_type, f ? f.name : null, f ? f.stored : null, f ? f.type : null, f ? f.size : null, id, orgId]);
+        if (result.affectedRows === 0) {
+            await removeFiles(saved.map(x => x.stored));
             return fail(res, 'The delivery was inspected meanwhile: its documents cannot be changed any more.', 409);
         }
-        res.render('documents/rowToast', Object.assign(fresh, { message: 'Document #' + id + ' updated.', kind: 'success' }));
+        if (f && row.storedName) await removeFiles([row.storedName]);      // the old file is not needed any more
+
+        const fresh = await findDocument(id, orgId);
+        res.render('documents/rowToast', Object.assign(fresh, { message: 'Document #' + id + ' updated' + (f ? ' with the new file.' : '.'), kind: 'success' }));
     }
     catch (err) {
+        await removeFiles(saved.map(x => x.stored));
         fail(res, sqlMessage(err));
     }
 });
@@ -170,6 +195,7 @@ app.put('/:id', async (req, res) => {
 // ---------- D: delete ----------
 app.delete('/:id', async (req, res) => {
     try {
+        const row = await findDocument(req.params.id, req.user.orgId);       // to know the file to remove
         const [result] = await db().execute(
             `DELETE doc FROM delivery_document doc JOIN delivery d ON d.delivery_id = doc.delivery_id
              WHERE doc.document_id = ? AND d.org_id = ? AND d.status NOT IN ('INSPECTED', 'COMPLETED')`,
@@ -177,6 +203,7 @@ app.delete('/:id', async (req, res) => {
         if (result.affectedRows === 0) {
             return fail(res, 'Only documents of your deliveries that are not inspected yet can be deleted.', 409);
         }
+        if (row && row.storedName) await removeFiles([row.storedName]);
         // Nothing except the message: hx-swap="delete" of the button removes the row (HTMX 4 does not swap an empty response next to a partial) and the message goes to #toast.
         res.render('toast', { message: 'Document #' + req.params.id + ' deleted.', kind: 'success' });
     }

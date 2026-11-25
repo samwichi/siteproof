@@ -16,7 +16,7 @@
   <td>#{{deliveryId}} - {{project}}</td>
   <td class="text-truncate" style="max-width: 260px;" title="{{material}}">{{material}}</td>
   <td>{{docType}}</td>
-  <td><i aria-hidden="true" class="bi bi-file-earmark-text"></i> {{fileName}}</td>
+  <td><i aria-hidden="true" class="bi bi-file-earmark-text"></i> {{#if hasFile}}<a href="/files/document/{{ID}}" target="_blank" rel="noopener" hx-boost="false">{{fileName}}</a> <span class="text-muted small">({{fileType}}, {{kb}} KB)</span>{{else}}{{fileName}} <span class="text-muted small">(no file)</span>{{/if}}</td>
   <td>{{uploadedBy}}</td>
   <td><span class="badge text-bg-{{badge}}">{{status}}</span></td>
 </tr>

@@ -39,7 +39,8 @@ function loadUser(db) {
                     (SELECT COUNT(*) FROM user_account w WHERE u.role = 'COMPANY' AND w.org_id = u.org_id AND w.status = 'PENDING') AS waiting,
                     (SELECT COUNT(*) FROM rfq_supplier rs JOIN rfq r ON r.rfq_id = rs.rfq_id
                      WHERE u.role = 'SUPPLIER' AND rs.org_id = u.org_id AND r.status = 'SENT' AND r.due_date >= CURDATE()
-                       AND NOT EXISTS (SELECT 1 FROM quotation q WHERE q.rfq_id = rs.rfq_id AND q.org_id = rs.org_id)) AS openRfqs
+                       AND NOT EXISTS (SELECT 1 FROM quotation q WHERE q.rfq_id = rs.rfq_id AND q.org_id = rs.org_id)) AS openRfqs,
+                    (SELECT COUNT(*) FROM notification n WHERE n.user_id = u.user_id AND n.read_at IS NULL) AS unread
              FROM user_account u LEFT JOIN organization o ON o.org_id = u.org_id
              WHERE u.user_id = ?`, [c.id]);
         const u = rows[0];
@@ -50,7 +51,8 @@ function loadUser(db) {
         }
 
         const user = { id: u.user_id, orgId: u.org_id, orgName: u.org_name, orgType: u.org_type, name: u.full_name,
-                       role: u.role, roleName: ROLE_NAMES[u.role] };
+                       role: u.role, roleName: ROLE_NAMES[u.role],
+                       canMessage: ['CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR'].includes(u.role) };
         req.user = user;
         res.locals.user = user;
         res.locals.isContractor = (u.role === 'CONTRACTOR_PM');   // the templates cannot compare strings, so we prepare the answer here
@@ -62,14 +64,15 @@ function loadUser(db) {
         res.locals.isInspectionCompany = (u.role === 'COMPANY' && u.org_type === 'INSPECTION');
         res.locals.waitingUsers = Number(u.waiting);     // registrations that the company account has to approve (badge in the menu)
         res.locals.openRfqs = Number(u.openRfqs);        // requests for quotation that wait for an answer of a supplier (badge in the menu)
+        res.locals.unread = Number(u.unread);            // notifications that the user has not opened yet (the bell in the menu)
         next();
     };
 }
 
-// Middleware factory: only a logged-in user with the given role can continue.
-function requireRole(role) {
+// Middleware factory: only a logged-in user with one of the given roles can continue (requireRole('SUPPLIER') or requireRole('A', 'B')).
+function requireRole(...roles) {
     return function (req, res, next) {
-        if (req.user && req.user.role === role) {
+        if (req.user && roles.includes(req.user.role)) {
             return next();
         }
         if (!req.user) {

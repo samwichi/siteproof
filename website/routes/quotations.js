@@ -9,6 +9,7 @@
 const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList } = require('../lib/listing');
+const notify = require('../lib/notify');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -193,6 +194,13 @@ async function saveItems(conn, quotationId, prices) {
     }
 }
 
+// Tell the project managers of the contractor what the supplier did with its quotation.
+async function toContractor(rfq, req, what) {
+    const about = await notify.aboutRfq(db(), rfq.ID);
+    await notify.toCompany(db(), about.contractorId, 'CONTRACTOR_PM',
+        req.user.orgName + ' ' + what + ' for RFQ #' + rfq.ID + ' (' + about.title + ').', '/rfqs/' + rfq.ID, req.user.id);
+}
+
 // ---------- R: list ----------
 app.get('/', async (req, res) => {
     const data = await readList(db(), req, LIST, SELECT_RFQS, [req.user.orgId], prepareRow);
@@ -220,6 +228,7 @@ app.post('/:rfqId', async (req, res) => {
             return 'ok';
         });
         if (result === 'closed') return fail(res, CLOSED, 409);
+        await toContractor(rfq, req, 'sent a quotation');
         await showDetail(req, res, rfq.ID, 'Quotation sent: the contractor can see it now. You can change or withdraw it until ' + rfq.due + '.');
     }
     catch (err) {
@@ -246,6 +255,7 @@ app.put('/:rfqId', async (req, res) => {
             return 'ok';
         });
         if (result === 'closed') return fail(res, CLOSED, 409);
+        await toContractor(rfq, req, 'changed its quotation');
         await showDetail(req, res, rfq.ID, 'Quotation updated.');
     }
     catch (err) {
@@ -268,6 +278,7 @@ app.delete('/:rfqId', async (req, res) => {
             return 'ok';
         });
         if (result === 'closed') return fail(res, CLOSED, 409);
+        await toContractor(rfq, req, 'withdrew its quotation');
         await showDetail(req, res, rfq.ID, 'Quotation withdrawn. You can send a new one until ' + rfq.due + '.');
     }
     catch (err) {

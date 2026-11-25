@@ -107,6 +107,63 @@ Rules:
 * A quotation of a supplier that is not approved any more, or without a price for every material, cannot be accepted; an awarded or cancelled RFQ cannot be awarded again.
 * The contractor can accept before the last day (the page says that the suppliers can still answer) or wait until it.
 
+## 2.7 Notifications (the bell in the menu, every user)
+
+* When something happens, the website writes a short notification for the people who must know it, with the page that shows it:
+
+| Event | Who gets a notification |
+|---|---|
+| A delivery is created (directly or by accepting a quotation), changed or deleted | the users of the supplier |
+| The supplier moves a delivery (PREPARING, IN_TRANSIT, DELIVERED) | the project managers of the contractor |
+| A delivery arrives (DELIVERED) | the inspectors of the contractor and of its appointed inspection companies |
+| A delivery is inspected | the project managers of the contractor and the users of the supplier |
+| A delivery is rated | the users of the supplier |
+| An RFQ is sent or cancelled | the users of every invited supplier |
+| A quotation is sent, changed or withdrawn | the project managers of the contractor |
+| An RFQ is awarded | every supplier that answered (accepted, or another quotation was chosen) |
+| A user registers | the company account of the company |
+
+* The bell shows the number of new notifications and asks for it again every 30 seconds. On the page Notifications the user opens one (it is marked as read and its page opens), marks all as read, or deletes one or all the read ones. Every user sees only his own notifications.
+* The user who caused the event does not get a notification, and switched-off or waiting users get none. Writing a notification never stops the action itself (if it fails, only the log shows it).
+* An existing database gets the new table with `database/10_upgrade_notifications.sql`.
+
+## 2.8 Messages (the speech bubble in the menu: contractor, supplier, inspector)
+
+* **Conversation of a delivery:** the project managers of the contractor, the users of the supplier and the inspectors that may inspect it (the contractor's own and those of its appointed inspection companies) read and write in it. It opens from the delivery detail page (contractor), the assigned deliveries (supplier) and the inspection list (inspector).
+* **Conversation of an RFQ:** private between the contractor and **one** invited supplier, so the suppliers never see each other's questions. The contractor opens it from the list of invited suppliers of the RFQ, the supplier from the RFQ page ("Ask ..."). A draft RFQ has no conversation.
+* The page of a conversation asks for new messages every 10 seconds, so an answer appears without reloading. A user can delete his own messages. The other side gets a notification (the inspectors only when they have written in the conversation).
+* "Messages" in the menu lists all the conversations of the user that have messages, the newest first, with the last message.
+* Who may read and write is checked in the database at every request; another company gets "Conversation not found". Deleting a SCHEDULED delivery deletes its messages too.
+* An existing database gets the new table with `database/11_upgrade_messages.sql`.
+
+## 2.9 Quality documents with the real file
+
+* The supplier uploads the **file** of each quality document (PDF, JPG or PNG, at most 5 MB). The type is checked from the first bytes of the file (a renamed file is refused), the file is kept in `website/uploads` under a random name, and the name that the user sees is the original one (also with Chinese characters).
+* A document can be added at any time (for example the 28-day test report after the inspection); until the delivery is inspected the supplier can change its type, **replace the file** or delete it (the old file is removed from the disk).
+* The supplier (Quality documents), the contractor (delivery detail page) and the inspectors (inspection list and form) open the file by its link. `routes/files.js` checks in the database that the user may see that delivery; other companies get "Document not found". The file is sent with headers that stop the browser from running anything in it.
+* When a document is added, the contractor gets a notification, and the inspectors too when the delivery waits for the inspection.
+* Documents of the sample data and of older databases have only a name ("no file"). An existing database gets the new columns with `database/12_upgrade_document_files.sql`.
+
+## 2.10 Smaller improvements
+
+* **Time slots:** a new delivery, or a delivery whose time slot is changed, cannot start in the past ("now" comes from the database).
+* **Unit price:** the edit form of a delivery asks for the unit price, like the new delivery form; the value is quantity × unit price in both.
+* **Error messages:** the technical text of a database error stays in the log; the user sees a short message (for example "A number is too large").
+* **Decline:** a supplier can **decline** a SCHEDULED delivery with a reason (for example "we can deliver on Thursday, not on Tuesday"). The delivery stays SCHEDULED but cannot be moved on; the contractor gets a notification and sees the reason in the list and on the detail page. When the contractor changes the delivery, the supplier is asked again; the supplier can also accept it after all. An existing database gets the two columns with `database/13_upgrade_decline.sql`.
+* **My account:** a click on the own name in the menu opens the account page: name, e-mail, role, and **change the password** (the current password is needed; the new one has at least 8 characters).
+
+## 2.11 Company overview (menu of a company account)
+
+* The company account sees **everything its company does**, read only, with totals at the top. The list has search, status filter, sorting and paging like the other lists.
+
+| Company | Totals | List |
+|---|---|---|
+| Contractor | deliveries not completed, declined by a supplier, ordered value, accepted value, retention kept, RFQs waiting for quotations | every delivery of every project (filter by project): supplier, value, status, inspection and retention, rating, who ordered it |
+| Supplier | deliveries to prepare or bring, value of completed deliveries, average rating, quotations sent / accepted, listed products | every delivery that the contractors ordered from the company |
+| Inspection company | deliveries waiting for an inspection, inspections recorded, rejected deliveries, contractors served | every inspection of its inspectors |
+
+* Every query is limited to the company of the company account; another company sees nothing of it.
+
 ## 3. Folders
 
 ```
@@ -116,6 +173,7 @@ website/
 ├── routes/
 │   ├── auth.js            UC1  sign in / sign out (and the message when the account is switched off or the company is not approved)
 │   ├── register.js        registration: company account (with proof documents) and user account (company list with search)
+│   ├── companyOrders.js   company account: overview of all the orders of the company with totals (read only)
 │   ├── company.js         company account: users of the company (approve / reject a registration, switch off / on) and the appointment of inspection companies
 │   ├── projects.js        company account of a contractor: create, list, edit, delete the projects (name, retention rate)
 │   ├── admin.js           administrator: all companies, approve / reject, proof documents and users of a company
@@ -126,16 +184,21 @@ website/
 │   ├── rfqs.js            contractor: requests for quotation: create, list, edit, delete (only drafts), materials, invited suppliers, send, cancel; compare the quotations and accept one (creates the deliveries)
 │   ├── inspections.js     UC8-UC10  inspector: see the supplier's quality documents, record received / accepted quantity (accepted value and retention are calculated)
 │   ├── ratings.js         UC4  contractor: complete an inspected delivery and rate the supplier (1-5)
-│   ├── assigned.js        UC5  supplier: list the assigned deliveries and move each one forward (PREPARING, IN_TRANSIT, DELIVERED)
+│   ├── assigned.js        UC5  supplier: list the assigned deliveries and move each one forward (PREPARING, IN_TRANSIT, DELIVERED), or decline a SCHEDULED one
 │   ├── history.js         UC7  supplier: own average rating, score distribution and delivery history (read only)
-│   ├── documents.js       UC6  supplier: add quality documents at any time; edit or delete them until the delivery is inspected (type and file name)
+│   ├── documents.js       UC6  supplier: upload quality documents (the file) at any time; edit (also replace the file) or delete them until the delivery is inspected
+│   ├── files.js           opens the file of a quality document for the supplier, the contractor and the inspectors of that delivery (a normal link)
 │   ├── products.js        supplier: the product catalog of the company ("My products"): add, list, edit, unlist / list again, delete
-│   └── quotations.js      supplier: the RFQs sent to the company; send, change, withdraw a quotation until the last day
+│   ├── quotations.js      supplier: the RFQs sent to the company; send, change, withdraw a quotation until the last day
+│   ├── account.js         every user: own account and change the password
+│   ├── messages.js        contractor, supplier, inspector: conversations of the deliveries and private RFQ conversations (write, read, delete own)
+│   └── notifications.js   every user: own notifications (list, open, mark all as read, delete), and the number for the bell
 ├── lib/
 │   ├── auth.js            loadUser (who is logged in; asks the database at every request whether the account and its company are still allowed), requireRole('...'), role names, start page of each role
 │   ├── upload.js          proof documents: receive (multer), check the first bytes, save under a random name, read
 │   ├── respond.js         fail(res, message): error message in the toast, without changing the page
 │   ├── listing.js         readList(): search, status filter, sorting and paging of a list (used by all the list pages)
+│   ├── notify.js          writes the notifications for the routes (to the users of a company with one role, or to the inspectors of a contractor)
 │   └── materials.js       findMaterials(): the material picker (category buttons + search box) of the new delivery form and of "My products"
 ├── views/
 │   ├── index.hbs          the only full page: header, navbar, div#toast, main#main, footer

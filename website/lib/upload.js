@@ -1,6 +1,7 @@
-// Proof documents of a company: upload, check and save (and later read) the files.
-// The files are kept in the folder website/uploads under a random name. Nobody can open them by a link in the folder:
-// only the route of the administrator reads them (routes/admin.js).
+// Uploaded files: the proof documents of a company (registration) and the quality documents of a delivery.
+// Upload, check and save (and later read) the files. The files are kept in the folder website/uploads under a random name.
+// Nobody can open them by a link in the folder: only the routes that check who may see them read them
+// (routes/adminDocuments.js for the administrator, routes/files.js for the quality documents).
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -13,7 +14,8 @@ const MAX_FILES = 3;
 const MAX_SIZE = 5 * 1024 * 1024;        // 5 MB per file
 
 // The files are first kept in memory, so nothing is written to the disk before everything is checked.
-const receive = multer({ storage: multer.memoryStorage(), limits: { files: MAX_FILES, fileSize: MAX_SIZE, fields: 20 } }).array('proof', MAX_FILES);
+// field: the name of the file input (proof for the registration, file for a quality document); max: how many files.
+const receiver = (field, max) => multer({ storage: multer.memoryStorage(), limits: { files: max, fileSize: MAX_SIZE, fields: 20 } }).array(field, max);
 
 // What the file really is. The name and the type that the browser sends can be false, so we look at the first bytes of the file.
 function detectType(buffer) {
@@ -34,12 +36,14 @@ function cleanName(original) {
 }
 
 // Run multer and check every file. Returns { files: [{ name, type, ext, mime, size, buffer }] } or { error: 'message' }.
-function readFiles(req, res) {
+function readFiles(req, res, options = {}) {
+    const field = options.field || 'proof';
+    const max = options.max || MAX_FILES;
     return new Promise(resolve => {
-        receive(req, res, err => {
+        receiver(field, max)(req, res, err => {
             if (err) {
                 if (err.code === 'LIMIT_FILE_SIZE') return resolve({ error: 'A file is larger than 5 MB.' });
-                if (err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE') return resolve({ error: 'You can upload at most ' + MAX_FILES + ' files.' });
+                if (err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE') return resolve({ error: max === 1 ? 'Please upload one file.' : 'You can upload at most ' + max + ' files.' });
                 console.log('Upload error: ', err);
                 return resolve({ error: 'The upload failed. Please try again.' });
             }
@@ -72,7 +76,7 @@ async function saveFiles(files) {
     }
 }
 
-// Delete files again (when the database did not accept the registration).
+// Delete files again (when the database did not accept the change, or when the document is deleted or replaced).
 async function removeFiles(storedNames) {
     for (const name of storedNames) {
         await fs.promises.rm(path.join(FOLDER, name), { force: true }).catch(() => {});

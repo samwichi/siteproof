@@ -1,0 +1,3 @@
+{{!-- The number of new notifications on the bell in the menu. The span is always there: it asks for the new number every 30 seconds
+      and it can be replaced by an <hx-partial> after a change. --}}
+<span id="notificationBadge" hx-get="/notifications/badge" hx-trigger="every 30s" hx-swap="outerHTML">{{#if unread}}<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill text-bg-danger">{{unread}}<span class="visually-hidden"> new notifications</span></span>{{/if}}</span>

@@ -1,0 +1,15 @@
+<p>
+  <a class="btn btn-outline-secondary btn-sm" href="{{back}}" hx-boost="true" hx-target="#main"><i aria-hidden="true" class="bi bi-arrow-left"></i> Back</a>
+  <a class="btn btn-outline-secondary btn-sm" href="/messages" hx-boost="true" hx-target="#main"><i aria-hidden="true" class="bi bi-chat-dots"></i> All conversations</a>
+</p>
+<h1 class="h2">{{title}}</h1>
+<p class="text-muted">{{subtitle}}</p>
+{{> messages/list}}
+<form class="card card-body" hx-post="{{url}}" hx-target="#main" hx-disable="findAll button">
+  <label class="form-label" for="body">Your message</label>
+  <textarea class="form-control mb-2" id="body" name="body" rows="3" maxlength="1000" required
+            placeholder="For example: can you deliver one hour earlier? / The pump truck needs the gate on Neihu Rd."></textarea>
+  <div><button class="btn btn-primary"><i aria-hidden="true" class="bi bi-send-fill"></i> Send</button></div>
+  <div class="form-text">The other side gets a notification. Everybody in this conversation can read it.</div>
+</form>
+{{#if message}}{{> toast}}{{/if}}

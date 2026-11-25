@@ -22,6 +22,9 @@
         {{/if}}
         {{#if isCompany}}
         <li class="nav-item">
+          <a class="nav-link" href="/company/orders"><i aria-hidden="true" class="bi bi-speedometer2"></i> Company overview</a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" href="/company"><i aria-hidden="true" class="bi bi-people"></i> Users of my company {{> company/waitingBadge}}</a>
         </li>
         {{#if isContractorCompany}}
@@ -71,7 +74,13 @@
       </ul>
       <div class="d-flex align-items-center">
         {{#if user}}
-          <span class="navbar-text me-3"><i aria-hidden="true" class="bi bi-person-circle"></i> {{user.name}} ({{user.roleName}}{{#if user.orgName}}, {{user.orgName}}{{/if}})</span>
+          {{#if user.canMessage}}
+          <a class="nav-link me-2" href="/messages" title="Messages"><i aria-hidden="true" class="bi bi-chat-dots fs-5"></i><span class="visually-hidden">Messages</span></a>
+          {{/if}}
+          <a class="nav-link me-3 position-relative" href="/notifications" title="Notifications">
+            <i aria-hidden="true" class="bi bi-bell fs-5"></i><span class="visually-hidden">Notifications</span>{{> notifications/badge}}
+          </a>
+          <a class="nav-link me-3" href="/account" title="My account and password"><i aria-hidden="true" class="bi bi-person-circle"></i> {{user.name}} ({{user.roleName}}{{#if user.orgName}}, {{user.orgName}}{{/if}})</a>
           {{!-- The logout form must reload the whole page, so it is not boosted. --}}
           <form action="/logout" method="post" hx-boost="false">
             <button class="btn btn-outline-dark btn-sm"><i aria-hidden="true" class="bi bi-box-arrow-right"></i> Sign out</button>

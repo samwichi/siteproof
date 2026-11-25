@@ -47,6 +47,11 @@ const adminDocuments = require('./routes/adminDocuments');
 adminDocuments.connection = connection;
 app.use('/admin/documents', requireRole('ADMIN'), adminDocuments);
 
+// ---- The same for the file of a quality document (supplier, contractor, inspector) ----
+const files = require('./routes/files');
+files.connection = connection;
+app.use('/files/document', requireRole('CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR'), files);
+
 // ---- Homepage and the wildcard route (partial page updates, see laboratory section 5) ----
 app.get('/', (req, res) => {
     if (req.get('HX-Request')) {
@@ -100,6 +105,18 @@ const quotations = require('./routes/quotations');
 quotations.connection = connection;
 app.use('/quotations', requireRole('SUPPLIER'), quotations);
 
+const messages = require('./routes/messages');
+messages.connection = connection;
+app.use('/messages', requireRole('CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR'), messages);
+
+const account = require('./routes/account');
+account.connection = connection;
+app.use('/account', requireRole('ADMIN', 'COMPANY', 'CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR'), account);
+
+const notifications = require('./routes/notifications');
+notifications.connection = connection;
+app.use('/notifications', requireRole('ADMIN', 'COMPANY', 'CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR'), notifications);
+
 const products = require('./routes/products');
 products.connection = connection;
 app.use('/products', requireRole('SUPPLIER'), products);
@@ -122,6 +139,10 @@ app.use('/projects', requireRole('COMPANY'), projects);          // only the com
 
 const company = require('./routes/company');
 company.connection = connection;
+// The overview of the company is mounted before /company, so /company/orders is not taken by the company router.
+const companyOrders = require('./routes/companyOrders');
+companyOrders.connection = connection;
+app.use('/company/orders', requireRole('COMPANY'), companyOrders);
 app.use('/company', requireRole('COMPANY'), company);
 
 const adminUsers = require('./routes/adminUsers');

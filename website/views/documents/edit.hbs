@@ -1,7 +1,7 @@
 {{!-- The edit form replaces the whole table row. A <form> cannot be placed between <tr> and <td>, so the form is inside one wide cell. --}}
 <tr class="table-warning">
   <td colspan="7">
-    <form class="row g-2 align-items-end" hx-put="/documents/{{ID}}" hx-target="closest tr" hx-swap="outerHTML" hx-disable="findAll button">
+    <form class="row g-2 align-items-end" hx-put="/documents/{{ID}}" hx-encoding="multipart/form-data" hx-target="closest tr" hx-swap="outerHTML" hx-disable="findAll button">
       <div class="col-12">
         <strong>Document #{{ID}}</strong> - delivery #{{deliveryId}} ({{material}}, {{project}})
       </div>
@@ -14,8 +14,9 @@
         </select>
       </div>
       <div class="col-md-6">
-        <label class="form-label" for="filename-{{ID}}">File name (.pdf, .jpg)</label>
-        <input class="form-control" id="filename-{{ID}}" type="text" name="file_name" value="{{fileName}}" maxlength="200" required>
+        <label class="form-label" for="file-{{ID}}">New file (optional)</label>
+        <input class="form-control" id="file-{{ID}}" type="file" name="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" aria-describedby="file-help-{{ID}}">
+        <div id="file-help-{{ID}}" class="form-text">Now: {{#if hasFile}}<a class="link-dark" href="/files/document/{{ID}}" target="_blank" rel="noopener" hx-boost="false">{{fileName}}</a> <span class="text-muted small">({{fileType}}, {{kb}} KB)</span>{{else}}{{fileName}} <span class="text-muted small">(no file)</span>{{/if}}. Choose a file only to replace it.</div>
       </div>
       <div class="col-md-2 text-nowrap">
         {{!-- Both buttons have the name "action": the route reads req.body.action to know which one was clicked. --}}

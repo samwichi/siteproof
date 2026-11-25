@@ -1,0 +1,27 @@
+<h1 class="h2">My account</h1>
+<div class="card mb-4">
+  <ul class="list-group list-group-flush">
+    <li class="list-group-item"><strong>Name:</strong> {{name}}</li>
+    <li class="list-group-item"><strong>E-mail (to sign in):</strong> {{email}}</li>
+    <li class="list-group-item"><strong>Role:</strong> {{user.roleName}}{{#if user.orgName}} at {{user.orgName}}{{/if}}</li>
+    <li class="list-group-item text-muted small">Registered on {{created}}</li>
+  </ul>
+</div>
+<h2 class="h4">Change the password</h2>
+<form class="row g-3" hx-put="/account/password" hx-target="#main" hx-disable="findAll button" style="max-width: 32rem;">
+  <div class="col-12">
+    <label class="form-label" for="current">Current password</label>
+    <input class="form-control" type="password" id="current" name="current" autocomplete="current-password" required>
+  </div>
+  <div class="col-12">
+    <label class="form-label" for="password">New password</label>
+    <input class="form-control" type="password" id="password" name="password" autocomplete="new-password" minlength="8" required aria-describedby="pw-help">
+    <div id="pw-help" class="form-text">At least 8 characters.</div>
+  </div>
+  <div class="col-12">
+    <label class="form-label" for="password2">New password again</label>
+    <input class="form-control" type="password" id="password2" name="password2" autocomplete="new-password" minlength="8" required>
+  </div>
+  <div class="col-12"><button class="btn btn-primary"><i aria-hidden="true" class="bi bi-key"></i> Change the password</button></div>
+</form>
+{{#if message}}{{> toast}}{{/if}}

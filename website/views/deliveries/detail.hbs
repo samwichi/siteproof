@@ -5,8 +5,16 @@
   </a>
 </p>
 
-<h1 class="h2">Delivery #{{ID}} <span class="badge text-bg-{{badge}} fs-6 align-middle">{{status}}</span></h1>
+<h1 class="h2">Delivery #{{ID}} <span class="badge text-bg-{{badge}} fs-6 align-middle">{{status}}</span>
+  <a class="btn btn-outline-primary btn-sm align-middle ms-2" href="/messages/delivery/{{ID}}" hx-boost="true" hx-target="#main">
+    <i aria-hidden="true" class="bi bi-chat-dots"></i> Messages with the supplier
+  </a>
+</h1>
 
+{{#if isDeclined}}
+  <div class="alert alert-danger"><i aria-hidden="true" class="bi bi-x-circle"></i> <strong>{{supplier}} declined this delivery:</strong> {{declineReason}}
+    <br>Change the quantity, the price or the time slot in "My deliveries" (the supplier is asked again), or delete the delivery.</div>
+{{/if}}
 <div class="d-flex flex-wrap gap-1 align-items-center my-3 small">
   {{#each steps}}
     <span class="badge {{#if current}}text-bg-primary{{else}}{{#if done}}text-bg-success{{else}}text-bg-light border text-muted{{/if}}{{/if}}">{{name}}</span>
@@ -52,7 +60,7 @@
       {{#if documents.length}}
         <ul class="list-group list-group-flush">
           {{#each documents}}
-            <li class="list-group-item"><i aria-hidden="true" class="bi bi-file-earmark-text"></i> {{doc_type}}: {{file_name}}</li>
+            <li class="list-group-item"><i aria-hidden="true" class="bi bi-file-earmark-text"></i> {{doc_type}}: {{#if hasFile}}<a href="/files/document/{{ID}}" target="_blank" rel="noopener" hx-boost="false">{{file_name}}</a>{{else}}{{file_name}} <span class="text-muted small">(no file)</span>{{/if}}</li>
           {{/each}}
         </ul>
       {{else}}

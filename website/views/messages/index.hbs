@@ -1,0 +1,21 @@
+<h1 class="h2">Messages</h1>
+<p class="text-muted">Your conversations about deliveries and requests for quotation, the newest first. To start one, open a delivery or an RFQ and click "Messages".</p>
+{{> list/controls placeholder="Search in the conversations"}}
+<div id="list" data-count="{{list.total}}">
+  <div class="list-group mb-3">
+    {{#each rows}}
+      <a class="list-group-item list-group-item-action" href="{{url}}" hx-boost="true" hx-target="#main">
+        <div class="d-flex justify-content-between gap-2">
+          <strong>{{title}}</strong>
+          <small class="text-muted text-nowrap">{{last}}</small>
+        </div>
+        <div class="small text-muted">{{subtitle}} · {{count}}</div>
+        <div class="small text-truncate">{{lastBody}}</div>
+      </a>
+    {{/each}}
+  </div>
+  {{#unless rows.length}}
+    <p class="text-muted text-center">{{#if list.filtered}}No conversation matches your search.{{else}}No conversation yet.{{/if}}</p>
+  {{/unless}}
+  {{> list/pager}}
+</div>

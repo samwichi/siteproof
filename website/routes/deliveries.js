@@ -5,6 +5,7 @@ const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList, like } = require('../lib/listing');
 const { findMaterials } = require('../lib/materials');
+const notify = require('../lib/notify');
 const app = express.Router();
 
 // The promise version of the connection pool injected by app.js (same mysql2 package as in the laboratory, but with async/await).
@@ -35,6 +36,8 @@ const SELECT_DELIVERIES = `
            DATE_FORMAT(d.slot_start, '%Y-%m-%dT%H:%i') AS slotStartInput,
            DATE_FORMAT(d.slot_end, '%Y-%m-%dT%H:%i')   AS slotEndInput,
            d.status                                   AS status,
+           d.declined_at                              AS declinedAt,
+           d.decline_reason                           AS declineReason,
            (d.status = 'SCHEDULED')                   AS canEdit
     FROM delivery d
     JOIN project p      ON p.project_id = d.project_id
@@ -44,6 +47,8 @@ const SELECT_DELIVERIES = `
 
 function prepare(row) {
     row.badge = BADGES[row.status];
+    row.unitPrice = row.quantity > 0 ? Math.round(row.valueRaw / row.quantity * 100) / 100 : 0;     // for the edit form
+    row.isDeclined = Boolean(row.declinedAt);
     return row;
 }
 
@@ -76,12 +81,18 @@ async function showList(req, res, message) {
 const toDatetime = (text) => String(text).replace('T', ' ');
 
 // Check the fields that the create form and the edit form have in common. Returns an error message, or null when everything is fine.
-function checkFields(quantity, value, start, end) {
+function checkFields(quantity, price, start, end) {
     if (!(quantity > 0)) return 'The quantity must be more than 0.';
-    if (!(value >= 0)) return 'The value cannot be negative.';
+    if (!(price >= 0)) return 'The unit price cannot be negative.';
     if (!start || !end) return 'Please enter the time slot.';
     if (String(end) <= String(start)) return 'The end of the time slot must be after its start.';
     return null;
+}
+
+// A new time slot cannot start in the past. "Now" comes from the database (the same clock everywhere).
+async function slotInPast(start) {
+    const [[clock]] = await db().execute("SELECT DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i') AS now");
+    return String(start).slice(0, 16) <= clock.now;
 }
 
 // ---------- R: list ----------
@@ -154,6 +165,7 @@ app.post('/', async (req, res) => {
 
     const message = checkFields(quantity, price, b.slot_start, b.slot_end);
     if (message) return fail(res, message);
+    if (await slotInPast(b.slot_start)) return fail(res, 'The time slot must be in the future.');
     if (!b.org_id) return fail(res, 'Please choose a supplier.');
     if (!b.material_id) return fail(res, 'Please choose a material.');
 
@@ -172,6 +184,9 @@ app.post('/', async (req, res) => {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [b.project_id, b.org_id, b.material_id, req.user.id, quantity, value,
              toDatetime(b.slot_start), toDatetime(b.slot_end)]);
+        const about = await notify.aboutDelivery(db(), result.insertId);
+        await notify.toCompany(db(), about.supplierId, 'SUPPLIER',
+            'New delivery #' + about.ID + ' from ' + about.contractor + ': ' + about.material + ' for ' + about.project + '.', notify.pages.supplier(about.ID), req.user.id);
         await showList(req, res, 'Delivery #' + result.insertId + ' created.');
     }
     catch (err) {
@@ -190,7 +205,7 @@ app.get('/:id', async (req, res) => {
     row.steps = STEPS.map((name, i) => ({ name: name, done: i <= current, current: i === current }));
 
     const [documents] = await db().execute(
-        'SELECT doc_type, file_name FROM delivery_document WHERE delivery_id = ? ORDER BY document_id', [row.ID]);
+        'SELECT document_id AS ID, doc_type, file_name, stored_name IS NOT NULL AS hasFile FROM delivery_document WHERE delivery_id = ? ORDER BY document_id', [row.ID]);
     row.documents = documents;
 
     // The inspection (LEFT JOIN: not every delivery has one). Accepted value = delivery value x accepted / ordered; retention = accepted value x rate.
@@ -252,21 +267,30 @@ app.put('/:id', async (req, res) => {
 
     const b = req.body;
     const quantity = Number(b.ordered_quantity);
-    const value = Number(b.delivery_value);
-    const message = checkFields(quantity, value, b.slot_start, b.slot_end);
+    const price = Number(b.unit_price);
+    const value = Math.round(quantity * price * 100) / 100;       // the same as when the delivery is created: quantity x unit price
+    const message = checkFields(quantity, price, b.slot_start, b.slot_end);
     if (message) return fail(res, message);
     if (!row.canEdit) return fail(res, 'Only deliveries with status SCHEDULED can be edited.', 409);
+    // A slot that is not changed may lie in the past (only the quantity or the price is corrected); a new slot may not.
+    if (b.slot_start !== row.slotStartInput && await slotInPast(b.slot_start)) return fail(res, 'The time slot must be in the future.');
 
     try {
         const [result] = await db().execute(
             `UPDATE delivery d JOIN project p ON p.project_id = d.project_id
-             SET d.ordered_quantity = ?, d.delivery_value = ?, d.slot_start = ?, d.slot_end = ?
+             SET d.ordered_quantity = ?, d.delivery_value = ?, d.slot_start = ?, d.slot_end = ?, d.declined_at = NULL, d.decline_reason = NULL
              WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'SCHEDULED'`,
             [quantity, value, toDatetime(b.slot_start), toDatetime(b.slot_end), id, orgId]);
 
         const fresh = await findDelivery(id, orgId);
         if (result.affectedRows === 0 && !fresh.canEdit) {
             return fail(res, 'The status changed meanwhile: only SCHEDULED deliveries can be edited.', 409);
+        }
+        if (result.affectedRows > 0) {
+            const about = await notify.aboutDelivery(db(), id);
+            await notify.toCompany(db(), about.supplierId, 'SUPPLIER',
+                'Delivery #' + id + ' (' + about.material + ') was changed by ' + about.contractor + ': please check the quantity and the time slot.',
+                notify.pages.supplier(id), req.user.id);
         }
         res.render('deliveries/rowToast', Object.assign(fresh, { message: 'Delivery #' + id + ' updated.', kind: 'success' }));
     }
@@ -278,6 +302,11 @@ app.put('/:id', async (req, res) => {
 // ---------- D: delete ----------
 app.delete('/:id', async (req, res) => {
     try {
+        const about = await notify.aboutDelivery(db(), req.params.id);        // read before it is deleted (for the notification)
+        // The messages of the delivery go with it (only while it is SCHEDULED, like the delivery itself).
+        await db().execute(
+            `DELETE msg FROM message msg JOIN delivery d ON d.delivery_id = msg.delivery_id JOIN project p ON p.project_id = d.project_id
+             WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'SCHEDULED'`, [req.params.id, req.user.orgId]);
         const [result] = await db().execute(
             `DELETE d FROM delivery d JOIN project p ON p.project_id = d.project_id
              WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'SCHEDULED'`,
@@ -285,6 +314,8 @@ app.delete('/:id', async (req, res) => {
         if (result.affectedRows === 0) {
             return fail(res, 'Only SCHEDULED deliveries of your projects can be deleted.', 409);
         }
+        await notify.toCompany(db(), about.supplierId, 'SUPPLIER',
+            'Delivery #' + about.ID + ' (' + about.material + ' for ' + about.project + ') was cancelled by ' + about.contractor + '.', '/assigned', req.user.id);
         // Nothing except the message: hx-swap="delete" of the button removes the row (HTMX 4 does not swap an empty response next to a partial) and the message goes to #toast.
         res.render('toast', { message: 'Delivery #' + req.params.id + ' deleted.', kind: 'success' });
     }

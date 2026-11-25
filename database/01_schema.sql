@@ -194,6 +194,8 @@ CREATE TABLE delivery (
     status           VARCHAR(20)   NOT NULL DEFAULT 'SCHEDULED'
                      CHECK (status IN ('SCHEDULED', 'PREPARING', 'IN_TRANSIT', 'DELIVERED', 'INSPECTED', 'COMPLETED')),
     quotation_id     INT           NULL,      -- the accepted quotation that created this delivery (NULL: created directly)
+    declined_at      DATETIME      NULL,      -- the supplier cannot deliver it as asked (only while SCHEDULED); the contractor changes or deletes it
+    decline_reason   VARCHAR(200)  NULL,
     FOREIGN KEY (quotation_id) REFERENCES quotation (quotation_id),
     FOREIGN KEY (project_id)  REFERENCES project (project_id),
     FOREIGN KEY (org_id)      REFERENCES organization (org_id),
@@ -208,6 +210,9 @@ CREATE TABLE delivery_document (
     uploaded_by INT          NOT NULL,
     doc_type    VARCHAR(50)  NOT NULL,
     file_name   VARCHAR(200) NOT NULL,
+    stored_name VARCHAR(40)  NULL,          -- the uploaded file in website/uploads (random name); NULL: only the name is known (old data)
+    file_type   VARCHAR(10)  NULL CHECK (file_type IS NULL OR file_type IN ('PDF', 'JPG', 'PNG')),
+    file_size   INT          NULL,
     FOREIGN KEY (delivery_id) REFERENCES delivery (delivery_id),
     FOREIGN KEY (uploaded_by) REFERENCES user_account (user_id)
 );
@@ -253,6 +258,41 @@ CREATE TABLE supplier_product (
     UNIQUE (org_id, material_id),
     FOREIGN KEY (org_id)      REFERENCES organization (org_id),
     FOREIGN KEY (material_id) REFERENCES material (material_id)
+);
+
+-- 1.13c Notifications: a short message for one user about something that happened (a new delivery, a status change, a quotation...),
+--       with the page that shows it. read_at is NULL while the user has not opened it (the bell in the menu counts them).
+CREATE TABLE notification (
+    notification_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id         INT          NOT NULL,
+    text            VARCHAR(255) NOT NULL,
+    link            VARCHAR(100) NOT NULL,
+    created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    read_at         DATETIME     NULL,
+    INDEX (user_id, read_at),
+    FOREIGN KEY (user_id) REFERENCES user_account (user_id)
+);
+
+-- 1.13d Messages. A message belongs to one conversation:
+--       - the conversation of a delivery (delivery_id): the contractor, the supplier and the inspectors of that delivery; or
+--       - the private conversation of an RFQ between the contractor and ONE invited supplier (rfq_id + supplier_id); the foreign key
+--         to rfq_supplier allows it only for an invited supplier, and the other suppliers never see it.
+--       Exactly one of the two is filled (CHECK).
+CREATE TABLE message (
+    message_id  INT AUTO_INCREMENT PRIMARY KEY,
+    delivery_id INT           NULL,
+    rfq_id      INT           NULL,
+    supplier_id CHAR(8)       NULL,
+    sender_id   INT           NOT NULL,
+    body        VARCHAR(1000) NOT NULL,
+    created_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CHECK ((delivery_id IS NOT NULL AND rfq_id IS NULL AND supplier_id IS NULL)
+        OR (delivery_id IS NULL AND rfq_id IS NOT NULL AND supplier_id IS NOT NULL)),
+    INDEX (delivery_id, created_at),
+    INDEX (rfq_id, supplier_id, created_at),
+    FOREIGN KEY (delivery_id)          REFERENCES delivery (delivery_id),
+    FOREIGN KEY (rfq_id, supplier_id)  REFERENCES rfq_supplier (rfq_id, org_id),
+    FOREIGN KEY (sender_id)            REFERENCES user_account (user_id)
 );
 
 -- 1.14 View that calculates the total price of each purchase: quantity x unit price x (1 - discount).

@@ -80,7 +80,7 @@ Status: ✅ Done = works in the website; 🔶 Partly = some of it works (see sec
 | Feature | Scope | Main data entities (see [ERModel.md](ERModel.md)) |
 |---|---|---|
 | RFQ and quotation comparison | 🟨 Phase 2 (✅ built) | RFQ, RFQ_ITEM, RFQ_SUPPLIER, QUOTATION, QUOTATION_ITEM |
-| LINE notifications and 28-day test reminders | 🟨 Phase 2 | NOTIFICATION |
+| Notifications in the website (✅ built); LINE messages and 28-day test reminders | 🟨 Phase 2 | NOTIFICATION |
 | Digital payment requests | 🟨 Phase 2 | PAYMENT_REQUEST |
 | Advanced supplier analytics | 🟨 Phase 2 | Computed from existing MVP data |
 | Pro-tier features (multi-project / multi-office, unlimited supplier connections) | 🟨 Phase 2 | SUBSCRIPTION, SUPPLIER_CONNECTION |
@@ -124,8 +124,8 @@ SiteProof has moved from planning to implementation. The database and the first 
 | UC2 Create a delivery record | Done | Contractor creates, edits and deletes delivery records (edit and delete only while SCHEDULED) |
 | UC3 View delivery status, history, retention and ratings | Done | List with status for the contractor, and a detail page for each delivery: progress, order, documents, inspection, retention and rating in one place |
 | UC4 Complete a delivery and rate the supplier | Done | Rating 1 to 5, can be changed or deleted |
-| UC5 Update the delivery status | Done | Supplier sees the assigned deliveries and moves each one step by step: PREPARING, IN_TRANSIT, DELIVERED |
-| UC6 Quality documents | Done (simple) | Supplier adds documents at any time and edits or deletes them until the inspection (type and file name); the file itself is not uploaded yet |
+| UC5 Update the delivery status | Done | Supplier sees the assigned deliveries and moves each one step by step: PREPARING, IN_TRANSIT, DELIVERED; a SCHEDULED delivery can be declined with a reason, and the contractor changes or deletes it |
+| UC6 Quality documents | Done | Supplier uploads the file (PDF, JPG or PNG, at most 5 MB; the real type is checked) at any time, and changes (also the file) or deletes it until the inspection; the contractor and the inspectors open the files from their pages |
 | UC7 Supplier rating and history | Done | Supplier sees the average rating, how the scores are distributed and the history of its deliveries with the inspection result |
 | UC8 Record received quantity and review documents | Done | The inspector sees the quality documents of each delivery (or a warning when there are none) in the list and in the inspection form, then records the received quantity |
 | UC9 Accept, partially accept or reject | Done | Decision from the received and accepted quantity |
@@ -135,9 +135,11 @@ Beyond the ten use cases, the supplier keeps a **product catalog** (My products)
 
 **Requests for quotation (RFQ, phase 2):** the contractor writes an RFQ for a project (materials and quantities, wanted delivery slot, last day for the quotations) and invites suppliers; the suppliers that offer the most materials in their catalog are suggested first. A draft can be changed and deleted; after **Send** it cannot be changed or deleted any more, only cancelled ([website/README.md](website/README.md), section 2.4). The invited suppliers answer with a **quotation** (a unit price for each material, lead time, note) and can change or withdraw it until the last day (section 2.5). The contractor **compares the quotations side by side** and **accepts** one: the deliveries are created automatically for that supplier and continue in the closed loop above (section 2.6). The whole story of the assignment works: supplier products → RFQ → quotations → decision → delivery → inspection → rating.
 
+**Notifications:** every user has a bell in the menu with the number of new notifications: a new delivery, a status change, a delivery that arrived and must be inspected, an inspection result, a rating, an RFQ, a quotation, a decision or a new registration ([website/README.md](website/README.md), section 2.7). **Messages:** the contractor, the supplier and the inspectors talk about a delivery in its conversation, and the contractor asks each invited supplier questions about an RFQ in a private conversation (section 2.8). **Company overview:** the company account sees all the orders of its company with totals (deliveries, values, retention, ratings, inspections), read only (section 2.11).
+
 The whole closed loop works from the first step to the last: the contractor creates a delivery, the supplier moves it to DELIVERED, the inspector inspects it, the contractor completes it with a rating, and the supplier sees the rating.
 
-**Next:** automated tests, real file upload for the quality documents (today only the file name is saved), and the rest of the second phase (see section 2).
+**Next:** automated tests and the rest of the second phase (see section 2).
 
 ---
 ## 4. Project Documents
@@ -193,6 +195,8 @@ graph TD
     HOME --> COM["Company Account Area"]:::p1
     HOME --> ADM["Administrator Area"]:::p1
     COM --> M1["Approve Users, Projects, Inspection Companies<br/>UC1<br/>Owner: Po-Hao"]:::p1
+    COM --> M2["Company Overview<br/>All Orders and Totals<br/>Owner: Po-Hao"]:::p1
+    HOME --> ALL["Every User: Notifications, Messages, My Account<br/>Owner: Po-Hao"]:::p1
     ADM --> A1["Approve Companies, See All Users<br/>UC1<br/>Owner: Po-Hao"]:::p1
     CON --> C6["Find Products<br/>Product Catalog<br/>Owner: Po-Hao"]:::p1
     SUP --> S4["My Products<br/>Product Catalog<br/>Owner: Po-Hao"]:::p1
@@ -238,6 +242,10 @@ graph TD
 | My Products (supplier) | Product catalog | 1 | Po-Hao | ✅ Done |
 | Requests for Quotation (contractor: create, send, compare, accept) | RFQ (phase 2) | 2 | Po-Hao | ✅ Done |
 | Quotations (supplier: send, change, withdraw) | RFQ (phase 2) | 2 | Po-Hao | ✅ Done |
+| Company Overview (all orders of the company, totals) | UC3 | 2 | Po-Hao | ✅ Done |
+| Notifications (every user) | Phase 2 | 2 | Po-Hao | ✅ Done |
+| Messages (contractor, supplier, inspector) | Phase 2 | 2 | Po-Hao | ✅ Done |
+| My Account (change the password) | UC1 | 2 | Po-Hao | ✅ Done |
 | Phase 2 and Phase 3 pages | — | 2 / 3 | To be assigned | ⬜ To do |
 
 Status: ✅ Done, 🔶 Partly, ⬜ To do (details in section 3.1). "Supplier Ratings" is partly done because the rating of each delivery is shown on the Complete and Rate page and on the Delivery Detail page, but there is no separate page with the average rating of each supplier.
