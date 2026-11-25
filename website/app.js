@@ -31,7 +31,11 @@ app.use(express.static('node_modules/bootstrap/dist/js'));
 app.use(express.static('node_modules/bootstrap-icons/font'));
 
 // ---- Database: a connection pool (laboratory section 9.4) ----
-const connection = mysql.createPool(configs.db);
+// The MySQL container runs on UTC, but the users are in Taiwan: every connection uses Taiwan time (UTC+8, no summer time),
+// so NOW(), CURDATE() and the stored times are the times that the users see on their clock.
+const TIME_ZONE = '+08:00';
+const connection = mysql.createPool(Object.assign({ timezone: TIME_ZONE }, configs.db));
+connection.on('connection', conn => conn.query("SET time_zone = '" + TIME_ZONE + "'"));
 app.use(loadUser(connection.promise()));   // who is logged in? (req.user)
 connection.query('SELECT 1', (err) => {
     if (err) {
