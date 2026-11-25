@@ -2,6 +2,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { setLoginCookie, HOME_PAGES } = require('../lib/auth');
+const limit = require('../lib/loginLimit');
 const app = express.Router();
 
 // The messages of the login page. The text of a rejection comes from the administrator (a signed cookie keeps it for one request).
@@ -16,7 +17,10 @@ const ERRORS = {
 
 // The login form (a fragment shown inside main#main).
 app.get('/login', (req, res) => {
-    const error = ERRORS[req.query.error];
+    const minutes = Math.max(1, Math.min(15, Number(req.query.minutes) || 15));
+    const error = req.query.error === 'locked'
+        ? 'Too many wrong passwords. For your safety this sign in is locked; please try again in ' + minutes + ' minute' + (minutes === 1 ? '' : 's') + '.'
+        : ERRORS[req.query.error];
     const note = req.signedCookies.loginNote;
     if (note) res.clearCookie('loginNote');
     res.render('login', { error: error, note: req.query.error === 'rejected' ? note : null, registered: req.query.registered });
@@ -24,15 +28,20 @@ app.get('/login', (req, res) => {
 
 // Check the e-mail and password (stored as a bcrypt hash in user_account).
 app.post('/login', async (req, res) => {
-    const SQL = `SELECT u.user_id, u.org_id, u.full_name, u.password, u.role, u.active, u.status AS user_status, o.status, o.review_note
+    const email = String(req.body.email || '').trim();
+    const minutes = limit.lockedMinutes(email, req.ip);
+    if (minutes) return res.redirect('/login?error=locked&minutes=' + minutes);
+    const SQL = `SELECT u.user_id, u.org_id, u.full_name, u.password, u.role, u.active, u.status AS user_status, u.must_change_password, o.status, o.review_note
                  FROM user_account u LEFT JOIN organization o ON o.org_id = u.org_id
                  WHERE u.email = ?`;
-    const [rows] = await app.connection.promise().execute(SQL, [String(req.body.email || '').trim()]);
+    const [rows] = await app.connection.promise().execute(SQL, [email]);
 
     const ok = rows.length === 1 && await bcrypt.compare(String(req.body.password || ''), rows[0].password);
     if (!ok) {
+        limit.recordFailure(email, req.ip);
         return res.redirect('/login?error=wrong');
     }
+    limit.recordSuccess(email);
 
     // The password is right. Now: is the account allowed to work? (The administrator belongs to no company.)
     const u = rows[0];
@@ -46,6 +55,7 @@ app.post('/login', async (req, res) => {
     }
 
     setLoginCookie(res, u);
+    if (u.must_change_password === 1) return res.redirect('/account');   // signed in with a temporary password: change it first
     res.redirect(HOME_PAGES[u.role] || '/');         // each role starts on its own page
 });
 

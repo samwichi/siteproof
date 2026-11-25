@@ -6,6 +6,7 @@ const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList, like } = require('../lib/listing');
 const { ROLE_NAMES } = require('../lib/auth');
+const { resetPassword } = require('../lib/password');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -48,6 +49,20 @@ async function findUser(id, orgId) {
 
 app.get('/', async (req, res) => {
     res.render('company/index', await readList(db(), req, LIST, SELECT_USERS, [req.user.orgId], prepare));
+});
+
+// Make a temporary password for a user of the company who forgot his password (shown once, for the company account to pass on).
+app.put('/users/:id/password', async (req, res) => {
+    const user = await findUser(req.params.id, req.user.orgId);
+    if (!user) return fail(res, 'User not found.', 404);
+    if (!user.isActive) return fail(res, 'Only an active user can get a new password.', 409);
+    const temporary = await resetPassword(db(), user.ID, "org_id = ? AND role <> 'COMPANY' AND status = 'APPROVED' AND active = 1", [req.user.orgId]);
+    if (!temporary) return fail(res, 'The password of ' + user.name + ' could not be reset.', 409);
+    res.render('company/rowToast', Object.assign(user, {
+        message: 'Temporary password of ' + user.name + ': ' + temporary + ' . Give it to the person now (it is shown only once); '
+            + 'the old password does not work any more, and the new one must be changed after the sign in.',
+        kind: 'warning', seconds: 120
+    }));
 });
 
 // Switch a user of the company off or on. A switched off user cannot sign in, and the pages stop working at his next click.

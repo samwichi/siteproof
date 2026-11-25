@@ -6,6 +6,7 @@
 const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList } = require('../lib/listing');
+const { inTransaction } = require('../lib/transaction');
 const notify = require('../lib/notify');
 const app = express.Router();
 
@@ -94,15 +95,18 @@ app.post('/:id', async (req, res) => {
     if (!score) return fail(res, 'Please choose a score from 1 to 5.');
 
     try {
-        const [result] = await db().execute(
-            `INSERT INTO supplier_rating (delivery_id, rated_by, score)
-             SELECT d.delivery_id, ?, ?
-             FROM delivery d JOIN project p ON p.project_id = d.project_id
-             WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'INSPECTED'`,
-            [req.user.id, score, req.params.id, req.user.orgId]);
+        // One transaction: the record and the new status of the delivery are saved together, or not at all.
+        const result = await inTransaction(db(), async conn => {
+            const [r] = await conn.execute(
+                `INSERT INTO supplier_rating (delivery_id, rated_by, score)
+                 SELECT d.delivery_id, ?, ?
+                 FROM delivery d JOIN project p ON p.project_id = d.project_id
+                 WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'INSPECTED'`,
+                [req.user.id, score, req.params.id, req.user.orgId]);
+            if (r.affectedRows === 1) await conn.execute("UPDATE delivery SET status = 'COMPLETED' WHERE delivery_id = ? AND status = 'INSPECTED'", [req.params.id]);
+            return r;
+        });
         if (result.affectedRows === 0) return fail(res, 'Only INSPECTED deliveries can be rated.', 409);
-
-        await db().execute("UPDATE delivery SET status = 'COMPLETED' WHERE delivery_id = ?", [req.params.id]);
 
         const fresh = await findRow(req.params.id, req.user.orgId);
         const about = await notify.aboutDelivery(db(), req.params.id);
@@ -158,15 +162,18 @@ app.put('/:id', async (req, res) => {
 // ---------- D: delete the rating (the delivery is not completed any more) ----------
 app.delete('/:id', async (req, res) => {
     try {
-        const [result] = await db().execute(
-            `DELETE r FROM supplier_rating r
-             JOIN delivery d ON d.delivery_id = r.delivery_id
-             JOIN project p  ON p.project_id = d.project_id
-             WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'COMPLETED'`,
-            [req.params.id, req.user.orgId]);
+        // One transaction: the record and the new status of the delivery are saved together, or not at all.
+        const result = await inTransaction(db(), async conn => {
+            const [r] = await conn.execute(
+                `DELETE r FROM supplier_rating r
+                 JOIN delivery d ON d.delivery_id = r.delivery_id
+                 JOIN project p  ON p.project_id = d.project_id
+                 WHERE d.delivery_id = ? AND p.org_id = ? AND d.status = 'COMPLETED'`,
+                [req.params.id, req.user.orgId]);
+            if (r.affectedRows === 1) await conn.execute("UPDATE delivery SET status = 'INSPECTED' WHERE delivery_id = ? AND status = 'COMPLETED'", [req.params.id]);
+            return r;
+        });
         if (result.affectedRows === 0) return fail(res, 'Only the rating of a COMPLETED delivery can be deleted.', 409);
-
-        await db().execute("UPDATE delivery SET status = 'INSPECTED' WHERE delivery_id = ?", [req.params.id]);
 
         const fresh = await findRow(req.params.id, req.user.orgId);
         fresh.message = 'Rating of delivery #' + req.params.id + ' deleted. The delivery must be rated again to be completed.';

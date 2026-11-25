@@ -4,6 +4,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { fail } = require('../lib/respond');
+const { setLoginCookie } = require('../lib/auth');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -29,8 +30,11 @@ app.put('/password', async (req, res) => {
     const [[u]] = await db().execute('SELECT password FROM user_account WHERE user_id = ?', [req.user.id]);
     if (!await bcrypt.compare(current, u.password)) return fail(res, 'The current password is not correct.');
     const hash = await bcrypt.hash(password, 10);
-    await db().execute('UPDATE user_account SET password = ? WHERE user_id = ?', [hash, req.user.id]);
-    await showAccount(req, res, 'Your password is changed. Use the new one from the next sign in.');
+    await db().execute('UPDATE user_account SET password = ?, must_change_password = 0 WHERE user_id = ?', [hash, req.user.id]);
+    res.locals.mustChange = false;
+    // This browser stays signed in with a new cookie; every other browser where the old password was used is signed out.
+    setLoginCookie(res, { user_id: req.user.id, org_id: req.user.orgId, full_name: req.user.name, role: req.user.role, password: hash });
+    await showAccount(req, res, 'Your password is changed. Other computers where you were signed in are signed out.');
 });
 
 module.exports = app;

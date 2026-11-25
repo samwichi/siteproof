@@ -37,15 +37,18 @@
     <table class="table align-middle mb-0">
       <caption class="visually-hidden">Unit prices of your quotation</caption>
       <thead><tr>
-        <th scope="col">Material</th><th scope="col" class="text-end">Quantity</th><th scope="col">Your catalog</th>
+        <th scope="col">Material</th><th scope="col" class="text-end">Quantity</th><th scope="col" class="d-none d-md-table-cell">Your catalog</th>
         <th scope="col" class="text-end">Unit price (NT$)</th>{{#if hasQuotation}}<th scope="col" class="text-end">Amount (NT$)</th>{{/if}}
       </tr></thead>
       <tbody>
         {{#each items}}
         <tr>
-          <td>{{material}}</td>
+          <td>{{material}}
+            {{!-- On a phone the catalog column is hidden, so the price range is shown under the material. --}}
+            <div class="d-md-none small text-muted">{{#if inCatalog}}Your catalog: {{catalogMin}}{{#unless samePrice}} - {{catalogMax}}{{/unless}} / {{unit}}{{else}}Not in your catalog{{/if}}</div>
+          </td>
           <td class="text-end text-nowrap">{{quantity}} {{unit}}</td>
-          <td class="small text-nowrap">{{#if inCatalog}}{{catalogMin}}{{#unless samePrice}} - {{catalogMax}}{{/unless}} / {{unit}}{{else}}<span class="text-muted">Not in your catalog</span>{{/if}}</td>
+          <td class="small text-nowrap d-none d-md-table-cell">{{#if inCatalog}}{{catalogMin}}{{#unless samePrice}} - {{catalogMax}}{{/unless}} / {{unit}}{{else}}<span class="text-muted">Not in your catalog</span>{{/if}}</td>
           <td class="text-end">
             {{#if ../canSubmit}}{{> quotations/priceInput}}{{else}}{{#if ../canChange}}{{> quotations/priceInput}}{{else}}{{unitPrice}}{{/if}}{{/if}}
           </td>
