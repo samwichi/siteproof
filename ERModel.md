@@ -39,6 +39,7 @@ erDiagram
         varchar role "CONTRACTOR_PM, SUPPLIER, INSPECTOR, COMPANY, ADMIN"
         tinyint active "0 = switched off"
         varchar status "PENDING, APPROVED, REJECTED (by the company account)"
+        tinyint must_change_password "1 after a reset"
         timestamp created_at
     }
     ORG_DOCUMENT {
@@ -180,6 +181,7 @@ erDiagram
         varchar role "CONTRACTOR_PM, SUPPLIER, INSPECTOR, COMPANY, ADMIN"
         tinyint active
         varchar status
+        tinyint must_change_password
         timestamp created_at
         varchar line_user_id "Phase 2: LINE"
     }

@@ -139,6 +139,8 @@ Beyond the ten use cases, the supplier keeps a **product catalog** (My products)
 
 The whole closed loop works from the first step to the last: the contractor creates a delivery, the supplier moves it to DELIVERED, the inspector inspects it, the contractor completes it with a rating, and the supplier sees the rating.
 
+**Security and everyday use:** the login cookie is never signed with the public example secret, wrong passwords are limited, the database uses Taiwan time, the login lasts while the user works, forgotten passwords are reset with a temporary password, inspections and ratings are saved in one transaction, and the supplier pages work on a phone ([website/README.md](website/README.md), section 2.12).
+
 **Next:** automated tests and the rest of the second phase (see section 2).
 
 ---

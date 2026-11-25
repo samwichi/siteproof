@@ -20,7 +20,7 @@ Extra packages: `cookie-parser` (signed login cookie, as in the Express laborato
    cd /app
    npm install
    npm i -g nodemon
-   cp config.example.js config.js        # then change the database IP in config.js
+   cp config.example.js config.js        # then change the database IP in config.js (leave cookieSecret empty: a random one is made)
    nodemon -L app.js
    ```
 
@@ -164,6 +164,16 @@ Rules:
 
 * Every query is limited to the company of the company account; another company sees nothing of it.
 
+## 2.12 Security and everyday use
+
+* **Cookie secret:** the login cookie is signed with a secret. Whoever knows it can make a cookie for any user, also for the administrator, so the website never uses the example of `config.example.js` (it is on GitHub): when `cookieSecret` in `config.js` is empty, shorter than 32 characters or the old example, the website makes a random secret once and keeps it in `website/.cookie-secret` (not in Git). Nothing has to be done by hand; everybody signs in again once.
+* **Wrong passwords:** after 5 wrong passwords for the same e-mail within 15 minutes, the sign in of that e-mail is locked for 15 minutes (and after 100 from the same address). The page says how long.
+* **Taiwan time:** every database connection uses Taiwan time (`SET time_zone = '+08:00'`), also when the MySQL container runs on UTC. So the times that the pages show, "the time slot must be in the future" and "the last day for the quotations" are right.
+* **Staying signed in:** the login lasts 1 hour after the last click (it is renewed while the user works; the automatic refresh of the bell and of the messages does not count). When a password is changed, every other computer where the old password was used is signed out.
+* **Forgotten password:** the company account gives a user of its company a **temporary password** (key button in "Users of my company"); the administrator does the same for a company account (company page). It is shown only once. After the sign in with it the user goes to "My account", and every page reminds him to choose his own password. An existing database gets the column with `database/14_upgrade_password_reset.sql`.
+* **Transactions:** recording or deleting an inspection or a rating and the new status of the delivery are saved together (one transaction), never only one of them.
+* **Phone:** the supplier's assigned deliveries have their buttons in the first column (no sideways scrolling to "Mark delivered"), the bell and the messages are next to the menu button, and the quotation form shows the catalog price under the material.
+
 ## 3. Folders
 
 ```
@@ -198,6 +208,10 @@ website/
 │   ├── upload.js          proof documents: receive (multer), check the first bytes, save under a random name, read
 │   ├── respond.js         fail(res, message): error message in the toast, without changing the page
 │   ├── listing.js         readList(): search, status filter, sorting and paging of a list (used by all the list pages)
+│   ├── secret.js          the cookie secret: never the public example; a random one in website/.cookie-secret when needed
+│   ├── loginLimit.js      locks the sign in of an e-mail after 5 wrong passwords (15 minutes)
+│   ├── password.js        temporary password for a forgotten password
+│   ├── transaction.js     inTransaction(): several statements saved together or not at all
 │   ├── notify.js          writes the notifications for the routes (to the users of a company with one role, or to the inspectors of a contractor)
 │   └── materials.js       findMaterials(): the material picker (category buttons + search box) of the new delivery form and of "My products"
 ├── views/
