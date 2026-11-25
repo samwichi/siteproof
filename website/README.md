@@ -102,7 +102,7 @@ website/
 │   ├── ratings.js         UC4  contractor: complete an inspected delivery and rate the supplier (1-5)
 │   ├── assigned.js        UC5  supplier: list the assigned deliveries and move each one forward (PREPARING, IN_TRANSIT, DELIVERED)
 │   ├── history.js         UC7  supplier: own average rating, score distribution and delivery history (read only)
-│   ├── documents.js       UC6  supplier: add, list, edit, delete quality documents (type and file name) until the delivery is inspected
+│   ├── documents.js       UC6  supplier: add quality documents at any time; edit or delete them until the delivery is inspected (type and file name)
 │   └── products.js        supplier: the product catalog of the company ("My products"): add, list, edit, unlist / list again, delete
 ├── lib/
 │   ├── auth.js            loadUser (who is logged in; asks the database at every request whether the account and its company are still allowed), requireRole('...'), role names, start page of each role
