@@ -42,7 +42,7 @@ async function available() {
 }
 
 // Make the empty test database again from 01_schema.sql and add a small world: one contractor with a project (5% retention),
-// one supplier, one material, and three users (project manager, supplier, inspector). Returns the ids that the tests need.
+// one supplier, one material, and four users (project manager, supplier, inspector, website administrator). Returns the ids that the tests need.
 async function create() {
     const schema = fs.readFileSync(schemaFile(), 'utf8')
         .replace('DROP DATABASE IF EXISTS siteproof;', 'DROP DATABASE IF EXISTS ' + NAME + ';')
@@ -64,7 +64,8 @@ async function create() {
             `INSERT INTO user_account (org_id, full_name, email, password, role) VALUES
                 ('90000101', 'Test PM', 'pm@test.example.com', ?, 'CONTRACTOR_PM'),
                 ('90000202', 'Test Supplier', 'supplier@test.example.com', ?, 'SUPPLIER'),
-                ('90000101', 'Test Inspector', 'inspector@test.example.com', ?, 'INSPECTOR')`, [hash, hash, hash]);
+                ('90000101', 'Test Inspector', 'inspector@test.example.com', ?, 'INSPECTOR'),
+                (NULL, 'Test Administrator', 'admin@test.example.com', ?, 'ADMIN')`, [hash, hash, hash, hash]);
         const [[project]] = await conn.query('SELECT project_id FROM project');
         return { projectId: project.project_id, supplierId: '90000202', materialId: '90000303' };
     }

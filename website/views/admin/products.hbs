@@ -1,0 +1,51 @@
+{{#if company}}
+<h1 class="h2">Products of {{company.name}}</h1>
+<p><a href="/admin/companies/{{company.ID}}" hx-boost="true" hx-target="#main"><i aria-hidden="true" class="bi bi-arrow-left"></i> Company page</a></p>
+<p class="text-muted">Every product of this supplier, also the unlisted ones. Read only: the supplier manages its own products.</p>
+{{else}}
+<h1 class="h2">All products</h1>
+<p class="text-muted">The products of every supplier, also the unlisted ones and those of suppliers that are not approved. Read only: each supplier manages its own products.</p>
+{{/if}}
+{{> list/controls placeholder="Search by material, supplier, company ID or note"}}
+<div id="list" data-count="{{list.total}}">
+  <div class="table-responsive">
+    <table class="table table-striped table-hover table-sm">
+      <caption class="visually-hidden">{{#if company}}Products of {{company.name}}{{else}}Products of all suppliers{{/if}}</caption>
+      <thead>
+        <tr>
+          {{> list/th key="material" label="Material"}}
+          {{> list/th key="supplier" label="Supplier"}}
+          {{> list/th key="price" label="Price (NT$ / unit)" cls="text-end"}}
+          {{> list/th key="minOrder" label="Minimum order" cls="text-end"}}
+          {{> list/th key="lead" label="Lead time" cls="text-end"}}
+          <th scope="col">Listing</th>
+          {{> list/th key="updated" label="Updated"}}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+        <tr class="align-middle">
+          <td style="max-width: 340px;">
+            <div class="text-truncate" title="{{material}}">{{material}}</div>
+            <div class="small text-muted text-truncate">{{category}}{{#if note}} · {{note}}{{/if}}</div>
+          </td>
+          <td>
+            <a class="d-inline-block py-1" href="/admin/companies/{{orgId}}" hx-boost="true" hx-target="#main">{{supplier}}</a>
+            {{#if isWaiting}}<span class="badge text-bg-warning">Waiting for approval</span>{{/if}}
+            {{#if isRejected}}<span class="badge text-bg-danger">Rejected</span>{{/if}}
+          </td>
+          <td class="text-end text-nowrap">{{#if samePrice}}{{priceMin}}{{else}}{{priceMin}} - {{priceMax}}{{/if}} / {{unit}}</td>
+          <td class="text-end text-nowrap">{{#if minOrder}}{{minOrder}} {{unit}}{{else}}<span class="text-muted">-</span>{{/if}}</td>
+          <td class="text-end text-nowrap">{{#if leadTime}}{{leadTime}} days{{else}}<span class="text-muted">-</span>{{/if}}</td>
+          <td>{{#if isListed}}<span class="badge text-bg-success">Listed</span>{{else}}<span class="badge text-bg-secondary">Unlisted</span>{{/if}}</td>
+          <td class="text-nowrap">{{updated}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{#unless rows.length}}
+    <p class="text-muted text-center">{{#if list.filtered}}No product matches your search. Try a shorter word or another filter.{{else}}No supplier has a product yet.{{/if}}</p>
+  {{/unless}}
+  {{> list/pager}}
+</div>

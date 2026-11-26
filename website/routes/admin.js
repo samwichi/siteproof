@@ -73,6 +73,7 @@ app.get('/', async (req, res) => {
 
 // ---------- the page of one company ----------
 const USERS_SHOWN = 200;
+const PRODUCTS_SHOWN = 10;
 async function showCompany(req, res, message, kind, seconds) {
     const [orgs] = await db().execute('SELECT * FROM organization WHERE org_id = ?', [req.params.id]);
     if (orgs.length === 0) return fail(res, 'Company not found.', 404);
@@ -103,7 +104,23 @@ async function showCompany(req, res, message, kind, seconds) {
     });
     const [[counted]] = await db().execute("SELECT COUNT(*) AS n FROM user_account WHERE org_id = ? AND role <> 'COMPANY'", [req.params.id]);
 
-    res.render('admin/company', { org: org, sameName: sameName, sameNameMany: sameName.length > 1, accounts: accounts, documents: documents, users: users,
+    // A supplier: its products (the first ones here, all of them with search and paging at /admin/products/company/:id).
+    let products = null;
+    if (orgs[0].org_type === 'SUPPLIER') {
+        const [[n]] = await db().execute('SELECT COUNT(*) AS total, COALESCE(SUM(active), 0) AS listed FROM supplier_product WHERE org_id = ?', [req.params.id]);
+        const [rows] = await db().execute(
+            `SELECT m.material_name AS material, m.unit AS unit, sp.active AS active,
+                    IF(sp.price_min = ROUND(sp.price_min), FORMAT(sp.price_min, 0), FORMAT(sp.price_min, 2)) AS priceMin,
+                    IF(sp.price_max = ROUND(sp.price_max), FORMAT(sp.price_max, 0), FORMAT(sp.price_max, 2)) AS priceMax,
+                    sp.price_min = sp.price_max AS samePrice
+             FROM supplier_product sp JOIN material m ON m.material_id = sp.material_id
+             WHERE sp.org_id = ? ORDER BY sp.active DESC, m.material_name LIMIT ` + PRODUCTS_SHOWN, [req.params.id]);
+        rows.forEach(r => { r.isListed = (r.active === 1); r.samePrice = (Number(r.samePrice) === 1); });
+        products = { rows: rows, total: Number(n.total), listed: Number(n.listed), unlisted: Number(n.total) - Number(n.listed),
+                     more: Number(n.total) > rows.length };
+    }
+
+    res.render('admin/company', { org: org, products: products, sameName: sameName, sameNameMany: sameName.length > 1, accounts: accounts, documents: documents, users: users,
                                   userTotal: Number(counted.n), moreUsers: Number(counted.n) > users.length, message: message, kind: kind, seconds: seconds });
 }
 

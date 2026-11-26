@@ -156,6 +156,10 @@ const adminUsers = require('./routes/adminUsers');
 adminUsers.connection = connection;
 app.use('/admin/users', requireRole('ADMIN'), adminUsers);       // before /admin, so that /admin does not catch it
 
+const adminProducts = require('./routes/adminProducts');
+adminProducts.connection = connection;
+app.use('/admin/products', requireRole('ADMIN'), adminProducts); // before /admin, so that /admin does not catch it
+
 const admin = require('./routes/admin');
 admin.connection = connection;
 app.use('/admin', requireRole('ADMIN'), admin);
