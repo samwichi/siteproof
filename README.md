@@ -141,7 +141,9 @@ The whole closed loop works from the first step to the last: the contractor crea
 
 **Security and everyday use:** the login cookie is never signed with the public example secret, wrong passwords are limited, the database uses Taiwan time, the login lasts while the user works, forgotten passwords are reset with a temporary password, inspections and ratings are saved in one transaction, and the supplier pages work on a phone ([website/README.md](website/README.md), section 2.12).
 
-**Next:** more automated tests (RFQ and registration) and the rest of the second phase (see section 2).
+**Automated tests:** `npm test` in the website folder runs 102 tests (`node:test`), from the registration to the RFQ and the whole closed loop ([website/README.md](website/README.md), "Automated tests").
+
+**Next:** the rest of the second phase (see section 2).
 
 ---
 ## 4. Project Documents

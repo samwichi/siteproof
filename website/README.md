@@ -26,6 +26,8 @@ Extra packages: `cookie-parser` (signed login cookie, as in the Express laborato
 
 4. Open http://localhost:8080
 
+**Reset the demo data** (for example on the morning of the demo, because the dates of the sample data are counted from the day of the reset): run `database\reset-demo.bat` in the folder of the repository (macOS / Linux: `sh database/reset-demo.sh`). It checks that the MySQL container `siteproof-mysql` runs and has the three data files, asks before it deletes anything, saves a backup in `database/backups/` (not committed), runs `01` to `04` and `06`, and shows the number of rows and the time slots of the sample deliveries. Another container name: `set SITEPROOF_DB_CONTAINER=<name>` first. Afterwards sign out of the website and sign in again.
+
 `config.js` is not committed (it is in `.gitignore`): the database IP is different on each computer. Commit changes of `config.example.js` instead.
 
 ## 2. Demo accounts (password of all: `siteproof123`)
@@ -282,8 +284,10 @@ npm test
 | `tests/listing.test.js` | Search, filter, sorting and paging: the text of the user never reaches the SQL text (SQL injection), plus a fuzz test | no |
 | `tests/adminProducts.test.js` | The administrator sees the products of all suppliers and, on the page of a supplier, the products of that supplier (also unlisted, also of suppliers that wait for the approval), the filters work, the page is read only, other roles get 403 | yes |
 | `tests/closedLoop.test.js` | The whole closed loop through the real routes: create, status steps, document upload, inspection with retention, rating, history, notifications; and what must be refused at each step | yes |
+| `tests/registration.test.js` | Demo steps 1 to 4: a supplier company registers with a proof document, the administrator approves (or rejects with a reason), a person registers for the company and its company account approves, the new supplier lists, unlists and lists again a product that contractors find; and what must be refused at each step (wrong values, wrong role or company type, another company) | yes |
+| `tests/rfq.test.js` | Demo steps 5 to 7: draft RFQ with materials and invited suppliers, send, quotations (send, change, withdraw), comparison (cheapest first), acceptance that creates one SCHEDULED delivery per material, notifications; cancel, the last day for the quotations (boundary), delete of a draft; and what must be refused at each step | yes |
 
-`tests/closedLoop.test.js` uses its own database **`siteproof_test`**, made again from `database/01_schema.sql` at every run, so the data of the website are never changed. The database user of `config.js` needs the right to create it (once, as root in the MySQL container):
+The tests that need MySQL use their own database **`siteproof_test`**, made again from `database/01_schema.sql` at every run, so the data of the website are never changed. The database user of `config.js` needs the right to create it (once, as root in the MySQL container):
 
 ```sql
 GRANT ALL ON siteproof_test.* TO 'siteproof'@'172.17.%';
