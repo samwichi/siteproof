@@ -1,0 +1,126 @@
+{{!-- The seller center: the home page of a supplier (routes/seller.js). Links use HTMX (hx-boost) and change only main#main. --}}
+<div hx-boost:inherited="true" hx-target:inherited="#main">
+  <section class="shop-hero rounded-3 p-4 mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h1 class="h2 mb-1">Seller center</h1>
+      <p class="mb-0">Welcome, {{user.name}}. This is what {{user.orgName}} has to do now.</p>
+    </div>
+    <a class="btn btn-outline-primary" href="/products?view=shop"><i aria-hidden="true" class="bi bi-shop"></i> See my products as contractors do</a>
+  </section>
+
+  <section aria-labelledby="todoHeading" class="mb-4">
+    <h2 id="todoHeading" class="visually-hidden">To do</h2>
+    <div class="row g-3">
+      {{#each cards}}
+      <div class="col-6 col-lg-3">
+        <a class="shop-tile card h-100 text-decoration-none {{#unless zero}}border-{{kind}} border-2{{/unless}}" href="{{href}}">
+          <div class="card-body">
+            <div class="d-flex align-items-center gap-2">
+              <i aria-hidden="true" class="bi {{icon}} fs-3 {{#if zero}}text-secondary{{else}}text-{{kind}}{{/if}}"></i>
+              <span class="display-6 fw-semibold text-body">{{n}}</span>
+            </div>
+            <div class="fw-semibold text-body">{{label}}</div>
+            <div class="small text-muted">{{hint}}</div>
+          </div>
+        </a>
+      </div>
+      {{/each}}
+    </div>
+  </section>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <section aria-labelledby="rfqHeading" class="mb-4">
+        <h2 id="rfqHeading" class="h5">Requests for quotation to answer</h2>
+        {{#if rfqs.length}}
+        <ul class="list-group">
+          {{#each rfqs}}
+          <li class="list-group-item d-flex justify-content-between align-items-center gap-2 flex-wrap">
+            <div>
+              <a class="text-decoration-none" href="/quotations/{{ID}}">RFQ #{{ID}} {{title}}</a>
+              <div class="small text-muted">{{contractor}}</div>
+            </div>
+            <span class="badge {{#if daysLeft}}text-bg-light border{{else}}text-bg-danger{{/if}}">Closes {{dueText}} ({{due}})</span>
+          </li>
+          {{/each}}
+        </ul>
+        {{#if moreRfqs}}<a class="small" href="/quotations">All RFQs to answer <i aria-hidden="true" class="bi bi-arrow-right"></i></a>{{/if}}
+        {{else}}
+        <p class="small text-muted">No request for quotation waits for your answer.</p>
+        {{/if}}
+      </section>
+
+      <section aria-labelledby="nextHeading" class="mb-4">
+        <h2 id="nextHeading" class="h5">Next deliveries</h2>
+        {{#if next.length}}
+        <ul class="list-group">
+          {{#each next}}
+          <li class="list-group-item d-flex justify-content-between align-items-center gap-2 flex-wrap">
+            <div>
+              <span class="fw-semibold">#{{ID}} {{material}}</span>
+              <div class="small text-muted">{{contractor}} · {{slotStart}}</div>
+            </div>
+            <span class="badge text-bg-secondary">{{status}}</span>
+          </li>
+          {{/each}}
+        </ul>
+        <a class="small" href="/assigned">Update the status in Assigned deliveries <i aria-hidden="true" class="bi bi-arrow-right"></i></a>
+        {{else}}
+        <p class="small text-muted">No delivery to work on.</p>
+        {{/if}}
+      </section>
+    </div>
+
+    <div class="col-lg-4">
+      <section aria-labelledby="statsHeading" class="card mb-3">
+        <div class="card-body">
+          <h2 id="statsHeading" class="h5">My performance</h2>
+          <div class="mb-2">
+            {{#if stats.average}}
+              <span class="stars fs-5" role="img" aria-label="{{stats.average}} out of 5">{{stats.averageStars}}</span>
+              <span class="fw-semibold">{{stats.average}}</span> <small class="text-muted">({{stats.rated}} rated)</small>
+            {{else}}<span class="text-muted">No rating yet</span>{{/if}}
+          </div>
+          <ul class="list-unstyled small mb-2">
+            <li><i aria-hidden="true" class="bi bi-clock"></i> On time: {{#if stats.arrived}}<strong>{{stats.onTimePercent}}%</strong> ({{stats.onTime}} of {{stats.arrived}} arrived){{else}}<span class="text-muted">no delivery arrived yet</span>{{/if}}</li>
+            <li><i aria-hidden="true" class="bi bi-check2-circle"></i> Completed: <strong>{{stats.completed}}</strong> of {{stats.deliveries}} deliveries</li>
+          </ul>
+          <a class="small" href="/history">My rating and history <i aria-hidden="true" class="bi bi-arrow-right"></i></a>
+        </div>
+      </section>
+
+      <section aria-labelledby="productsHeading" class="card mb-3">
+        <div class="card-body">
+          <h2 id="productsHeading" class="h5">My products</h2>
+          <p class="small mb-2"><strong>{{products.listed}}</strong> listed · <strong>{{products.unlisted}}</strong> unlisted</p>
+          {{#if products.top.length}}
+          <div class="small text-muted">Ordered most:</div>
+          <ol class="small ps-3 mb-2">
+            {{#each products.top}}<li>{{material}} <span class="text-muted">({{text}})</span></li>{{/each}}
+          </ol>
+          {{/if}}
+          <a class="small" href="/products">Manage my products <i aria-hidden="true" class="bi bi-arrow-right"></i></a>
+        </div>
+      </section>
+
+      <section aria-labelledby="ratingsHeading" class="card">
+        <div class="card-body">
+          <h2 id="ratingsHeading" class="h5">Latest ratings</h2>
+          {{#if ratings.length}}
+          <ul class="list-unstyled small mb-0">
+            {{#each ratings}}
+            <li class="mb-2">
+              <span class="stars" role="img" aria-label="{{score}} out of 5">{{stars}}</span>
+              <span class="text-muted">{{day}}</span>
+              <div>{{contractor}} · {{material}}</div>
+            </li>
+            {{/each}}
+          </ul>
+          {{else}}
+          <p class="small text-muted mb-0">No rating yet.</p>
+          {{/if}}
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

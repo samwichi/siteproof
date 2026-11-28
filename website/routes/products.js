@@ -1,6 +1,8 @@
 // Product catalog of a supplier ("My products"): the supplier adds the materials that its company can provide, with the price range
 // per unit, the minimum order and the lead time, and edits, unlists (takes off the catalog for now) or deletes them.
-// The contractors search the listed products of all approved suppliers on the page "Find products" (routes/catalog.js).
+// The contractors find the listed products of all approved suppliers in their shop (routes/shop.js).
+// Two views of the same products: the table (to add, edit and unlist them) and the storefront (/products?view=shop): the listed products
+// as cards, like the contractors see them in the shop, with the place of the price among the approved suppliers of the material.
 // Rules:
 //   - every query is limited to the company of the logged-in supplier (sp.org_id = req.user.orgId);
 //   - a company offers each material only once (UNIQUE in the database), so the material cannot be changed after the product is added;
@@ -9,6 +11,7 @@ const express = require('express');
 const { fail, sqlMessage } = require('../lib/respond');
 const { readList } = require('../lib/listing');
 const { findMaterials } = require('../lib/materials');
+const supplierStats = require('../lib/supplierStats');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -97,8 +100,49 @@ function readFields(b) {
     return { priceMin: round(priceMin), priceMax: round(priceMax), minOrder: minOrder === null ? null : round(minOrder), leadTime: leadTime, note: note || null };
 }
 
-// ---------- R: list (with the form to add a product at the top) ----------
+// ---------- R: the storefront view: the listed products as the contractors see them ----------
+// "1 day", "3 days", "1 listed product" (Handlebars cannot compare numbers, so the text is made here).
+const plural = (n, word) => n + ' ' + word + (n === 1 ? '' : 's');
+const ICONS = { Labor: 'bi-person-gear', Equipment: 'bi-truck-front', Material: 'bi-bricks', Other: 'bi-box-seam' };
+
+async function showStorefront(req, res) {
+    const orgId = req.user.orgId;
+    // The place of the lowest price among the approved suppliers that list the same material (1 = the cheapest; the same price shares the place).
+    const [cards] = await db().execute(
+        `SELECT m.material_id AS id, m.material_name AS name, m.unit, c.category_name AS category,
+                ${money('sp.price_min')} AS priceMin, ${money('sp.price_max')} AS priceMax, (sp.price_min = sp.price_max) AS samePrice,
+                CAST(sp.min_order_qty AS DOUBLE) AS minOrder, sp.lead_time_days AS leadTime,
+                (SELECT COUNT(*) FROM supplier_product o JOIN organization s ON s.org_id = o.org_id AND s.org_type = 'SUPPLIER' AND s.status = 'APPROVED'
+                 WHERE o.material_id = sp.material_id AND o.active = 1) AS suppliers,
+                (SELECT COUNT(*) FROM supplier_product o JOIN organization s ON s.org_id = o.org_id AND s.org_type = 'SUPPLIER' AND s.status = 'APPROVED'
+                 WHERE o.material_id = sp.material_id AND o.active = 1 AND o.price_min < sp.price_min) + 1 AS place
+         FROM supplier_product sp
+         JOIN material m          ON m.material_id = sp.material_id
+         JOIN material_category c ON c.category_id = m.category_id
+         WHERE sp.org_id = ? AND sp.active = 1
+         ORDER BY m.material_name, m.material_id`, [orgId]);
+    cards.forEach(card => {
+        card.icon = ICONS[card.category] || 'bi-box-seam';
+        card.samePrice = Boolean(card.samePrice);
+        card.suppliers = Number(card.suppliers);
+        card.place = Number(card.place);
+        card.alone = (card.suppliers === 1);
+        card.cheapest = (card.place === 1 && !card.alone);
+        card.placeText = card.alone ? 'Only supplier of this material' : card.cheapest ? 'Lowest price of ' + card.suppliers + ' suppliers'
+            : 'Price place ' + card.place + ' of ' + card.suppliers + ' suppliers';
+        card.leadText = card.leadTime === null ? null : plural(card.leadTime, 'day');
+    });
+    const [[org]] = await db().execute('SELECT org_name AS name, status FROM organization WHERE org_id = ?', [orgId]);
+    const [[unlisted]] = await db().execute('SELECT COUNT(*) AS n FROM supplier_product WHERE org_id = ? AND active = 0', [orgId]);
+    res.render('products/storefront', {
+        shopView: true, company: org.name, approved: org.status === 'APPROVED', cards: cards, cardsText: plural(cards.length, 'listed product'),
+        unlisted: Number(unlisted.n), unlistedText: plural(Number(unlisted.n), 'unlisted product'), stats: await supplierStats.summary(db(), orgId)
+    });
+}
+
+// ---------- R: list (with the form to add a product at the top), or the storefront view ----------
 app.get('/', async (req, res) => {
+    if (req.query.view === 'shop') return showStorefront(req, res);
     await showList(req, res);
 });
 

@@ -1,0 +1,7 @@
+{{!-- The two views of My products: the table (to add and edit) and the storefront (as the contractors see the products). Parameter: shopView. --}}
+<div class="btn-group" role="group" aria-label="View of my products">
+  <a class="btn btn-outline-primary{{#unless shopView}} active{{/unless}}" href="/products" hx-boost="true" hx-target="#main"{{#unless shopView}} aria-current="page"{{/unless}}>
+    <i aria-hidden="true" class="bi bi-table"></i> Table</a>
+  <a class="btn btn-outline-primary{{#if shopView}} active{{/if}}" href="/products?view=shop" hx-boost="true" hx-target="#main"{{#if shopView}} aria-current="page"{{/if}}>
+    <i aria-hidden="true" class="bi bi-shop"></i> As contractors see them</a>
+</div>

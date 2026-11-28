@@ -1,0 +1,57 @@
+{{!-- The storefront view of My products: the listed products of the supplier as the contractors see them in the shop (routes/products.js). --}}
+<div hx-boost:inherited="true" hx-target:inherited="#main">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h1 class="h2 mb-0">My products</h1>
+    {{> products/viewSwitch}}
+  </div>
+
+  <section class="shop-hero rounded-3 p-4 mb-4">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <span class="shop-icon shop-icon-lg rounded-3"><i aria-hidden="true" class="bi bi-shop"></i></span>
+      <div class="flex-grow-1">
+        <h2 class="h3 mb-1">{{company}}</h2>
+        <div>
+          {{#if stats.average}}
+            <span class="stars" role="img" aria-label="{{stats.average}} out of 5">{{stats.averageStars}}</span> {{stats.average}}
+            <small class="text-muted">({{stats.rated}} rated)</small>
+          {{else}}<span class="text-muted">No rating yet</span>{{/if}}
+          {{#if stats.arrived}} · <span>{{stats.onTimePercent}}% on time</span>{{/if}}
+          · <span>{{cardsText}}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="text-muted">This is how the contractors see your products in their shop: the price range, the lead time and the minimum order.
+     The place of your price shows how your lowest price compares with the other approved suppliers of the same material.
+     {{#if unlisted}}Not shown: {{unlistedText}}.{{/if}}</p>
+  {{#unless approved}}<div class="alert alert-warning">Your company is not approved yet, so the contractors do not see these products yet.</div>{{/unless}}
+
+  {{#if cards.length}}
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3">
+    {{#each cards}}
+    <div class="col">
+      <div class="card h-100 {{#if cheapest}}border-success border-2{{/if}}">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex align-items-start gap-2 mb-2">
+            <span class="shop-icon rounded-2"><i aria-hidden="true" class="bi {{icon}}"></i></span>
+            <h3 class="h6 mb-0 shop-name" title="{{name}}">{{name}}</h3>
+          </div>
+          <div class="small text-muted mb-2">{{category}} · per {{unit}}</div>
+          <div class="fw-semibold">NT$ {{#if samePrice}}{{priceMin}}{{else}}{{priceMin}} - {{priceMax}}{{/if}} <span class="small text-muted fw-normal">/ {{unit}}</span></div>
+          <ul class="list-unstyled small text-muted mb-2">
+            <li>Lead time: {{#if leadText}}{{leadText}}{{else}}not given{{/if}}</li>
+            <li>Minimum order: {{#if minOrder}}{{minOrder}} {{unit}}{{else}}none{{/if}}</li>
+          </ul>
+          <div class="mt-auto">
+            <span class="badge {{#if cheapest}}text-bg-success{{else if alone}}text-bg-info{{else}}text-bg-light border{{/if}}">{{placeText}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+  {{else}}
+  <p class="text-muted">No product is listed. <a href="/products">Add your first product</a> in the table view so that contractors can find you.</p>
+  {{/if}}
+</div>

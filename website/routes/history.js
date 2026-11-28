@@ -3,6 +3,7 @@
 // how many deliveries were rated, how the scores are distributed, and the list of its deliveries with the
 // inspection result and the score of each one.
 const express = require('express');
+const supplierStats = require('../lib/supplierStats');
 const app = express.Router();
 
 const db = () => app.connection.promise();
@@ -14,29 +15,14 @@ const BADGES = {
 
 const MAX_ROWS = 100;       // the list shows the latest deliveries; the summary always counts all of them
 
-const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
+const stars = supplierStats.stars;
 
 // ---------- R: rating summary and delivery history ----------
 app.get('/', async (req, res) => {
     const orgId = req.user.orgId;
 
-    // The summary over all the deliveries of the supplier.
-    const [[sum]] = await db().execute(
-        `SELECT COUNT(*)                          AS deliveries,
-                COALESCE(SUM(d.status = 'COMPLETED'), 0) AS completed,
-                COUNT(r.score)                    AS rated,
-                CAST(AVG(r.score) AS DOUBLE)      AS average
-         FROM delivery d
-         LEFT JOIN supplier_rating r ON r.delivery_id = d.delivery_id
-         WHERE d.org_id = ?`, [orgId]);
-
-    // Punctuality: for every delivery that arrived, was its last arrival (DELIVERED in delivery_event) inside the time slot?
-    const [[punctual]] = await db().execute(
-        `SELECT COUNT(*) AS arrived, COALESCE(SUM(a.at <= d.slot_end), 0) AS onTime
-         FROM delivery d
-         JOIN (SELECT delivery_id, MAX(created_at) AS at FROM delivery_event WHERE event = 'DELIVERED' GROUP BY delivery_id) a
-           ON a.delivery_id = d.delivery_id
-         WHERE d.org_id = ? AND d.status IN ('DELIVERED', 'INSPECTED', 'COMPLETED')`, [orgId]);
+    // The summary over all the deliveries of the supplier (lib/supplierStats.js, the same numbers as in the seller center).
+    const summary = await supplierStats.summary(db(), orgId);
 
     // How many deliveries got each score (5 to 1).
     const [counts] = await db().execute(
@@ -46,7 +32,7 @@ app.get('/', async (req, res) => {
     const distribution = [5, 4, 3, 2, 1].map(score => {
         const found = counts.find(c => c.score === score);
         const n = found ? Number(found.n) : 0;
-        return { score: score, n: n, percent: sum.rated > 0 ? Math.round(n * 100 / sum.rated) : 0 };
+        return { score: score, n: n, percent: summary.rated > 0 ? Math.round(n * 100 / summary.rated) : 0 };
     });
 
     // The history: newest first. The limit is written in the SQL text because it is a fixed number.
@@ -81,17 +67,6 @@ app.get('/', async (req, res) => {
         }
         if (row.score) row.stars = stars(row.score);
     }
-
-    const summary = {
-        deliveries: Number(sum.deliveries),
-        completed: Number(sum.completed),
-        rated: Number(sum.rated),
-        average: sum.average === null ? null : sum.average.toFixed(1),      // text like 3.0, so the page always shows one decimal
-    };
-    summary.averageStars = sum.average === null ? '' : stars(Math.round(sum.average));
-    summary.arrived = Number(punctual.arrived);
-    summary.onTime = Number(punctual.onTime);
-    summary.onTimePercent = summary.arrived ? Math.round(summary.onTime / summary.arrived * 100) : null;
 
     res.render('history/index', {
         summary: summary,

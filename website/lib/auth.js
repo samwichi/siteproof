@@ -18,7 +18,7 @@ const ROLE_NAMES = {
 const HOME_PAGES = {
     CONTRACTOR_PM: '/shop',
     INSPECTOR: '/inspections',
-    SUPPLIER: '/assigned',
+    SUPPLIER: '/seller',
     COMPANY: '/company',
     ADMIN: '/admin'
 };
