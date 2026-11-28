@@ -60,8 +60,14 @@ files.connection = connection;
 app.use('/files/document', requireRole('CONTRACTOR_PM', 'SUPPLIER', 'INSPECTOR'), files);
 
 // ---- Homepage and the wildcard route (partial page updates, see laboratory section 5) ----
-app.get('/', (req, res) => {
-    if (req.get('HX-Request')) {
+// The Home page of a contractor project manager is the shop (routes/shop.js); the other roles get the short welcome text.
+const shop = require('./routes/shop');
+shop.connection = connection;
+app.get('/', (req, res, next) => {
+    if (req.get('HX-Request') && res.locals.isContractor) {
+        shop.showHome(req, res).catch(next);
+    }
+    else if (req.get('HX-Request')) {
         res.render('home');
     }
     else {
@@ -87,6 +93,8 @@ app.use('/', auth);
 const deliveries = require('./routes/deliveries');
 deliveries.connection = connection;
 app.use('/deliveries', requireRole('CONTRACTOR_PM'), deliveries);
+
+app.use('/shop', requireRole('CONTRACTOR_PM'), shop);
 
 const rfqs = require('./routes/rfqs');
 rfqs.connection = connection;

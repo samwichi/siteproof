@@ -1,0 +1,104 @@
+{{!-- The shop: the home page of a contractor (routes/shop.js). Links and the search form use HTMX (hx-boost) and change only main#main. --}}
+<div hx-boost:inherited="true" hx-target:inherited="#main">
+  <section class="shop-hero rounded-3 p-4 p-md-5 mb-4">
+    <h1 class="h2 mb-1">Welcome, {{user.name}}</h1>
+    <p class="mb-3">What does your site need? Compare the prices, lead times and ratings of {{#if total}}the approved suppliers{{else}}the suppliers{{/if}}, then order with one click.</p>
+    <form action="/shop" method="get" role="search" hx-push-url="true">
+      {{#if category}}<input type="hidden" name="category" value="{{category.id}}">{{/if}}
+      <div class="input-group input-group-lg">
+        <span class="input-group-text bg-white"><i aria-hidden="true" class="bi bi-search"></i></span>
+        <input class="form-control" type="search" name="q" value="{{q}}" placeholder="Search a material (rebar, cement, plywood ...)" aria-label="Search a material">
+        <button class="btn btn-primary" type="submit">Search</button>
+      </div>
+    </form>
+  </section>
+
+  <section aria-labelledby="categoriesHeading" class="mb-4">
+    <h2 id="categoriesHeading" class="visually-hidden">Categories</h2>
+    <div class="row g-3">
+      {{#each categories}}
+      <div class="col-6 col-lg-3">
+        <a class="shop-tile card h-100 text-decoration-none {{#if chosen}}border-primary border-2{{/if}}" href="/shop?category={{id}}" {{#if chosen}}aria-current="true"{{/if}}>
+          <div class="card-body d-flex align-items-center gap-3">
+            <i aria-hidden="true" class="bi {{icon}} fs-2 text-primary"></i>
+            <div>
+              <div class="fw-semibold text-body">{{name}}</div>
+              <div class="small text-muted">{{materialsText}}</div>
+            </div>
+          </div>
+        </a>
+      </div>
+      {{/each}}
+    </div>
+  </section>
+
+  <div class="row g-4">
+    <section class="col-lg-9" aria-labelledby="materialsHeading">
+      <div class="d-flex justify-content-between align-items-baseline flex-wrap gap-2 mb-2">
+        <h2 id="materialsHeading" class="h4 mb-0">{{heading}}</h2>
+        {{#if searching}}<a class="small" href="/shop"><i aria-hidden="true" class="bi bi-x-circle"></i> Show the popular materials</a>{{/if}}
+      </div>
+      {{#if cards.length}}
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
+        {{#each cards}}
+        <div class="col">
+          <a class="shop-card card h-100 text-decoration-none text-body" href="/shop/materials/{{id}}">
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex align-items-start gap-2 mb-2">
+                <span class="shop-icon rounded-2"><i aria-hidden="true" class="bi {{icon}}"></i></span>
+                <h3 class="h6 mb-0 shop-name" title="{{name}}">{{name}}</h3>
+              </div>
+              <div class="small text-muted mb-2">{{category}} · per {{unit}}</div>
+              <div class="mt-auto">
+                <div class="fw-semibold">{{#if samePrice}}NT$ {{lowest}}{{else}}from NT$ {{lowest}}{{/if}} <span class="small text-muted fw-normal">/ {{unit}}</span></div>
+                <div class="small text-muted">
+                  {{suppliersText}}{{#if bought}} · bought {{boughtText}}{{/if}}
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+        {{/each}}
+      </div>
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+        <small class="text-muted">{{from}}-{{to}} of {{total}}</small>
+        {{#if showPager}}
+        <nav aria-label="Pages">
+          <ul class="pagination pagination-sm mb-0">
+            {{#if prevHref}}<li class="page-item"><a class="page-link" href="{{prevHref}}" aria-label="Previous page">&laquo;</a></li>
+            {{else}}<li class="page-item disabled"><span class="page-link">&laquo;</span></li>{{/if}}
+            <li class="page-item active"><span class="page-link" aria-current="page">{{page}} / {{pages}}</span></li>
+            {{#if nextHref}}<li class="page-item"><a class="page-link" href="{{nextHref}}" aria-label="Next page">&raquo;</a></li>
+            {{else}}<li class="page-item disabled"><span class="page-link">&raquo;</span></li>{{/if}}
+          </ul>
+        </nav>
+        {{/if}}
+      </div>
+      {{else}}
+      <p class="text-muted">{{#if searching}}No material matches your search. Try a shorter word or another category.{{else}}No supplier has listed a product yet.{{/if}}</p>
+      {{/if}}
+    </section>
+
+    <aside class="col-lg-3" aria-labelledby="openHeading">
+      <h2 id="openHeading" class="h5">My open deliveries</h2>
+      {{#if open.length}}
+      <ul class="list-group mb-2">
+        {{#each open}}
+        <li class="list-group-item">
+          <a class="text-decoration-none" href="/deliveries/{{ID}}">#{{ID}} {{material}}</a>
+          <div class="small text-muted">{{supplier}} · {{slotStart}}</div>
+          <span class="badge text-bg-{{badge}}">{{status}}</span>{{#if declined}} <span class="badge text-bg-danger">Declined</span>{{/if}}
+        </li>
+        {{/each}}
+      </ul>
+      <a class="small" href="/deliveries">{{#if openMore}}All {{openTotal}} open deliveries{{else}}My deliveries{{/if}} <i aria-hidden="true" class="bi bi-arrow-right"></i></a>
+      {{else}}
+      <p class="small text-muted">No open delivery. Choose a material to order.</p>
+      {{/if}}
+      <div class="d-grid gap-2 mt-3">
+        <a class="btn btn-outline-primary btn-sm" href="/rfqs/new"><i aria-hidden="true" class="bi bi-envelope-paper"></i> New request for quotation</a>
+        <a class="btn btn-outline-secondary btn-sm" href="/catalog"><i aria-hidden="true" class="bi bi-table"></i> All products as a table</a>
+      </div>
+    </aside>
+  </div>
+</div>

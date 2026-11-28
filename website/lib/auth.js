@@ -16,7 +16,7 @@ const ROLE_NAMES = {
 
 // The page where each role starts (after the login and after a registration).
 const HOME_PAGES = {
-    CONTRACTOR_PM: '/deliveries',
+    CONTRACTOR_PM: '/shop',
     INSPECTOR: '/inspections',
     SUPPLIER: '/assigned',
     COMPANY: '/company',
