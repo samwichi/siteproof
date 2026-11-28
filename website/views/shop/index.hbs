@@ -7,7 +7,7 @@
       {{#if category}}<input type="hidden" name="category" value="{{category.id}}">{{/if}}
       <div class="input-group input-group-lg">
         <span class="input-group-text bg-white"><i aria-hidden="true" class="bi bi-search"></i></span>
-        <input class="form-control" type="search" name="q" value="{{q}}" placeholder="Search a material (rebar, cement, plywood ...)" aria-label="Search a material">
+        <input class="form-control" type="search" name="q" value="{{q}}" placeholder="Search a material or a supplier" aria-label="Search a material or a supplier">
         <button class="btn btn-primary" type="submit">Search</button>
       </div>
     </form>
@@ -98,6 +98,7 @@
       <div class="d-grid gap-2 mt-3">
         <a class="btn btn-outline-primary btn-sm" href="/rfqs/new"><i aria-hidden="true" class="bi bi-envelope-paper"></i> New request for quotation</a>
         <a class="btn btn-outline-secondary btn-sm" href="/catalog"><i aria-hidden="true" class="bi bi-table"></i> All products as a table</a>
+        <small class="text-muted text-center">Sort by price, rating, lead time or minimum order</small>
       </div>
     </aside>
   </div>

@@ -105,6 +105,23 @@ test('the category tiles count the materials that can be bought, and filter the 
     assert.ok(filtered.body.includes('aria-current="true"'), 'the chosen tile is marked');
 });
 
+test('the menu of the contractor has one entry: Home is the shop, the product table is linked from the shop', async t => {
+    if (guard(t)) return;
+    const body = (await users.pm.get('/shop')).body;
+    assert.ok(!body.includes('Find products'), 'no separate menu item');
+    assert.ok(!body.includes('bi-shop'), 'no separate Shop item');
+    assert.ok(body.includes('href="/catalog"'), 'the table is still reachable');
+    assert.equal((await users.pm.get('/catalog')).status, 200);
+});
+
+test('the search also finds the materials of a supplier (only approved suppliers, only listed products)', async t => {
+    if (guard(t)) return;
+    assert.deepEqual(cardNames((await users.pm.get('/shop?q=cheap')).body), ['Rebar SD420', 'Mobile crane 25 t']);
+    assert.deepEqual(cardNames((await users.pm.get('/shop?q=' + encodeURIComponent('Waiting Supplier'))).body), [], 'not approved');
+    const [[equipment]] = await db.execute("SELECT category_id FROM material_category WHERE category_name = 'Equipment'");
+    assert.deepEqual(cardNames((await users.pm.get('/shop?q=cheap&category=' + equipment.category_id)).body), ['Mobile crane 25 t']);
+});
+
 test('the search finds materials by name or ID; % is searched as a normal character', async t => {
     if (guard(t)) return;
     assert.deepEqual(cardNames((await users.pm.get('/shop?q=rebar')).body), ['Rebar SD420']);

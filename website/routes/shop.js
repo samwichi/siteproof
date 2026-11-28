@@ -1,5 +1,5 @@
 // The shop: the home page of a contractor project manager, made like an online store.
-//   - /            (app.js sends the Home page of a contractor here) and /shop: a big search box, the categories as tiles, the popular
+//   - /            (app.js sends the Home page of a contractor here) and /shop: a big search box (material or supplier), the categories as tiles, the popular
 //                  materials as cards (or the materials that match the search), and the deliveries of the company that are still open;
 //   - /shop/materials/:id: the page of one material, like the page of a product in a store: every approved supplier that offers it,
 //                  the cheapest first, with its price range, minimum order, lead time and rating, and the button "Order".
@@ -59,8 +59,11 @@ async function readMaterials(q, category, page) {
     let where = '';
     const args = [];
     if (q) {
-        where += ' AND (m.material_name LIKE ? OR m.material_id LIKE ?)';
-        args.push(like(q), like(q));
+        // The name or ID of the material, or the name of an approved supplier that lists it (so "Find products" is not needed for that).
+        where += ` AND (m.material_name LIKE ? OR m.material_id LIKE ? OR EXISTS (
+                       SELECT 1 FROM supplier_product sq JOIN organization so ON so.org_id = sq.org_id AND so.org_type = 'SUPPLIER' AND so.status = 'APPROVED'
+                       WHERE sq.material_id = m.material_id AND sq.active = 1 AND so.org_name LIKE ?))`;
+        args.push(like(q), like(q), like(q));
     }
     if (category) {
         where += ' AND m.category_id = ?';
