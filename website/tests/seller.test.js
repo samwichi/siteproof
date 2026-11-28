@@ -1,5 +1,5 @@
 // The seller center, the home page of a supplier (routes/seller.js): the numbers of the work to do, the next deliveries,
-// the RFQs to answer, the performance, the products and the latest ratings; and "My storefront" with the place of the prices.
+// the RFQs to answer, the performance, the products and the latest ratings; and the storefront view of My products with the place of the prices.
 // Uses the test database siteproof_test like the other system tests. Without MySQL the tests are skipped.
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
@@ -81,10 +81,10 @@ test('the supplier starts in the seller center, and Home is the seller center to
     assert.ok(home.body.includes('Seller center'));
 });
 
-test('only suppliers can open the seller center and the storefront', async t => {
+test('only suppliers can open the seller center and the storefront view', async t => {
     if (guard(t)) return;
     assert.equal((await users.pm.get('/seller')).status, 403);
-    assert.equal((await users.pm.get('/seller/storefront')).status, 403);
+    assert.equal((await users.pm.get('/products?view=shop')).status, 403);
     assert.equal((await new Browser(baseUrl).get('/seller')).hxRedirect, '/login');
 });
 
@@ -145,16 +145,30 @@ test('another supplier sees only its own numbers', async t => {
     assert.ok(body.includes('No rating yet'));
 });
 
-test('My storefront: the listed products as the contractors see them, with the place of the price', async t => {
+test('the storefront view of My products: the listed products as the contractors see them, with the place of the price', async t => {
     if (guard(t)) return;
-    const body = (await users.supplier.get('/seller/storefront')).body;
-    assert.equal(body.match(/<h2 class="h6 mb-0 shop-name"/g).length, 2, 'only the listed products');
+    const body = (await users.supplier.get('/products?view=shop')).body;
+    assert.equal(body.match(/<h3 class="h6 mb-0 shop-name"/g).length, 2, 'only the listed products');
+    assert.ok(/class="btn btn-outline-primary active" href="\/products\?view=shop"/.test(body), 'the storefront button is the active one');
     assert.ok(!body.includes('Mobile crane'), 'not the unlisted one');
     assert.ok(body.includes('Not shown: 1 unlisted product'));
     assert.ok(body.includes('Price place 2 of 2 suppliers'), 'rebar: the other supplier is cheaper, the one that is not approved is not counted');
     assert.ok(body.includes('Only supplier of this material'), 'cement');
     assert.ok(body.includes('Lead time: 3 days') && body.includes('Lead time: 1 day<'), 'plural of day');
-    const other = (await users.other.get('/seller/storefront')).body;
+    const other = (await users.other.get('/products?view=shop')).body;
     assert.ok(other.includes('Lowest price of 2 suppliers'));
     assert.ok(!other.includes('Cement Type I'), 'only its own products');
+});
+
+test('My products has one entry: the table view links to the storefront view, the old address goes there too', async t => {
+    if (guard(t)) return;
+    const table = (await users.supplier.get('/products')).body;
+    assert.ok(/class="btn btn-outline-primary active" href="\/products"/.test(table), 'the table button is the active one');
+    assert.ok(table.includes('href="/products?view=shop"'));
+    const old = await users.supplier.get('/seller/storefront');
+    assert.equal(old.status, 302);
+    assert.equal(old.location, '/products?view=shop');
+    // The menu is in the full page (without the header HX-Request).
+    const page = await (await fetch(baseUrl + '/', { headers: { Cookie: users.supplier.cookie } })).text();
+    assert.ok(page.includes('href="/products"') && !page.includes('My storefront'), 'one menu item: My products');
 });

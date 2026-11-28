@@ -1,17 +1,15 @@
-{{!-- My storefront: the listed products of the supplier as the contractors see them in the shop (routes/seller.js). --}}
+{{!-- The storefront view of My products: the listed products of the supplier as the contractors see them in the shop (routes/products.js). --}}
 <div hx-boost:inherited="true" hx-target:inherited="#main">
-  <nav aria-label="breadcrumb" class="mt-3">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="/seller">Seller center</a></li>
-      <li class="breadcrumb-item active" aria-current="page">My storefront</li>
-    </ol>
-  </nav>
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h1 class="h2 mb-0">My products</h1>
+    {{> products/viewSwitch}}
+  </div>
 
   <section class="shop-hero rounded-3 p-4 mb-4">
     <div class="d-flex align-items-center gap-3 flex-wrap">
       <span class="shop-icon shop-icon-lg rounded-3"><i aria-hidden="true" class="bi bi-shop"></i></span>
       <div class="flex-grow-1">
-        <h1 class="h3 mb-1">{{company}}</h1>
+        <h2 class="h3 mb-1">{{company}}</h2>
         <div>
           {{#if stats.average}}
             <span class="stars" role="img" aria-label="{{stats.average}} out of 5">{{stats.averageStars}}</span> {{stats.average}}
@@ -21,7 +19,6 @@
           · <span>{{cardsText}}</span>
         </div>
       </div>
-      <a class="btn btn-primary" href="/products"><i aria-hidden="true" class="bi bi-pencil-square"></i> Edit my products</a>
     </div>
   </section>
 
@@ -38,7 +35,7 @@
         <div class="card-body d-flex flex-column">
           <div class="d-flex align-items-start gap-2 mb-2">
             <span class="shop-icon rounded-2"><i aria-hidden="true" class="bi {{icon}}"></i></span>
-            <h2 class="h6 mb-0 shop-name" title="{{name}}">{{name}}</h2>
+            <h3 class="h6 mb-0 shop-name" title="{{name}}">{{name}}</h3>
           </div>
           <div class="small text-muted mb-2">{{category}} · per {{unit}}</div>
           <div class="fw-semibold">NT$ {{#if samePrice}}{{priceMin}}{{else}}{{priceMin}} - {{priceMax}}{{/if}} <span class="small text-muted fw-normal">/ {{unit}}</span></div>
@@ -55,6 +52,6 @@
     {{/each}}
   </div>
   {{else}}
-  <p class="text-muted">No product is listed. <a href="/products">Add your first product</a> so that contractors can find you.</p>
+  <p class="text-muted">No product is listed. <a href="/products">Add your first product</a> in the table view so that contractors can find you.</p>
   {{/if}}
 </div>

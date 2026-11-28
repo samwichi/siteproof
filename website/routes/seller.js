@@ -2,8 +2,7 @@
 //   - /seller (app.js also sends the Home page of a supplier here): what needs to be done now (RFQs to answer, deliveries to ship,
 //     deliveries without a quality document, declined deliveries), the performance of the company (rating, on time, completed),
 //     its products (listed, unlisted, the most ordered) and the latest ratings;
-//   - /seller/storefront: "My storefront", the listed products of the company as cards, like the contractors see them in the shop,
-//     with the place of its price among all the approved suppliers of the material (1 = the cheapest).
+//   - the storefront view (the products as the contractors see them) is part of My products: /products?view=shop (routes/products.js).
 // Every query is limited to the company of the logged-in user (org_id = req.user.orgId). Read only.
 const express = require('express');
 const supplierStats = require('../lib/supplierStats');
@@ -11,12 +10,9 @@ const app = express.Router();
 
 const db = () => app.connection.promise();
 
-const money = column => `IF(${column} = ROUND(${column}), FORMAT(${column}, 0), FORMAT(${column}, 2))`;
 // "1 delivery", "2 deliveries" (Handlebars cannot compare numbers, so the text is made here).
 const plural = (n, word) => n + ' ' + (n === 1 ? word : /[^aeiou]y$/.test(word) ? word.slice(0, -1) + 'ies' : word + 's');
-const ICONS = { Labor: 'bi-person-gear', Equipment: 'bi-truck-front', Material: 'bi-bricks', Other: 'bi-box-seam' };
-const icon = name => ICONS[name] || 'bi-box-seam';
-const LISTED_SHOWN = 3;      // RFQs, deliveries and ratings shown under each heading of the seller center
+const LISTED_SHOWN = 3;      // RFQs, deliveries and ratings shown under each heading
 
 // ---------- the seller center ----------
 
@@ -111,42 +107,8 @@ async function showCenter(req, res) {
 
 app.get('/', showCenter);
 
-// ---------- My storefront ----------
-app.get('/storefront', async (req, res) => {
-    const orgId = req.user.orgId;
-    // The listed products, with the place of the lowest price among the approved suppliers that list the same material
-    // (1 = the cheapest; suppliers with the same price share the place).
-    const [cards] = await db().execute(
-        `SELECT m.material_id AS id, m.material_name AS name, m.unit, c.category_name AS category,
-                ${money('sp.price_min')} AS priceMin, ${money('sp.price_max')} AS priceMax, (sp.price_min = sp.price_max) AS samePrice,
-                CAST(sp.min_order_qty AS DOUBLE) AS minOrder, sp.lead_time_days AS leadTime, sp.note,
-                (SELECT COUNT(*) FROM supplier_product o JOIN organization s ON s.org_id = o.org_id AND s.org_type = 'SUPPLIER' AND s.status = 'APPROVED'
-                 WHERE o.material_id = sp.material_id AND o.active = 1) AS suppliers,
-                (SELECT COUNT(*) FROM supplier_product o JOIN organization s ON s.org_id = o.org_id AND s.org_type = 'SUPPLIER' AND s.status = 'APPROVED'
-                 WHERE o.material_id = sp.material_id AND o.active = 1 AND o.price_min < sp.price_min) + 1 AS place
-         FROM supplier_product sp
-         JOIN material m          ON m.material_id = sp.material_id
-         JOIN material_category c ON c.category_id = m.category_id
-         WHERE sp.org_id = ? AND sp.active = 1
-         ORDER BY m.material_name, m.material_id`, [orgId]);
-    cards.forEach(card => {
-        card.icon = icon(card.category);
-        card.samePrice = Boolean(card.samePrice);
-        card.suppliers = Number(card.suppliers);
-        card.place = Number(card.place);
-        card.alone = (card.suppliers === 1);
-        card.cheapest = (card.place === 1 && !card.alone);
-        card.placeText = card.alone ? 'Only supplier of this material' : card.cheapest ? 'Lowest price of ' + card.suppliers + ' suppliers'
-            : 'Price place ' + card.place + ' of ' + card.suppliers + ' suppliers';
-        card.leadText = card.leadTime === null ? null : plural(card.leadTime, 'day');
-    });
-    const [[org]] = await db().execute('SELECT org_name AS name, status FROM organization WHERE org_id = ?', [orgId]);
-    const [[unlisted]] = await db().execute('SELECT COUNT(*) AS n FROM supplier_product WHERE org_id = ? AND active = 0', [orgId]);
-    res.render('seller/storefront', {
-        company: org.name, approved: org.status === 'APPROVED', cards: cards, cardsText: plural(cards.length, 'listed product'),
-        unlisted: Number(unlisted.n), unlistedText: plural(Number(unlisted.n), 'unlisted product'), stats: await supplierStats.summary(db(), orgId)
-    });
-});
+// The old address of My storefront: it is now the storefront view of My products (routes/products.js).
+app.get('/storefront', (req, res) => res.redirect('/products?view=shop'));
 
 app.showCenter = showCenter;
 module.exports = app;
