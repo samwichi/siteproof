@@ -189,6 +189,14 @@ Rules:
 * On the right: **My open deliveries** of the company (not completed yet, the nearest time slot first), and links to a new RFQ and to the product table (Find products).
 * Only listed products of approved suppliers are shown. No database change.
 
+## 2.15 Seller center and My storefront (menu of a supplier: Home and My storefront)
+
+* After the sign in, a supplier starts in the **seller center** (`/seller`); the Home link shows it too.
+* Four cards with what needs to be done, each a link to the page where it is done: **RFQs to answer** (and when the first one closes), deliveries **to ship today or tomorrow** (and how many are open in all), deliveries **without a quality document** (on the way or delivered) and deliveries **declined** by the supplier.
+* The RFQs to answer and the next deliveries (the nearest first); **My performance** (average rating, on time, completed; the same numbers as My rating and history, `lib/supplierStats.js`); **My products** (listed, unlisted, the most ordered) and the **latest ratings**.
+* **My storefront** (`/seller/storefront`) shows the listed products as cards, like the contractors see them in the shop, with the **place of the price** among the approved suppliers of the same material ("Lowest price of 4 suppliers", "Price place 2 of 3 suppliers", "Only supplier of this material").
+* Every number is limited to the company of the user. Read only, no database change.
+
 ## 3. Folders
 
 ```
@@ -290,6 +298,7 @@ npm test
 | `tests/listing.test.js` | Search, filter, sorting and paging: the text of the user never reaches the SQL text (SQL injection), plus a fuzz test | no |
 | `tests/adminProducts.test.js` | The administrator sees the products of all suppliers and, on the page of a supplier, the products of that supplier (also unlisted, also of suppliers that wait for the approval), the filters work, the page is read only, other roles get 403 | yes |
 | `tests/shop.test.js` | The shop of the contractor: only listed products of approved suppliers, the most bought first, categories, search (also `%` and strange addresses), pages of 12 (boundary values), the page of a material with the cheapest offer first and Order, the open deliveries of the own company only, other roles get 403 | yes |
+| `tests/seller.test.js` | The seller center of a supplier: the cards count only the work of the own company (RFQs not answered yet, deliveries to ship soon, without a document, declined), the next deliveries, the performance (the same numbers as My rating and history), the products and ratings, My storefront with the place of the price; other roles get 403 | yes |
 | `tests/closedLoop.test.js` | The whole closed loop through the real routes: create, status steps, document upload, inspection with retention, rating, history, notifications; and what must be refused at each step | yes |
 
 `tests/closedLoop.test.js` uses its own database **`siteproof_test`**, made again from `database/01_schema.sql` at every run, so the data of the website are never changed. The database user of `config.js` needs the right to create it (once, as root in the MySQL container):
