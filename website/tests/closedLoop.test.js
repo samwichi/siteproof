@@ -50,7 +50,7 @@ const guard = t => { if (skip) { t.skip(skip); return true; } return false; };
 
 test('each role starts on its own page after the login', t => {
     if (guard(t)) return;
-    assert.equal(users.pm.home, '/deliveries');
+    assert.equal(users.pm.home, '/shop');
     assert.equal(users.supplier.home, '/assigned');
     assert.equal(users.inspector.home, '/inspections');
 });

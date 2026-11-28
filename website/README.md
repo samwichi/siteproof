@@ -74,7 +74,7 @@ Rules:
 * The catalog is filled at the start from the purchases of the given data (step 4.11 of `database/04_transform_load.sql`): each supplier offers the materials it has sold, with the lowest and highest unit price as the range. The demo suppliers also offer the materials of their sample deliveries (step 6.7b).
 * An existing database gets the new table with `database/08_upgrade_supplier_products.sql`.
 
-## 2.3 Find products (menu of a contractor)
+## 2.3 Find products (the product table: link "All products as a table" in the shop of a contractor)
 
 * The contractor searches the **listed** products of all **approved** suppliers by material, supplier or note, and filters by category. The same material is shown together with the cheapest supplier first, so the suppliers of a material are easy to compare.
 * Each row shows the price range per unit, the minimum order, the lead time and the **supplier rating** (the average of all the ratings that contractors gave this supplier, with the number of ratings). Every column can be sorted (for example by rating).
@@ -181,6 +181,14 @@ Rules:
 * The supplier's **My rating and history** shows how many of its deliveries arrived on time.
 * The sample data has a history for every sample delivery (counted from its time slot; delivery #2 arrived late). An existing database gets the table and an approximate history of its deliveries with `database/15_upgrade_delivery_history.sql`.
 
+## 2.14 Shop: the home page of a contractor (menu: Home)
+
+* After the sign in, a contractor project manager starts in the **shop** (`/shop`), made like an online store; the Home link shows it too. It is the only entry of the contractor for products: the product table (Find products, section 2.3) is linked from the shop, for sorting by price, rating, lead time or minimum order.
+* A big **search box** (material name or ID, or the name of a supplier: its materials are shown), the **categories as tiles** with the number of materials that can be bought in each one, and the **popular materials as cards**: the most bought first (the purchases of the given data plus the deliveries in SiteProof). Each card shows the lowest price per unit and how many suppliers offer the material. 12 cards per page.
+* The **page of a material** (`/shop/materials/<ID>`) shows every approved supplier that lists it, as cards with the price range, lead time, minimum order and rating; the cheapest is marked "Lowest price". **Order** opens the new delivery form with that supplier and material (as in Find products). "Paid before" shows the average unit price of the purchases of the given data, as a hint.
+* On the right: **My open deliveries** of the company (not completed yet, the nearest time slot first), and links to a new RFQ and to the product table (Find products).
+* Only listed products of approved suppliers are shown. No database change.
+
 ## 3. Folders
 
 ```
@@ -281,6 +289,7 @@ npm test
 | `tests/auth.test.js` | Role check and login cookie: every reason why an account may not be used any more (fake database) | no |
 | `tests/listing.test.js` | Search, filter, sorting and paging: the text of the user never reaches the SQL text (SQL injection), plus a fuzz test | no |
 | `tests/adminProducts.test.js` | The administrator sees the products of all suppliers and, on the page of a supplier, the products of that supplier (also unlisted, also of suppliers that wait for the approval), the filters work, the page is read only, other roles get 403 | yes |
+| `tests/shop.test.js` | The shop of the contractor: only listed products of approved suppliers, the most bought first, categories, search (also `%` and strange addresses), pages of 12 (boundary values), the page of a material with the cheapest offer first and Order, the open deliveries of the own company only, other roles get 403 | yes |
 | `tests/closedLoop.test.js` | The whole closed loop through the real routes: create, status steps, document upload, inspection with retention, rating, history, notifications; and what must be refused at each step | yes |
 
 `tests/closedLoop.test.js` uses its own database **`siteproof_test`**, made again from `database/01_schema.sql` at every run, so the data of the website are never changed. The database user of `config.js` needs the right to create it (once, as root in the MySQL container):

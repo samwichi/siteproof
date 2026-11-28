@@ -14,9 +14,7 @@
     <div class="collapse navbar-collapse" id="navbarContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         {{#if isContractor}}
-        <li class="nav-item">
-          <a class="nav-link" href="/catalog"><i aria-hidden="true" class="bi bi-search"></i> Find products</a>
-        </li>
+        {{!-- Home is the shop of the contractor (routes/shop.js); the product table (/catalog) is linked from the shop. --}}
         <li class="nav-item">
           <a class="nav-link" href="/rfqs"><i aria-hidden="true" class="bi bi-envelope-paper"></i> RFQs</a>
         </li>

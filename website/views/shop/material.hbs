@@ -1,0 +1,60 @@
+{{!-- The page of one material in the shop (routes/shop.js): every approved supplier that offers it, the cheapest first. --}}
+<div hx-boost:inherited="true" hx-target:inherited="#main">
+  <nav aria-label="breadcrumb" class="mt-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="/shop">Shop</a></li>
+      <li class="breadcrumb-item"><a href="/shop?category={{categoryId}}">{{category}}</a></li>
+      <li class="breadcrumb-item active text-truncate" aria-current="page" style="max-width: 60vw;">{{name}}</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex align-items-start gap-3 mb-3">
+    <span class="shop-icon shop-icon-lg rounded-3"><i aria-hidden="true" class="bi {{icon}}"></i></span>
+    <div>
+      <h1 class="h3 mb-1">{{name}}</h1>
+      <div class="text-muted">Material {{id}} · {{category}} · price per {{unit}}</div>
+    </div>
+  </div>
+
+  {{#if market}}
+  <div class="alert alert-light border small" role="note">
+    <i aria-hidden="true" class="bi bi-graph-up"></i>
+    <strong>Paid before:</strong> NT$ {{market.average}} / {{unit}} on average in {{market.text}}
+    (NT$ {{market.lowest}} to {{market.highest}}, latest {{market.latest}}). A hint for the price, not an offer.
+  </div>
+  {{/if}}
+
+  <h2 class="h5">{{offersText}}</h2>
+  {{#if offers.length}}
+  <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+    {{#each offers}}
+    <div class="col">
+      <div class="card h-100 {{#if cheapest}}border-success border-2{{/if}}">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <h3 class="h6 mb-1">{{supplier}}</h3>
+            {{#if cheapest}}<span class="badge text-bg-success">Lowest price</span>{{/if}}
+          </div>
+          <div class="mb-2">
+            {{#if averageText}}
+              <span class="stars" role="img" aria-label="{{averageText}} out of 5">{{stars}}</span> {{averageText}} <small class="text-muted">({{ratedText}})</small>
+            {{else}}<span class="small text-muted">No rating yet</span>{{/if}}
+          </div>
+          <div class="fs-5 fw-semibold">NT$ {{#if samePrice}}{{priceMin}}{{else}}{{priceMin}} - {{priceMax}}{{/if}} <span class="fs-6 text-muted fw-normal">/ {{../unit}}</span></div>
+          <ul class="list-unstyled small text-muted mb-3">
+            <li><i aria-hidden="true" class="bi bi-clock"></i> Lead time: {{#if leadText}}{{leadText}}{{else}}not given{{/if}}</li>
+            <li><i aria-hidden="true" class="bi bi-boxes"></i> Minimum order: {{#if minOrder}}{{minOrder}} {{../unit}}{{else}}none{{/if}}</li>
+            {{#if note}}<li><i aria-hidden="true" class="bi bi-info-circle"></i> {{note}}</li>{{/if}}
+          </ul>
+          <a class="btn btn-success mt-auto" href="/deliveries/new?product={{ID}}" aria-label="Order {{../name}} from {{supplier}}">
+            <i aria-hidden="true" class="bi bi-cart-plus"></i> Order
+          </a>
+        </div>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+  {{else}}
+  <p class="text-muted">No approved supplier offers this material at the moment.</p>
+  {{/if}}
+</div>
