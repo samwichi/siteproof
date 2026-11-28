@@ -6,6 +6,7 @@ const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const testDatabase = require('./helpers/testDatabase');
 const { Browser } = require('./helpers/browser');
+const { HOME_PAGES } = require('../lib/auth');      // the first page of each role (it can change, the test follows it)
 
 let skip = null;
 let app, server, db, baseUrl;
@@ -117,7 +118,7 @@ test('the administrator sees the waiting company with its document and approves 
     assert.equal((await users.admin.post('/admin/companies/' + newOrgId + '/approve')).status, 200);
     assert.equal(await count("SELECT COUNT(*) AS n FROM organization WHERE org_id = ? AND status = 'APPROVED'", [newOrgId]), 1);
     users.newCompany = new Browser(baseUrl);
-    assert.equal(await users.newCompany.login(COMPANY_EMAIL, NEW_PASSWORD), '/company');
+    assert.equal(await users.newCompany.login(COMPANY_EMAIL, NEW_PASSWORD), HOME_PAGES.COMPANY);
 });
 
 test('a rejected company cannot sign in and sees the reason', async t => {
@@ -174,7 +175,7 @@ test('the company account approves the person, who can then sign in as a supplie
     assert.equal((await users.newCompany.put('/company/users/' + newUserId + '/approval', { decision: 'APPROVED' })).status, 200);
     assert.equal((await users.newCompany.put('/company/users/' + newUserId + '/approval', { decision: 'APPROVED' })).status, 409, 'twice');
     users.newSupplier = new Browser(baseUrl);
-    assert.equal(await users.newSupplier.login(USER_EMAIL, NEW_PASSWORD), '/assigned');
+    assert.equal(await users.newSupplier.login(USER_EMAIL, NEW_PASSWORD), HOME_PAGES.SUPPLIER);
 });
 
 // ---------- 4. the new supplier lists a product ----------
